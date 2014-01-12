@@ -4,7 +4,7 @@ Welcome to the Team 1540 Gemini-Apollo project for the 2014 FRC game Aerial Assi
 
 The Team 1540 Gemini-Apollo project uses Team 1540's Common Chicken Runtime Engine (CCRE) project as its framework.
 
-See the [https://bitbucket.org/col6y/common-chicken-runtime-engine][BitBucket project] for it.
+See the [BitBucket project](https://bitbucket.org/col6y/common-chicken-runtime-engine) for it.
 
 # Contributors
 
@@ -29,4 +29,4 @@ You may have to occasionally run the following again to update your copy of the 
 
 	$ git submodule update
 	
-[http://www.git-scm.com/book/en/Git-Tools-Submodules][Find more details]
+[Find more details](http://www.git-scm.com/book/en/Git-Tools-Submodules)
