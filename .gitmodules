@@ -1,0 +1,3 @@
+[submodule "common-chicken-runtime-engine"]
+	path = common-chicken-runtime-engine
+	url = https://col6y@bitbucket.org/col6y/common-chicken-runtime-engine.git
