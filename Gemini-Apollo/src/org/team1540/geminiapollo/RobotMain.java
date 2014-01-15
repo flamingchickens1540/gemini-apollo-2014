@@ -1,23 +1,9 @@
-/*
- * Copyright 2013-2014 Colby Skeggs
- * 
- * This file is part of the CCRE, the Common Chicken Runtime Engine.
- * 
- * The CCRE is free software: you can redistribute it and/or modify it under the
- * terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation, either version 3 of the License, or (at your option) any
- * later version.
- * 
- * The CCRE is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
- * A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
- * details.
- * 
- * You should have received a copy of the GNU Lesser General Public License
- * along with the CCRE.  If not, see <http://www.gnu.org/licenses/>.
- */
 package org.team1540.geminiapollo;
 
+import ccre.chan.BooleanInputPoll;
+import ccre.chan.BooleanOutput;
+import ccre.chan.FloatInputPoll;
+import ccre.chan.FloatOutput;
 import ccre.igneous.SimpleCore;
 
 public class RobotMain extends SimpleCore {
@@ -25,6 +11,50 @@ public class RobotMain extends SimpleCore {
     public static final boolean IS_COMPETITION_ROBOT = false;
 
     protected void createSimpleControl() {
-        // TODO: create modules
+        // TODO: Better selection of ramping settings
+        FloatOutput leftDrive1 = makeTalonMotor(1, MOTOR_FORWARD, 0.1f);
+        FloatOutput leftDrive2 = makeTalonMotor(2, MOTOR_FORWARD, 0.1f);
+        FloatOutput rightDrive1 = makeTalonMotor(3, MOTOR_FORWARD, 0.1f);
+        FloatOutput rightDrive2 = makeTalonMotor(4, MOTOR_FORWARD, 0.1f);
+        FloatOutput winchMotor = makeTalonMotor(5, MOTOR_FORWARD, 0.1f);
+        FloatOutput collectorMotor = makeTalonMotor(6, MOTOR_FORWARD, 0.1f);
+
+        BooleanOutput shiftSolenoid = makeSolenoid(1);
+        BooleanOutput armSolenoid = makeSolenoid(2);
+        BooleanOutput winchReleaseSolenoid = makeSolenoid(3);
+
+        // TODO: Better selection of average bits
+        FloatInputPoll winchCurrent = makeAnalogInput(1, 8);
+        FloatInputPoll pressureSensor = makeAnalogInput(2, 8);
+
+        BooleanInputPoll catapultCocked = makeDigitalInput(2);
+
+        useCompressor(1, 1);
+
+        // TODO: Check if these should be Producers.
+        BooleanInputPoll armUpDown = ControlInterface.getArmUpDown();
+        BooleanInputPoll rollersOnOff = ControlInterface.getRollersOnOff();
+        BooleanInputPoll rearmCatapult = ControlInterface.getRearmCatapult();
+        BooleanInputPoll fireButton = ControlInterface.getFireButton();
+
+        FloatInputPoll leftDriveAxis = joystick1.getAxisChannel(2);
+        FloatInputPoll forwardDriveAxis = joystick1.getAxisChannel(3);
+        FloatInputPoll rightDriveAxis = joystick1.getAxisChannel(5);
+
+        BooleanInputPoll shiftHighButton = joystick1.getButtonChannel(1);
+        BooleanInputPoll shiftLowButton = joystick1.getButtonChannel(3);
+
+        DriveCode.createDrive(leftDrive1, leftDrive2, rightDrive1, rightDrive2, leftDriveAxis, rightDriveAxis, forwardDriveAxis);
+        DriveCode.createShifting(shiftSolenoid, shiftHighButton, shiftLowButton);
+
+        Actuators.createCollector(collectorMotor, rollersOnOff);
+        Actuators.createArm(armSolenoid, armUpDown);
+
+        Shooter.createShooter(winchMotor, winchReleaseSolenoid, winchCurrent, catapultCocked, rearmCatapult, fireButton);
+        // TODO: VisionTracking calls not added yet.
+        // TODO: Autonomous calls not added yet.
+        // TODO: TestMode calls not added yet.
+
+        // TODO: Display current pressure.
     }
 }
