@@ -11,6 +11,9 @@ public class RobotMain extends SimpleCore {
     public static final boolean IS_COMPETITION_ROBOT = false;
 
     protected void createSimpleControl() {
+        
+        // *** Inputs and outputs ***
+        
         // TODO: Better selection of ramping settings
         FloatOutput leftDrive1 = makeTalonMotor(1, MOTOR_FORWARD, 0.1f);
         FloatOutput leftDrive2 = makeTalonMotor(2, MOTOR_FORWARD, 0.1f);
@@ -44,13 +47,15 @@ public class RobotMain extends SimpleCore {
         BooleanInputPoll shiftHighButton = joystick1.getButtonChannel(1);
         BooleanInputPoll shiftLowButton = joystick1.getButtonChannel(3);
 
-        DriveCode.createDrive(leftDrive1, leftDrive2, rightDrive1, rightDrive2, leftDriveAxis, rightDriveAxis, forwardDriveAxis);
-        DriveCode.createShifting(shiftSolenoid, shiftHighButton, shiftLowButton);
+        // *** Drive code ***
+        
+        DriveCode.createDrive(startedTeleop, duringTeleop, leftDrive1, leftDrive2, rightDrive1, rightDrive2, leftDriveAxis, rightDriveAxis, forwardDriveAxis);
+        DriveCode.createShifting(startedTeleop, duringTeleop, shiftSolenoid, shiftHighButton, shiftLowButton);
 
-        Actuators.createCollector(collectorMotor, rollersOnOff);
-        Actuators.createArm(armSolenoid, armUpDown);
+        Actuators.createCollector(startedTeleop, duringTeleop, collectorMotor, rollersOnOff);
+        Actuators.createArm(startedTeleop, duringTeleop, armSolenoid, armUpDown);
 
-        Shooter.createShooter(winchMotor, winchReleaseSolenoid, winchCurrent, catapultCocked, rearmCatapult, fireButton);
+        Shooter.createShooter(startedTeleop, duringTeleop, winchMotor, winchReleaseSolenoid, winchCurrent, catapultCocked, rearmCatapult, fireButton);
         // TODO: VisionTracking calls not added yet.
         // TODO: Autonomous calls not added yet.
         // TODO: TestMode calls not added yet.

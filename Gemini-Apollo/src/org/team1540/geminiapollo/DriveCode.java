@@ -6,11 +6,12 @@ import ccre.chan.FloatFilter;
 import ccre.chan.FloatInputPoll;
 import ccre.chan.FloatOutput;
 import ccre.ctrl.Mixing;
+import ccre.event.EventSource;
 import ccre.log.Logger;
 
 public class DriveCode {
 
-    public static void createDrive(FloatOutput leftDrive1, FloatOutput leftDrive2, FloatOutput rightDrive1, FloatOutput rightDrive2, FloatInputPoll leftDriveAxis, FloatInputPoll rightDriveAxis, FloatInputPoll forwardDriveAxis) {
+    public static void createDrive(EventSource begin, EventSource during, FloatOutput leftDrive1, FloatOutput leftDrive2, FloatOutput rightDrive1, FloatOutput rightDrive2, FloatInputPoll leftDriveAxis, FloatInputPoll rightDriveAxis, FloatInputPoll forwardDriveAxis) {
         Logger.warning("DriveCode TODO");
         //dead zone
         FloatFilter deadZone = Mixing.deadzone(.05f);
@@ -44,7 +45,7 @@ public class DriveCode {
         rightDrive2.writeValue(rightDriveValue2);
     }
 
-    public static void createShifting(BooleanOutput shiftSolenoid, BooleanInputPoll shiftHighButton, BooleanInputPoll shiftLowButton) {
+    public static void createShifting(EventSource begin, EventSource during, BooleanOutput shiftSolenoid, BooleanInputPoll shiftHighButton, BooleanInputPoll shiftLowButton) {
         Logger.warning("DriveCode TODO");
     }
 }
