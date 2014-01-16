@@ -31,6 +31,10 @@ public class RobotMain extends SimpleCore {
 
         // ***** DIGITAL INPUTS *****
         BooleanInputPoll catapultCocked = makeDigitalInput(2);
+        
+        // ***** VISION TRACKING *****
+        VisionTracking.setup(startedAutonomous);
+        BooleanInputPoll isHotZone = VisionTracking.isHotZone();
 
         // ***** COMPRESSOR *****
         useCompressor(1, 1);
@@ -62,7 +66,6 @@ public class RobotMain extends SimpleCore {
 
         // [[[[ SHOOTER CODE ]]]]
         Shooter.createShooter(startedTeleop, duringTeleop, winchMotor, winchReleaseSolenoid, winchCurrent, catapultCocked, rearmCatapult, fireButton, pullbackMod);
-        // TODO: VisionTracking calls not added yet.
         // TODO: Autonomous calls not added yet.
         // TODO: TestMode calls not added yet.
 
