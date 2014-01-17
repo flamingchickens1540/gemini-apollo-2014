@@ -6,6 +6,7 @@ import ccre.chan.FloatInputPoll;
 import ccre.chan.FloatOutput;
 import ccre.event.EventSource;
 import ccre.igneous.SimpleCore;
+import ccre.log.Logger;
 
 public class RobotMain extends SimpleCore {
 
@@ -68,6 +69,7 @@ public class RobotMain extends SimpleCore {
         //new DriveCode().setDriveMotors(leftDrive1, leftDrive2, rightDrive1, rightDrive2).setControlAxes(leftDriveAxis, rightDriveAxis, forwardDriveAxis).run(startedTeleop, duringTeleop);
 
         // [[[[ ARM CODE ]]]]
+        Logger.info("Actuators get startedTeleop irrelevently!");
         Actuators.createCollector(startedTeleop, duringTeleop, collectorMotor, rollersOnOff);
         Actuators.createArm(startedTeleop, duringTeleop, armSolenoid, armUpDown);
 
@@ -75,7 +77,7 @@ public class RobotMain extends SimpleCore {
         Shooter.createShooter(startedTeleop, duringTeleop, winchMotor, winchReleaseSolenoid, winchCurrent, catapultCocked, rearmCatapult, fireButton, pullbackMod);
         // TODO: Autonomous calls not added yet.
         // TODO: TestMode calls not added yet.
-
+        TestMode.start(new Object[]{}, new String[]{});
         // TODO: Display current pressure.
     }
 }
