@@ -32,7 +32,7 @@ public class RobotMain extends SimpleCore {
 
         // ***** DIGITAL INPUTS *****
         BooleanInputPoll catapultCocked = makeDigitalInput(2);
-        
+
         // ***** VISION TRACKING *****
         VisionTracking.setup(startedAutonomous);
         BooleanInputPoll isHotZone = VisionTracking.isHotZone();
@@ -46,7 +46,7 @@ public class RobotMain extends SimpleCore {
         BooleanInputPoll rollersOnOff = ControlInterface.getRollersOnOff();
         EventSource rearmCatapult = ControlInterface.getRearmCatapult();
         EventSource fireButton = ControlInterface.getFireButton();
-        
+
         FloatInputPoll pullbackMod = ControlInterface.getPullbackSlider();
 
         // ***** DRIVE JOYSTICK *****
@@ -56,7 +56,7 @@ public class RobotMain extends SimpleCore {
 
         EventSource shiftHighButton = joystick1.getButtonSource(1);
         EventSource shiftLowButton = joystick1.getButtonSource(3);
-        
+
         // [[[[ AUTONOMOUS CODE ]]]]
         AutonomousController controller = new AutonomousController();
         controller.setup(this);
