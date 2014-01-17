@@ -21,6 +21,7 @@ public class VisionTracking {
         checker.startWhen(startAuto);
         checker.stopWhen(ack);
         checker.schedule(500, new EventLogger(LogLevel.WARNING, "No acknowledgement of vision tracking in 500 milliseconds!"));
+        checker.schedule(510, checker.getStopEvent());
     }
 
     public static BooleanInputPoll isHotZone() {

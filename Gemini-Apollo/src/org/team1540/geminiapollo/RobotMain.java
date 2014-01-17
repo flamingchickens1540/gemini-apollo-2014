@@ -55,10 +55,17 @@ public class RobotMain extends SimpleCore {
 
         EventSource shiftHighButton = joystick1.getButtonSource(1);
         EventSource shiftLowButton = joystick1.getButtonSource(3);
+        
+        // [[[[ AUTONOMOUS CODE ]]]]
+        AutonomousController controller = new AutonomousController();
+        controller.setup(this);
+        controller.putDriveMotors(leftDrive1, leftDrive2, rightDrive1, rightDrive2);
 
         // [[[[ DRIVE CODE ]]]]
         DriveCode.createDrive(startedTeleop, duringTeleop, leftDrive1, leftDrive2, rightDrive1, rightDrive2, leftDriveAxis, rightDriveAxis, forwardDriveAxis);
         DriveCode.createShifting(startedTeleop, duringTeleop, shiftSolenoid, shiftHighButton, shiftLowButton);
+        // Possible other way to control:
+        //new DriveCode().setDriveMotors(leftDrive1, leftDrive2, rightDrive1, rightDrive2).setControlAxes(leftDriveAxis, rightDriveAxis, forwardDriveAxis).run(startedTeleop, duringTeleop);
 
         // [[[[ ARM CODE ]]]]
         Actuators.createCollector(startedTeleop, duringTeleop, collectorMotor, rollersOnOff);
