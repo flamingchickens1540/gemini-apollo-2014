@@ -9,7 +9,7 @@ import ccre.log.Logger;
 
 public class Shooter {
 
-    public static void createShooter(EventSource begin, EventSource during, FloatOutput winchMotor, BooleanOutput winchReleaseSolenoid, FloatInputPoll winchCurrent, BooleanInputPoll catapultCocked, EventSource rearmCatapult, EventSource fireButton, FloatInputPoll pullbackMod) {
+    public static void createShooter(EventSource begin, EventSource during, FloatOutput winchMotor, BooleanOutput winchReleaseSolenoid, FloatInputPoll winchCurrent, BooleanInputPoll catapultCocked, EventSource rearmCatapult, EventSource fireButton) {
         Logger.warning("Shooter TODO");
     }
 }

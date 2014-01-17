@@ -1,6 +1,5 @@
 package org.team1540.geminiapollo;
 
-import ccre.chan.BooleanInputPoll;
 import ccre.chan.BooleanOutput;
 import ccre.chan.BooleanStatus;
 import ccre.chan.FloatFilter;

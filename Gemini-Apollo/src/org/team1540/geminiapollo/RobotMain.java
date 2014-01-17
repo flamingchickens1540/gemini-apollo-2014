@@ -47,8 +47,6 @@ public class RobotMain extends SimpleCore {
         EventSource rearmCatapult = ControlInterface.getRearmCatapult();
         EventSource fireButton = ControlInterface.getFireButton();
 
-        FloatInputPoll pullbackMod = ControlInterface.getPullbackSlider();
-
         // ***** DRIVE JOYSTICK *****
         FloatInputPoll leftDriveAxis = joystick1.getAxisChannel(2);
         FloatInputPoll forwardDriveAxis = joystick1.getAxisChannel(3);
@@ -74,7 +72,7 @@ public class RobotMain extends SimpleCore {
         Actuators.createArm(startedTeleop, duringTeleop, armSolenoid, armUpDown);
 
         // [[[[ SHOOTER CODE ]]]]
-        Shooter.createShooter(startedTeleop, duringTeleop, winchMotor, winchReleaseSolenoid, winchCurrent, catapultCocked, rearmCatapult, fireButton, pullbackMod);
+        Shooter.createShooter(startedTeleop, duringTeleop, winchMotor, winchReleaseSolenoid, winchCurrent, catapultCocked, rearmCatapult, fireButton);
         // TODO: Autonomous calls not added yet.
         // TODO: TestMode calls not added yet.
         TestMode.start(new Object[]{}, new String[]{});
