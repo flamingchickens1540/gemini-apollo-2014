@@ -16,15 +16,17 @@ public class DriveCode {
     /*TO DO:
     -make sure shifting boolean is correct
     -add motor adjustors...
+    -during for createShifting is currently unnecessary, might remove
     */
     public static void createDrive(EventSource begin, EventSource during, final FloatOutput leftDrive1, final FloatOutput leftDrive2, final FloatOutput rightDrive1, final FloatOutput rightDrive2, FloatInputPoll leftDriveAxis, FloatInputPoll rightDriveAxis, FloatInputPoll forwardDriveAxis) {
-        Logger.warning("DriveCode TODO");
+        Logger.warning("DriveCode TOFINISH");
         //dead zone
         FloatFilter deadZone = Mixing.deadzone(.05f);
         final FloatInputPoll leftDriveAxisW = deadZone.wrap(leftDriveAxis);
         final FloatInputPoll rightDriveAxisW = deadZone.wrap(rightDriveAxis);
         final FloatInputPoll forwardDriveAxisW = deadZone.wrap(forwardDriveAxis);
         
+        //begin
         begin.addListener(new EventConsumer () {
             public void eventFired() {
                 leftDrive1.writeValue(0);
@@ -34,6 +36,7 @@ public class DriveCode {
             }
         });
 
+        //during
         during.addListener(new EventConsumer() {
             public void eventFired() {
                 //motor values
@@ -55,7 +58,7 @@ public class DriveCode {
     }
 
     public static void createShifting(EventSource begin, EventSource during, BooleanOutput shiftSolenoid, EventSource shiftHighButton, EventSource shiftLowButton) {
-        Logger.warning("DriveCode TODO");
+        Logger.warning("DriveCode TOFINISH");
         final BooleanStatus shifted = new BooleanStatus (shiftSolenoid);
         //begin
         shifted.setTrueWhen(begin);

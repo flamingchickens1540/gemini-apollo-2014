@@ -23,6 +23,7 @@ public class RobotMain extends SimpleCore {
         BooleanOutput shiftSolenoid = makeSolenoid(1);
         BooleanOutput armSolenoid = makeSolenoid(2);
         BooleanOutput winchReleaseSolenoid = makeSolenoid(3);
+        BooleanOutput winchEngageSolenoid = makeSolenoid(4);
 
         // ***** ANALOG INPUTS *****
         // TODO: Better selection of average bits
@@ -61,7 +62,7 @@ public class RobotMain extends SimpleCore {
         Actuators.createArm(startedTeleop, duringTeleop, armSolenoid, armUpDown);
 
         // [[[[ SHOOTER CODE ]]]]
-        Shooter.createShooter(startedTeleop, duringTeleop, winchMotor, winchReleaseSolenoid, winchCurrent, catapultCocked, rearmCatapult, fireButton, pullbackMod);
+        Shooter.createShooter(startedTeleop, duringTeleop, winchMotor, winchEngageSolenoid, winchReleaseSolenoid, winchCurrent, catapultCocked, rearmCatapult, fireButton, pullbackMod);
         // TODO: VisionTracking calls not added yet.
         // TODO: Autonomous calls not added yet.
         // TODO: TestMode calls not added yet.
