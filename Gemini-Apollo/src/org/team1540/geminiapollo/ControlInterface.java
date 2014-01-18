@@ -1,10 +1,8 @@
 package org.team1540.geminiapollo;
 
 import ccre.chan.BooleanInputPoll;
-import ccre.chan.FloatInputPoll;
 import ccre.ctrl.Mixing;
 import ccre.event.EventSource;
-import ccre.log.Logger;
 import ccre.phidget.PhidgetReader;
 
 public class ControlInterface {
