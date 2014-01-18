@@ -1,6 +1,5 @@
 package org.team1540.geminiapollo;
 
-import ccre.chan.BooleanInputPoll;
 import ccre.chan.BooleanOutput;
 import ccre.chan.BooleanStatus;
 import ccre.chan.FloatFilter;
@@ -46,24 +45,25 @@ public class DriveCode {
                 float rightDrive2Value = (rightDriveAxisW.readValue() + forwardDriveAxisW.readValue());
 
                 //adjust motor values
-                
-                
                 //write motor values
                 leftDrive1.writeValue(leftDrive1Value);
                 leftDrive2.writeValue(leftDrive2Value);
                 rightDrive1.writeValue(rightDrive1Value);
                 rightDrive2.writeValue(rightDrive2Value);
             }
-        });  
+        });
     }
 
     public static void createShifting(EventSource begin, EventSource during, BooleanOutput shiftSolenoid, EventSource shiftHighButton, EventSource shiftLowButton) {
         Logger.warning("DriveCode TOFINISH");
         final BooleanStatus shifted = new BooleanStatus (shiftSolenoid);
+        
         //begin
         shifted.setTrueWhen(begin);
+        
         //high
         shifted.setTrueWhen(shiftHighButton);
+        
         //low
         shifted.setFalseWhen(shiftLowButton);
     }

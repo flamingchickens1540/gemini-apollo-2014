@@ -4,12 +4,15 @@ import ccre.chan.BooleanInputPoll;
 import ccre.chan.BooleanOutput;
 import ccre.chan.FloatInputPoll;
 import ccre.chan.FloatOutput;
+import ccre.ctrl.Mixing;
 import ccre.event.EventSource;
 import ccre.igneous.SimpleCore;
+import ccre.log.Logger;
 
 public class RobotMain extends SimpleCore {
 
     protected void createSimpleControl() {
+        TestMode test=new TestMode(getIsTest());
         // ***** MOTORS *****
         // TODO: Better selection of ramping settings
         FloatOutput leftDrive1 = makeTalonMotor(1, MOTOR_FORWARD, 0.1f);
@@ -33,6 +36,9 @@ public class RobotMain extends SimpleCore {
         // ***** DIGITAL INPUTS *****
         BooleanInputPoll catapultCocked = makeDigitalInput(2);
 
+        // ***** VISION TRACKING *****
+        VisionTracking.setup(startedAutonomous);
+        BooleanInputPoll isHotZone = VisionTracking.isHotZone();
         // ***** COMPRESSOR *****
         useCompressor(1, 1);
 
@@ -42,8 +48,7 @@ public class RobotMain extends SimpleCore {
         BooleanInputPoll rollersOnOff = ControlInterface.getRollersOnOff();
         EventSource rearmCatapult = ControlInterface.getRearmCatapult();
         EventSource fireButton = ControlInterface.getFireButton();
-        
-        FloatInputPoll pullbackMod = ControlInterface.getPullbackSlider();
+        ControlInterface.displayPressure(pressureSensor, globalPeriodic);
 
         // ***** DRIVE JOYSTICK *****
         FloatInputPoll leftDriveAxis = joystick1.getAxisChannel(2);
@@ -53,20 +58,28 @@ public class RobotMain extends SimpleCore {
         EventSource shiftHighButton = joystick1.getButtonSource(1);
         EventSource shiftLowButton = joystick1.getButtonSource(3);
 
+        // [[[[ AUTONOMOUS CODE ]]]]
+        AutonomousController controller = new AutonomousController();
+        controller.setup(this);
+        controller.putDriveMotors(leftDrive1, leftDrive2, rightDrive1, rightDrive2);
+        controller.putHotzone(isHotZone);
+
         // [[[[ DRIVE CODE ]]]]
         DriveCode.createDrive(startedTeleop, duringTeleop, leftDrive1, leftDrive2, rightDrive1, rightDrive2, leftDriveAxis, rightDriveAxis, forwardDriveAxis);
         DriveCode.createShifting(startedTeleop, duringTeleop, shiftSolenoid, shiftHighButton, shiftLowButton);
+        // Possible other way to control:
+        //new DriveCode().setDriveMotors(leftDrive1, leftDrive2, rightDrive1, rightDrive2).setControlAxes(leftDriveAxis, rightDriveAxis, forwardDriveAxis).run(startedTeleop, duringTeleop);
 
         // [[[[ ARM CODE ]]]]
+        Logger.info("Actuators get startedTeleop irrelevently!");
         Actuators.createCollector(startedTeleop, duringTeleop, collectorMotor, rollersOnOff);
         Actuators.createArm(startedTeleop, duringTeleop, armSolenoid, armUpDown);
 
         // [[[[ SHOOTER CODE ]]]]
+
         Shooter.createShooter(startedTeleop, duringTeleop, winchMotor, winchEngageSolenoid, winchReleaseSolenoid, winchCurrent, catapultCocked, rearmCatapult, fireButton, pullbackMod);
         // TODO: VisionTracking calls not added yet.
         // TODO: Autonomous calls not added yet.
-        // TODO: TestMode calls not added yet.
-
         // TODO: Display current pressure.
     }
 }

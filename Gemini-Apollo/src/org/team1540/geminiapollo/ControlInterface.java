@@ -2,35 +2,35 @@ package org.team1540.geminiapollo;
 
 import ccre.chan.BooleanInputPoll;
 import ccre.chan.FloatInputPoll;
+import ccre.ctrl.Mixing;
+import ccre.event.EventConsumer;
 import ccre.event.EventSource;
-import ccre.log.Logger;
+import ccre.phidget.PhidgetReader;
 
 public class ControlInterface {
 
     public static BooleanInputPoll getArmUpDown() {
-        Logger.warning("ControlInterface TODO");
-        return null;
+        return PhidgetReader.getDigitalInput(0);
     }
 
     public static BooleanInputPoll getRollersOnOff() {
-        Logger.warning("ControlInterface TODO");
-        return null;
+        return PhidgetReader.getDigitalInput(0);
     }
 
     public static EventSource getRearmCatapult() {
-        Logger.warning("ControlInterface TODO");
-        return null;
+        return Mixing.whenBooleanBecomes(PhidgetReader.digitalInputs[2], true);
     }
 
     public static EventSource getFireButton() {
-        Logger.warning("ControlInterface TODO");
-        return null;
+        return Mixing.whenBooleanBecomes(PhidgetReader.digitalInputs[3], true);
     }
-    
-    // Added to control how much shooting power will be provided.
-    // The returned FloatInputPoll should return in the range 0.0 - 1.0.
-    public static FloatInputPoll getPullbackSlider() {
-        Logger.warning("ControlInterface TODO");
-        return null;
+    public static FloatInputPoll displayPressure(final FloatInputPoll f,EventSource update){
+        final FloatInputPoll pressure = Mixing.normalizeFloat(f, 100, 587);
+        update.addListener(new EventConsumer(){
+            public void eventFired() {
+                PhidgetReader.phidgetLCD[1].println("Pressure:"+pressure+"%");
+            }
+        });
+        return pressure;
     }
 }
