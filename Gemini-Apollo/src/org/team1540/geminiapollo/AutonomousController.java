@@ -1,5 +1,7 @@
 package org.team1540.geminiapollo;
 
+import ccre.chan.BooleanInputPoll;
+import ccre.chan.FloatInputPoll;
 import ccre.chan.FloatOutput;
 import ccre.chan.FloatStatus;
 import ccre.cluck.CluckGlobals;
@@ -13,16 +15,18 @@ import ccre.instinct.InstinctRegistrar;
 import ccre.log.Logger;
 import ccre.saver.StorageProvider;
 import ccre.saver.StorageSegment;
+import ccre.util.Utils;
 
 public class AutonomousController extends InstinctModule {
 
     private final StorageSegment seg = StorageProvider.openStorage("autonomous");
     private final TuningContext tune = new TuningContext(CluckGlobals.node, seg).publishSavingEvent("save-autonomous");
-    private FloatOutput rightDrive;
-    private FloatOutput leftDrive;
+    // Provided channels
+    private FloatOutput leftDrive, rightDrive;
+    private BooleanInputPoll isHotzone;
     // Tuned constants are below near the autonomous modes.
     private final StringHolder option = new StringHolder("none");
-    private final String[] options = {"none", "forward"};
+    private final String[] options = {"none", "forward", "hotcheck"};
 
     protected void autonomousMain() throws AutonomousModeOverException, InterruptedException {
         String cur = option.get();
@@ -30,6 +34,8 @@ public class AutonomousController extends InstinctModule {
             autoNone();
         } else if (cur.equals("forward")) {
             autoForward();
+        } else if (cur.equals("hotcheck")) {
+            autoHotcheck();
         } else {
             Logger.severe("Nonexistent autonomous mode: " + option.get());
         }
@@ -53,6 +59,14 @@ public class AutonomousController extends InstinctModule {
         waitForTime((long) (1000L * delay + 0.5f)); // Round to nearest integer.
         rightDrive.writeValue(0);
         leftDrive.writeValue(0);
+    }
+
+    private final FloatStatus hotcheckMaxDelay = tune.getFloat("a-hotcheck-maxwait", 6);
+
+    private void autoHotcheck() throws AutonomousModeOverException, InterruptedException {
+        FloatInputPoll cur = Utils.currentTimeSeconds;
+        float target = cur.readValue() + hotcheckMaxDelay.readValue(); // Wait six seconds at most.
+        int i = waitUntilOneOf(new BooleanInputPoll[]{isHotzone, Mixing.floatIsAtLeast(cur, target)});
     }
 
     // *** Framework ***
@@ -112,5 +126,9 @@ public class AutonomousController extends InstinctModule {
     public void putDriveMotors(FloatOutput leftDrive1, FloatOutput leftDrive2, FloatOutput rightDrive1, FloatOutput rightDrive2) {
         this.leftDrive = Mixing.combine(leftDrive1, leftDrive2);
         this.rightDrive = Mixing.combine(rightDrive1, rightDrive2);
+    }
+
+    public void putHotzone(BooleanInputPoll isHotzone) {
+        this.isHotzone = isHotzone;
     }
 }
