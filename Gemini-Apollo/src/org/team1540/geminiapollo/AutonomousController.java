@@ -67,6 +67,10 @@ public class AutonomousController extends InstinctModule {
         FloatInputPoll cur = Utils.currentTimeSeconds;
         float target = cur.readValue() + hotcheckMaxDelay.readValue(); // Wait six seconds at most.
         int i = waitUntilOneOf(new BooleanInputPoll[]{isHotzone, Mixing.floatIsAtLeast(cur, target)});
+        if (i != 0) {
+            Logger.warning("Cancelled wait for HotZone after " + hotcheckMaxDelay.readValue() + " seconds!");
+        }
+        // TODO: Shoot
     }
 
     // *** Framework ***
