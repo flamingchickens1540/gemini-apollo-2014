@@ -36,7 +36,6 @@ public class RobotMain extends SimpleCore {
         // ***** VISION TRACKING *****
         VisionTracking.setup(startedAutonomous);
         BooleanInputPoll isHotZone = VisionTracking.isHotZone();
-
         // ***** COMPRESSOR *****
         useCompressor(1, 1);
 
@@ -75,7 +74,6 @@ public class RobotMain extends SimpleCore {
         Shooter.createShooter(startedTeleop, duringTeleop, winchMotor, winchReleaseSolenoid, winchCurrent, catapultCocked, rearmCatapult, fireButton);
         // TODO: Autonomous calls not added yet.
         // TODO: TestMode calls not added yet.
-        TestMode.start(new Object[]{}, new String[]{});
         // TODO: Display current pressure.
     }
 }

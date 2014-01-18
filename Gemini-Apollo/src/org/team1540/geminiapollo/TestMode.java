@@ -10,14 +10,16 @@ public class TestMode {
     public TestMode(BooleanInputPoll inTest) {
         this.inTest=inTest;
     }
-    public void testPublish(String s,BooleanStatus b){
+    public BooleanStatus testPublish(String s,BooleanStatus b){
         CluckGlobals.node.publish(s+".input",(BooleanInput) b);
         testPublish(s+".output",(BooleanOutput) b);
+        return b;
     }
-    public void testPublish(String s,BooleanInput b){
+    public BooleanInput testPublish(String s,BooleanInput b){
         CluckGlobals.node.publish(s,(BooleanInput) b);
+        return b;
     }
-    public void testPublish(String s,final BooleanOutput b){
+    public BooleanOutput testPublish(String s,final BooleanOutput b){
         CluckGlobals.node.publish(s, new BooleanOutput(){
             public void writeValue(boolean bln) {
                 if(inTest.readValue()){
@@ -25,15 +27,18 @@ public class TestMode {
                 }
             }
         });
+        return b;
     }
-    public void testPublish(String s,FloatStatus b){
+    public FloatStatus testPublish(String s,FloatStatus b){
         CluckGlobals.node.publish(s+".input",(FloatInput) b);
         testPublish(s+".output",(FloatOutput) b);
+        return b;
     }
-    public void testPublish(String s,FloatInput b){
+    public FloatInput testPublish(String s,FloatInput b){
         CluckGlobals.node.publish(s,(FloatInput) b);
+        return b;
     }
-    public void testPublish(String s,final FloatOutput b){
+    public FloatOutput testPublish(String s,final FloatOutput b){
         CluckGlobals.node.publish(s, new FloatOutput(){
             public void writeValue(float bln) {
                 if(inTest.readValue()){
@@ -41,14 +46,17 @@ public class TestMode {
                 }
             }
         });
+        return b;
     }
-    public void testPublish(String s,BooleanInputProducer b){
+    public BooleanInputProducer testPublish(String s,BooleanInputProducer b){
         CluckGlobals.node.publish(s, b);
+        return b;
     }
-    public void testPublish(String s,FloatInputProducer b){
+    public FloatInputProducer testPublish(String s,FloatInputProducer b){
         CluckGlobals.node.publish(s, b);
+        return b;
     }
-    public void testPublish(String s,final EventConsumer o){
+    public EventConsumer testPublish(String s,final EventConsumer o){
         CluckGlobals.node.publish(s,new EventConsumer(){
             public void eventFired() {
                 if(inTest.readValue()){
@@ -56,9 +64,11 @@ public class TestMode {
                 }
             }
         });
+        return o;
     }
-    public void testPublish(String s,final EventSource o){
+    public EventSource testPublish(String s,final EventSource o){
         CluckGlobals.node.publish(s,o);
+        return o;
     }
 
 }
