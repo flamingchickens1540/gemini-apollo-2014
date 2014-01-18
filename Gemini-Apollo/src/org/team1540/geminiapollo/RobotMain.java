@@ -59,6 +59,7 @@ public class RobotMain extends SimpleCore {
         AutonomousController controller = new AutonomousController();
         controller.setup(this);
         controller.putDriveMotors(leftDrive1, leftDrive2, rightDrive1, rightDrive2);
+        controller.putHotzone(isHotZone);
 
         // [[[[ DRIVE CODE ]]]]
         DriveCode.createDrive(startedTeleop, duringTeleop, leftDrive1, leftDrive2, rightDrive1, rightDrive2, leftDriveAxis, rightDriveAxis, forwardDriveAxis);
