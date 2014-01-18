@@ -4,6 +4,7 @@ import ccre.chan.BooleanInputPoll;
 import ccre.chan.BooleanOutput;
 import ccre.chan.FloatInputPoll;
 import ccre.chan.FloatOutput;
+import ccre.ctrl.Mixing;
 import ccre.event.EventSource;
 import ccre.igneous.SimpleCore;
 import ccre.log.Logger;
@@ -11,6 +12,7 @@ import ccre.log.Logger;
 public class RobotMain extends SimpleCore {
 
     protected void createSimpleControl() {
+        TestMode test=new TestMode(getIsTest());
         // ***** MOTORS *****
         // TODO: Better selection of ramping settings
         FloatOutput leftDrive1 = makeTalonMotor(1, MOTOR_FORWARD, 0.1f);
@@ -45,6 +47,7 @@ public class RobotMain extends SimpleCore {
         BooleanInputPoll rollersOnOff = ControlInterface.getRollersOnOff();
         EventSource rearmCatapult = ControlInterface.getRearmCatapult();
         EventSource fireButton = ControlInterface.getFireButton();
+        ControlInterface.displayPressure(pressureSensor, globalPeriodic);
 
         // ***** DRIVE JOYSTICK *****
         FloatInputPoll leftDriveAxis = joystick1.getAxisChannel(2);
@@ -74,7 +77,6 @@ public class RobotMain extends SimpleCore {
         // [[[[ SHOOTER CODE ]]]]
         Shooter.createShooter(startedTeleop, duringTeleop, winchMotor, winchReleaseSolenoid, winchCurrent, catapultCocked, rearmCatapult, fireButton);
         // TODO: Autonomous calls not added yet.
-        // TODO: TestMode calls not added yet.
         // TODO: Display current pressure.
     }
 }
