@@ -18,7 +18,7 @@ public class Shooter {
     begin - find out what the status is at the beginning of the match
     */
     
-    public static void createShooter(EventSource begin, EventSource during, final FloatOutput winchMotor, BooleanOutput winchEngageSolenoid, BooleanOutput winchReleaseSolenoid, FloatInputPoll winchCurrent, final BooleanInputPoll catapultCocked, EventSource rearmCatapult, EventSource fireButton, FloatInputPoll pullbackMod, /*lol*/ armStatus) {
+    public static void createShooter(EventSource begin, EventSource during, final FloatOutput winchMotor, BooleanOutput winchEngageSolenoid, BooleanOutput winchReleaseSolenoid, FloatInputPoll winchCurrent, final BooleanInputPoll catapultCocked, EventSource rearmCatapult, EventSource fireButton, FloatInputPoll pullbackMod) {
         Logger.warning("Shooter TOFINISH");
         //Network Variables
         TuningContext tuner = new TuningContext (CluckGlobals.node, "Shooter Values");
@@ -50,7 +50,7 @@ public class Shooter {
             public void eventFired () {
                 if (running.readValue()) {
                     running.writeValue(false);
-                } else if (engaged.readValue() && ) {
+                } else if (engaged.readValue()) {
                     disengaged.writeValue(true);
                 }
             }
