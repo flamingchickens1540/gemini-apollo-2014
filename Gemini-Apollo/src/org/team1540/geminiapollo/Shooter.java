@@ -16,10 +16,11 @@ import ccre.log.Logger;
 public class Shooter {
     /* TODO LIST:
     begin - find out what the status is at the beginning of the match
+    - find out wich value of armstatus is arm down
     */
-    
-    public static void createShooter(EventSource begin, EventSource during, final FloatOutput winchMotor, BooleanOutput winchEngageSolenoid, BooleanOutput winchReleaseSolenoid, FloatInputPoll winchCurrent, final BooleanInputPoll catapultCocked, EventSource rearmCatapult, EventSource fireButton, FloatInputPoll pullbackMod, /*lol*/ armStatus) {
+    public static void createShooter(EventSource begin, EventSource during, final FloatOutput winchMotor, BooleanOutput winchEngageSolenoid, BooleanOutput winchReleaseSolenoid, FloatInputPoll winchCurrent, final BooleanInputPoll catapultCocked, EventSource rearmCatapult, EventSource fireButton, final BooleanInputPoll armStatus) {
         Logger.warning("Shooter TOFINISH");
+        Logger.warning("Catapult/arm collision software-stop not implemented yet.");
         //Network Variables
         TuningContext tuner = new TuningContext (CluckGlobals.node, "Shooter Values");
         tuner.publishSavingEvent("Shooter");
@@ -50,7 +51,7 @@ public class Shooter {
             public void eventFired () {
                 if (running.readValue()) {
                     running.writeValue(false);
-                } else if (engaged.readValue() && ) {
+                } else if (engaged.readValue() && armStatus.readValue() == false) {
                     disengaged.writeValue(true);
                 }
             }
