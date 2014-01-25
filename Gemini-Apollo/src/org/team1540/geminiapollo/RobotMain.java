@@ -78,8 +78,5 @@ public class RobotMain extends SimpleCore {
         // [[[[ SHOOTER CODE ]]]]
 
         Shooter.createShooter(startedTeleop, duringTeleop, winchMotor, winchEngageSolenoid, winchReleaseSolenoid, winchCurrent, catapultCocked, rearmCatapult, fireButton, armUpDown);
-        // TODO: VisionTracking calls not added yet.
-        // TODO: Autonomous calls not added yet.
-        // TODO: Display current pressure.
     }
 }

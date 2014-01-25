@@ -38,11 +38,6 @@ public class Main extends javax.swing.JFrame {
         tAddress.setText("10.15.40.11");
 
         bTest.setText("Try");
-        bTest.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bTestActionPerformed(evt);
-            }
-        });
 
         cSelector.setModel(cVProcessor1.getPointSettings());
 
@@ -90,10 +85,6 @@ public class Main extends javax.swing.JFrame {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
-
-    private void bTestActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bTestActionPerformed
-        //OpenCVLoader.test(webcamPanel1.getActiveImage());
-    }//GEN-LAST:event_bTestActionPerformed
 
     private void updatePoint(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_updatePoint
         cVProcessor1.putPoint(evt.getPoint());
