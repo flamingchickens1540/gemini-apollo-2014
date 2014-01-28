@@ -26,7 +26,7 @@ public class OpenCVLoader {
         Mat x = getFromImage(activeImage);
         Highgui.imwrite("test.png", x);
     }
-    
+
     public static Mat getFromImage(BufferedImage img) {
         long start = System.nanoTime();
         if (img.getType() != BufferedImage.TYPE_3BYTE_BGR) {
@@ -46,17 +46,16 @@ public class OpenCVLoader {
         //Logger.info("Total " + (end - start) / 1000000.0 + " ms");
         return cvi;
     }
-    
+
     /*public static Mat getFromImage2(BufferedImage img) {
-        if (img.getType() != BufferedImage.TYPE_3BYTE_BGR) {
-            throw new IllegalArgumentException("Bad type!");
-        }
-        Mat cvi = new Mat(img.getHeight(), img.getWidth(), CvType.CV_8UC3);
-        cvi.
-        cvi.put(0, 0, ((DataBufferByte) img.getData().getDataBuffer()).getData());
-        return cvi;
-    }*/
-    
+     if (img.getType() != BufferedImage.TYPE_3BYTE_BGR) {
+     throw new IllegalArgumentException("Bad type!");
+     }
+     Mat cvi = new Mat(img.getHeight(), img.getWidth(), CvType.CV_8UC3);
+     cvi.
+     cvi.put(0, 0, ((DataBufferByte) img.getData().getDataBuffer()).getData());
+     return cvi;
+     }*/
     public static void load() {
         // Forces class initialization.
     }
@@ -67,10 +66,15 @@ public class OpenCVLoader {
     }
 
     public static BufferedImage getFromMat(Mat fromImage) {
-        if (fromImage.type() != CvType.CV_8UC3) {
-            throw new IllegalArgumentException("Bad kind of Mat!");
+        int type = fromImage.type();
+        if (type == CvType.CV_8UC3) { // Default
+            type = BufferedImage.TYPE_3BYTE_BGR;
+        } else if (type == CvType.CV_8UC1) {
+            type = BufferedImage.TYPE_BYTE_GRAY;
+        } else {
+            throw new IllegalArgumentException("Bad kind of Mat: " + CvType.typeToString(type));
         }
-        BufferedImage out = new BufferedImage(fromImage.cols(), fromImage.rows(), BufferedImage.TYPE_3BYTE_BGR);
+        BufferedImage out = new BufferedImage(fromImage.cols(), fromImage.rows(), type);
         fromImage.get(0, 0, ((DataBufferByte) out.getTile(0, 0).getDataBuffer()).getData());
         return out;
     }

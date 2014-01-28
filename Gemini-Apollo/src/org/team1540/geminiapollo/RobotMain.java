@@ -5,6 +5,7 @@ import ccre.chan.BooleanOutput;
 import ccre.chan.FloatInputPoll;
 import ccre.chan.FloatOutput;
 import ccre.ctrl.Mixing;
+import ccre.event.Event;
 import ccre.event.EventSource;
 import ccre.igneous.SimpleCore;
 import ccre.log.Logger;
@@ -12,7 +13,7 @@ import ccre.log.Logger;
 public class RobotMain extends SimpleCore {
 
     protected void createSimpleControl() {
-        TestMode test=new TestMode(getIsTest());
+        TestMode test = new TestMode(getIsTest());
         // ***** MOTORS *****
         // TODO: Better selection of ramping settings
         FloatOutput leftDrive1 = makeTalonMotor(1, MOTOR_FORWARD, 0.1f);
@@ -63,6 +64,7 @@ public class RobotMain extends SimpleCore {
         controller.setup(this);
         controller.putDriveMotors(leftDrive1, leftDrive2, rightDrive1, rightDrive2);
         controller.putHotzone(isHotZone);
+        EventSource fireAutonomousTrigger = controller.getWhenToFire();
 
         // [[[[ DRIVE CODE ]]]]
         DriveCode.createDrive(startedTeleop, duringTeleop, leftDrive1, leftDrive2, rightDrive1, rightDrive2, leftDriveAxis, rightDriveAxis, forwardDriveAxis);
@@ -76,7 +78,12 @@ public class RobotMain extends SimpleCore {
         Actuators.createArm(startedTeleop, duringTeleop, armSolenoid, armUpDown);
 
         // [[[[ SHOOTER CODE ]]]]
-
-        Shooter.createShooter(startedTeleop, duringTeleop, winchMotor, winchEngageSolenoid, winchReleaseSolenoid, winchCurrent, catapultCocked, rearmCatapult, fireButton, armUpDown);
+        Event fireWhen = new Event();
+        fireButton.addListener(fireWhen);
+        fireAutonomousTrigger.addListener(fireWhen);
+        Event updateShooterWhen = new Event();
+        duringTeleop.addListener(updateShooterWhen);
+        duringAutonomous.addListener(updateShooterWhen);
+        Shooter.createShooter(startedAutonomous, updateShooterWhen, winchMotor, winchEngageSolenoid, winchReleaseSolenoid, winchCurrent, catapultCocked, rearmCatapult, fireWhen, armUpDown);
     }
 }

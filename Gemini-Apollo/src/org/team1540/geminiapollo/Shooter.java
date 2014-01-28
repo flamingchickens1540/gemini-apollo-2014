@@ -22,7 +22,7 @@ public class Shooter {
         Logger.warning("Shooter TOFINISH");
         Logger.warning("Catapult/arm collision software-stop not implemented yet.");
         //Network Variables
-        TuningContext tuner = new TuningContext (CluckGlobals.node, "Shooter Values");
+        TuningContext tuner = new TuningContext (CluckGlobals.node, "ShooterValues");
         tuner.publishSavingEvent("Shooter");
         final FloatStatus winchSpeed = tuner.getFloat("Winch Speed", .25f);
         final FloatStatus drawBack = tuner.getFloat("Draw Back", 1f);
