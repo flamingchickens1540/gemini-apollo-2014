@@ -17,12 +17,14 @@ public class Shooter {
     /* TODO LIST:
     begin - find out what the status is at the beginning of the match
     - find out wich value of armstatus is arm down
+    -implement better stopping when winchcurrent reaches (almost reaches) set value
+    -have a better stop for arming the catapult when arm is up (winchcurrent?)
     */
     public static void createShooter(EventSource begin, EventSource during, final FloatOutput winchMotor, BooleanOutput winchEngageSolenoid, BooleanOutput winchReleaseSolenoid, FloatInputPoll winchCurrent, final BooleanInputPoll catapultCocked, EventSource rearmCatapult, EventSource fireButton, final BooleanInputPoll armStatus) {
         Logger.warning("Shooter TOFINISH");
         Logger.warning("Catapult/arm collision software-stop not implemented yet.");
         //Network Variables
-        TuningContext tuner = new TuningContext (CluckGlobals.node, "Shooter Values");
+        TuningContext tuner = new TuningContext (CluckGlobals.node, "ShooterValues");
         tuner.publishSavingEvent("Shooter");
         final FloatStatus winchSpeed = tuner.getFloat("Winch Speed", .25f);
         final FloatStatus drawBack = tuner.getFloat("Draw Back", 1f);
@@ -44,6 +46,7 @@ public class Shooter {
 
         //begin
         running.setFalseWhen(begin);
+        
         //and more!
 
         //during
@@ -70,7 +73,7 @@ public class Shooter {
             public void eventFired() {
                 if (running.readValue()) {
                     winchMotor.writeValue(winchSpeed.readValue());
-                    if (catapultCocked.readValue()/*||magical winchcurrent check >= drawBack*/) {
+                    if (catapultCocked.readValue() || armStatus.readValue()/*||magical winchcurrent check >= drawBack*/) {
                         running.writeValue(false);
                     }
                 }
