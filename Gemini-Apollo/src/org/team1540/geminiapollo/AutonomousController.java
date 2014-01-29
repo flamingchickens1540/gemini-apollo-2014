@@ -1,17 +1,12 @@
 package org.team1540.geminiapollo;
 
-import ccre.chan.BooleanInputPoll;
-import ccre.chan.FloatInputPoll;
-import ccre.chan.FloatOutput;
-import ccre.chan.FloatStatus;
+import ccre.chan.*;
 import ccre.cluck.CluckGlobals;
 import ccre.ctrl.Mixing;
-import ccre.event.EventConsumer;
+import ccre.event.*;
 import ccre.holders.StringHolder;
 import ccre.holders.TuningContext;
-import ccre.instinct.AutonomousModeOverException;
-import ccre.instinct.InstinctModule;
-import ccre.instinct.InstinctRegistrar;
+import ccre.instinct.*;
 import ccre.log.Logger;
 import ccre.saver.StorageProvider;
 import ccre.saver.StorageSegment;
@@ -27,6 +22,7 @@ public class AutonomousController extends InstinctModule {
     // Tuned constants are below near the autonomous modes.
     private final StringHolder option = new StringHolder("none");
     private final String[] options = {"none", "forward", "hotcheck"};
+    private final Event fireWhenEvent = new Event();
 
     protected void autonomousMain() throws AutonomousModeOverException, InterruptedException {
         String cur = option.get();
@@ -68,9 +64,9 @@ public class AutonomousController extends InstinctModule {
         float target = cur.readValue() + hotcheckMaxDelay.readValue(); // Wait six seconds at most.
         int i = waitUntilOneOf(new BooleanInputPoll[]{isHotzone, Mixing.floatIsAtLeast(cur, target)});
         if (i != 0) {
-            Logger.warning("Cancelled wait for HotZone after " + hotcheckMaxDelay.readValue() + " seconds!");
+            Logger.warning("Cancelled wait for HotZone after " + hotcheckMaxDelay.readValue() + " seconds: " + isHotzone.readValue());
         }
-        // TODO: Shoot
+        fireWhenEvent.produce();
     }
 
     // *** Framework ***
@@ -134,5 +130,9 @@ public class AutonomousController extends InstinctModule {
 
     public void putHotzone(BooleanInputPoll isHotzone) {
         this.isHotzone = isHotzone;
+    }
+
+    public EventSource getWhenToFire() {
+        return fireWhenEvent;
     }
 }

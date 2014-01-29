@@ -9,7 +9,7 @@ import ccre.log.LogLevel;
 
 public class VisionTracking {
 
-    public static String prefix = "phidget/";
+    public static String prefix = "periscope/";
 
     public static void setup(EventSource startAuto) {
         // Start vision tracking at the start of autonomous.
@@ -17,6 +17,7 @@ public class VisionTracking {
 
         // Require an acknowledgement that the vision tracking is running.
         EventSource ack = CluckGlobals.node.subscribeES(prefix + "ack-vt-autonomous");
+        EventLogger.log(ack, LogLevel.INFO, "Got ack!");
         ExpirationTimer checker = new ExpirationTimer();
         checker.startWhen(startAuto);
         checker.stopWhen(ack);

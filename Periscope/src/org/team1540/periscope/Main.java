@@ -1,5 +1,10 @@
 package org.team1540.periscope;
 
+import ccre.cluck.CluckGlobals;
+import ccre.log.NetworkAutologger;
+import java.awt.Dimension;
+import java.awt.Point;
+
 public class Main extends javax.swing.JFrame {
 
     public Main() {
@@ -18,10 +23,11 @@ public class Main extends javax.swing.JFrame {
 
         webcam1 = new org.team1540.periscope.Webcam();
         cVProcessor1 = new org.team1540.periscope.CVProcessor();
+        cluckConnector1 = new org.team1540.periscope.CluckConnector();
         tAddress = new javax.swing.JTextField();
-        bTest = new javax.swing.JButton();
         cSelector = new javax.swing.JComboBox();
         imagePane = new org.team1540.periscope.ImagePanel();
+        txtCluckRemote = new javax.swing.JTextField();
 
         webcam1.setOutput(cVProcessor1);
         webcam1.setWebcamEnabled(false);
@@ -31,13 +37,14 @@ public class Main extends javax.swing.JFrame {
 
         cVProcessor1.setTarget(imagePane);
 
+        binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, txtCluckRemote, org.jdesktop.beansbinding.ELProperty.create("${text}"), cluckConnector1, org.jdesktop.beansbinding.BeanProperty.create("address"));
+        bindingGroup.addBinding(binding);
+
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         tAddress.setColumns(15);
         tAddress.setFont(new java.awt.Font("Monospaced", 0, 11)); // NOI18N
         tAddress.setText("10.15.40.11");
-
-        bTest.setText("Try");
 
         cSelector.setModel(cVProcessor1.getPointSettings());
 
@@ -58,16 +65,21 @@ public class Main extends javax.swing.JFrame {
             .addGap(0, 480, Short.MAX_VALUE)
         );
 
+        txtCluckRemote.setColumns(15);
+        txtCluckRemote.setFont(new java.awt.Font("Monospaced", 0, 11)); // NOI18N
+        txtCluckRemote.setText("10.15.40.2");
+        txtCluckRemote.setToolTipText("");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(tAddress, javax.swing.GroupLayout.PREFERRED_SIZE, 170, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tAddress, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cSelector, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 357, Short.MAX_VALUE)
-                .addComponent(bTest))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 329, Short.MAX_VALUE)
+                .addComponent(txtCluckRemote, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
             .addComponent(imagePane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
@@ -75,8 +87,8 @@ public class Main extends javax.swing.JFrame {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(tAddress, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(bTest)
-                    .addComponent(cSelector, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(cSelector, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtCluckRemote, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(imagePane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -87,7 +99,11 @@ public class Main extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void updatePoint(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_updatePoint
-        cVProcessor1.putPoint(evt.getPoint());
+        Point pt = evt.getPoint();
+        Dimension size = imagePane.getSize();
+        int pX = (int) (640 * pt.x / size.width);
+        int pY = (int) (480 * pt.y / size.height);
+        cVProcessor1.putPoint(new Point(pX, pY));
     }//GEN-LAST:event_updatePoint
 
     public static void main(String args[]) {
@@ -116,20 +132,23 @@ public class Main extends javax.swing.JFrame {
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
+            @Override
             public void run() {
+                CluckGlobals.ensureInitializedCore();
+                NetworkAutologger.register();
                 Main m = new Main();
                 m.setVisible(true);
-                //m.webcamPanel1.setWebcamEnabled(true);
             }
         });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton bTest;
     private javax.swing.JComboBox cSelector;
     private org.team1540.periscope.CVProcessor cVProcessor1;
+    private org.team1540.periscope.CluckConnector cluckConnector1;
     private org.team1540.periscope.ImagePanel imagePane;
     private javax.swing.JTextField tAddress;
+    private javax.swing.JTextField txtCluckRemote;
     private org.team1540.periscope.Webcam webcam1;
     private org.jdesktop.beansbinding.BindingGroup bindingGroup;
     // End of variables declaration//GEN-END:variables
