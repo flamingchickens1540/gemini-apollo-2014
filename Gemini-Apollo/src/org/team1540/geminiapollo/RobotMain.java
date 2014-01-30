@@ -13,6 +13,7 @@ import ccre.event.EventSource;
 import ccre.igneous.SimpleCore;
 import ccre.log.LogLevel;
 import ccre.log.Logger;
+import ccre.phidget.PhidgetReader;
 
 public class RobotMain extends SimpleCore {
 
@@ -90,5 +91,15 @@ public class RobotMain extends SimpleCore {
         duringTeleop.addListener(updateShooterWhen);
         duringAutonomous.addListener(updateShooterWhen);
         Shooter.createShooter(startedAutonomous, updateShooterWhen, winchMotor, winchEngageSolenoid, winchReleaseSolenoid, winchCurrent, catapultCocked, Mixing.filterEvent(getIsDisabled (), false, rearmCatapult), Mixing.filterEvent(getIsDisabled (), false, fireButton), armUpDown);
+        
+        
+        
+        
+        //******SPECIAL MESSAGES*******\\
+        globalPeriodic.addListener(new EventConsumer () {
+            public void eventFired () {
+                PhidgetReader.phidgetLCD[0].println("Are we human?");
+            }
+        });
     }
 }
