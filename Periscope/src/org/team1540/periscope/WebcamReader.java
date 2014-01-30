@@ -65,7 +65,7 @@ public class WebcamReader {
                     }
                 }
             }
-            if (contentLength < 1 || contentLength > 200000) {
+            if (contentLength < 1 || contentLength > 300000) {
                 throw new IOException("content length out of range: " + contentLength);
             }
             BufferedImage readImage = readImage(contentLength);

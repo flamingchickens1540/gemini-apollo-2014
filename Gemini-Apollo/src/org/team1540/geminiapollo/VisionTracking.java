@@ -1,5 +1,6 @@
 package org.team1540.geminiapollo;
 
+import ccre.chan.BooleanInput;
 import ccre.chan.BooleanInputPoll;
 import ccre.cluck.CluckGlobals;
 import ccre.ctrl.ExpirationTimer;
@@ -26,6 +27,6 @@ public class VisionTracking {
     }
 
     public static BooleanInputPoll isHotZone() {
-        return CluckGlobals.node.subscribeBIP(prefix + "is-vt-autonomous", false);
+        return CluckGlobals.node.subscribeBIP(prefix + "is-vt-autonomous", true);
     }
 }

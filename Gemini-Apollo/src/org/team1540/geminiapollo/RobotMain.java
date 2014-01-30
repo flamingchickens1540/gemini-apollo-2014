@@ -1,13 +1,17 @@
 package org.team1540.geminiapollo;
 
+import ccre.chan.BooleanInput;
 import ccre.chan.BooleanInputPoll;
 import ccre.chan.BooleanOutput;
 import ccre.chan.FloatInputPoll;
 import ccre.chan.FloatOutput;
 import ccre.ctrl.Mixing;
 import ccre.event.Event;
+import ccre.event.EventConsumer;
+import ccre.event.EventLogger;
 import ccre.event.EventSource;
 import ccre.igneous.SimpleCore;
+import ccre.log.LogLevel;
 import ccre.log.Logger;
 
 public class RobotMain extends SimpleCore {
@@ -81,6 +85,7 @@ public class RobotMain extends SimpleCore {
         Event fireWhen = new Event();
         fireButton.addListener(fireWhen);
         fireAutonomousTrigger.addListener(fireWhen);
+        EventLogger.log(fireWhen, LogLevel.FINE, "Fire now!");
         Event updateShooterWhen = new Event();
         duringTeleop.addListener(updateShooterWhen);
         duringAutonomous.addListener(updateShooterWhen);

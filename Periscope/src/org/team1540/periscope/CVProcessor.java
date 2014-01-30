@@ -1,5 +1,6 @@
 package org.team1540.periscope;
 
+import ccre.chan.BooleanInput;
 import ccre.chan.BooleanStatus;
 import ccre.cluck.CluckGlobals;
 import ccre.ctrl.Mixing;
@@ -23,7 +24,7 @@ public class CVProcessor implements ImageOutput {
     private final Event notifyAck = new Event();
 
     {
-        CluckGlobals.node.publish("is-vt-autonomous", bout);
+        CluckGlobals.node.publish("is-vt-autonomous", (BooleanInput) bout);
         CluckGlobals.node.publish("ack-vt-autonomous", (EventSource) notifyAck);
         CluckGlobals.node.publish("enable-vt-autonomous", Mixing.combine(waitingForAck.getSetTrueEvent(), new EventLogger(LogLevel.INFO, "Got enable!")));
     }
