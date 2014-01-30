@@ -37,13 +37,6 @@ public class Shooter {
         disengaged.setFalseWhen(Mixing.whenBooleanBecomes(engaged, true));
         final BooleanStatus running = new BooleanStatus();
         
-        //stop arming
-        final EventConsumer stopArming = new EventConsumer () {
-            public void eventFired () {
-                running.writeValue(false);
-            }
-        };
-
         //begin
         running.setFalseWhen(begin);
         
@@ -76,6 +69,8 @@ public class Shooter {
                     if (catapultCocked.readValue() || armStatus.readValue()/*||magical winchcurrent check >= drawBack*/) {
                         running.writeValue(false);
                     }
+                } else {
+                    winchMotor.writeValue(0f);
                 }
             }
         });
