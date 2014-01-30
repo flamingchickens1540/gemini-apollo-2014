@@ -28,7 +28,7 @@ public class ControlInterface {
         final FloatInputPoll pressure = Mixing.normalizeFloat(f, 100, 587);
         update.addListener(new EventConsumer(){
             public void eventFired() {
-                PhidgetReader.phidgetLCD[1].println("Pressure:"+pressure+"%");
+                PhidgetReader.phidgetLCD[1].println("Pressure: "+pressure+"%");
             }
         });
         return pressure;
