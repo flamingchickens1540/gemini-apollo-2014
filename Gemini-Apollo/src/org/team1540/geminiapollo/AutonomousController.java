@@ -62,9 +62,10 @@ public class AutonomousController extends InstinctModule {
     private void autoHotcheck() throws AutonomousModeOverException, InterruptedException {
         FloatInputPoll cur = Utils.currentTimeSeconds;
         float target = cur.readValue() + hotcheckMaxDelay.readValue(); // Wait six seconds at most.
-        int i = waitUntilOneOf(new BooleanInputPoll[]{isHotzone, Mixing.floatIsAtLeast(cur, target)});
+        BooleanInputPoll fatl = Mixing.floatIsAtLeast(cur, target);
+        int i = waitUntilOneOf(new BooleanInputPoll[]{isHotzone, fatl});
         if (i != 0) {
-            Logger.warning("Cancelled wait for HotZone after " + hotcheckMaxDelay.readValue() + " seconds: " + isHotzone.readValue());
+            Logger.warning("Cancelled wait for HotZone after " + hotcheckMaxDelay.readValue() + " seconds: " + cur.readValue() + " and " + target);
         }
         fireWhenEvent.produce();
     }
