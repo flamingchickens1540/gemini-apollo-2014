@@ -20,7 +20,7 @@ public class Shooter {
     -implement better stopping when winchcurrent reaches (almost reaches) set value
     -have a better stop for arming the catapult when arm is up (winchcurrent?)
     */
-    public static void createShooter(EventSource begin, EventSource during, final FloatOutput winchMotor, BooleanOutput winchEngageSolenoid, BooleanOutput winchReleaseSolenoid, FloatInputPoll winchCurrent, final BooleanInputPoll catapultCocked, EventSource rearmCatapult, EventSource fireButton, final BooleanInputPoll armStatus) {
+    public static void createShooter(EventSource begin, EventSource during, final FloatOutput winchMotor, BooleanOutput winchEngageSolenoid, BooleanOutput winchReleaseSolenoid, final FloatInputPoll winchCurrent, final BooleanInputPoll catapultCocked, EventSource rearmCatapult, EventSource fireButton, final BooleanInputPoll armStatus) {
         Logger.warning("Shooter TOFINISH");
         Logger.warning("Catapult/arm collision software-stop not implemented yet.");
         //Network Variables
@@ -37,13 +37,6 @@ public class Shooter {
         disengaged.setFalseWhen(Mixing.whenBooleanBecomes(engaged, true));
         final BooleanStatus running = new BooleanStatus();
         
-        //stop arming
-        final EventConsumer stopArming = new EventConsumer () {
-            public void eventFired () {
-                running.writeValue(false);
-            }
-        };
-
         //begin
         running.setFalseWhen(begin);
         
@@ -54,7 +47,7 @@ public class Shooter {
             public void eventFired () {
                 if (running.readValue()) {
                     running.writeValue(false);
-                } else if (engaged.readValue() && armStatus.readValue() == false) {
+                } else if (engaged.readValue() && !armStatus.readValue()) {
                     disengaged.writeValue(true);
                 }
             }
@@ -63,7 +56,7 @@ public class Shooter {
             public void eventFired () {
                 if (running.readValue()) {
                     running.writeValue(false);
-                } else {
+                } else if (!armStatus.readValue() && !catapultCocked.readValue()){
                     engaged.writeValue(true);
                     running.writeValue(true);
                 }
@@ -73,9 +66,11 @@ public class Shooter {
             public void eventFired() {
                 if (running.readValue()) {
                     winchMotor.writeValue(winchSpeed.readValue());
-                    if (catapultCocked.readValue() || armStatus.readValue()/*||magical winchcurrent check >= drawBack*/) {
+                    if (catapultCocked.readValue() || winchCurrent.readValue() >= drawBack.readValue()) {
                         running.writeValue(false);
                     }
+                } else {
+                    winchMotor.writeValue(0f);
                 }
             }
         });
