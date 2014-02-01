@@ -14,6 +14,9 @@ import ccre.igneous.SimpleCore;
 import ccre.log.LogLevel;
 import ccre.log.Logger;
 import ccre.phidget.PhidgetReader;
+import ccre.saver.StorageProvider;
+import ccre.saver.StorageSegment;
+import java.util.Random;
 
 public class RobotMain extends SimpleCore {
 
@@ -92,13 +95,15 @@ public class RobotMain extends SimpleCore {
         duringAutonomous.addListener(updateShooterWhen);
         Shooter.createShooter(startedAutonomous, updateShooterWhen, winchMotor, winchEngageSolenoid, winchReleaseSolenoid, winchCurrent, catapultCocked, Mixing.filterEvent(getIsDisabled (), false, rearmCatapult), Mixing.filterEvent(getIsDisabled (), false, fireButton), armUpDown);
         
-        
-        
-        
         //******SPECIAL MESSAGES*******\\
+        //Nothing important past here... seriously... don't waste your time here.
+        //You're a talented guy, you have better things to be doing. Leave this to me.
+        
+        final String [] messages = new String [] {"Welcome to pain!", "Are we human?", "Five Guys B&F's!", "My brother...", "My captain...", "My king.", "I will be back.", "Only twenty characters", "Blood", "Smoking kills.", "Peer", "Just say no!", "SPAAAAAAAAAAAAACE!!!", "$YOLO SWAGGINS$", "Don't drop the soap.", "This is SPARTA!!!", "Close the door...", "Get a room.", "SINUSOIDS", "Iron", "That's not a knife!", "Knoife"};
+        final int message = new Random ().nextInt(messages.length);
         globalPeriodic.addListener(new EventConsumer () {
             public void eventFired () {
-                PhidgetReader.phidgetLCD[0].println("Are we human?");
+                PhidgetReader.phidgetLCD[0].println(messages [message]);
             }
         });
     }

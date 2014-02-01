@@ -56,7 +56,7 @@ public class Shooter {
             public void eventFired () {
                 if (running.readValue()) {
                     running.writeValue(false);
-                } else if (!armStatus.readValue()){
+                } else if (!armStatus.readValue() && !catapultCocked.readValue()){
                     engaged.writeValue(true);
                     running.writeValue(true);
                 }
