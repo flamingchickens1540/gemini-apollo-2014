@@ -24,11 +24,12 @@ public class ControlInterface {
     public static EventSource getFireButton() {
         return Mixing.whenBooleanBecomes(PhidgetReader.digitalInputs[1], true);
     }
-    public static FloatInputPoll displayPressure(final FloatInputPoll f,EventSource update){
+
+    public static FloatInputPoll displayPressure(final FloatInputPoll f, EventSource update) {
         final FloatInputPoll pressure = Mixing.normalizeFloat(f, 100, 587);
-        update.addListener(new EventConsumer(){
+        update.addListener(new EventConsumer() {
             public void eventFired() {
-                PhidgetReader.phidgetLCD[1].println("Pressure: "+pressure.readValue ()+"%");
+                PhidgetReader.phidgetLCD[1].println("Pressure: " + pressure.readValue() + "%");
             }
         });
         return pressure;

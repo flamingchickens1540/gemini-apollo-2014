@@ -15,20 +15,21 @@ import ccre.log.Logger;
 
 public class Shooter {
     /* TODO LIST:
-    begin - find out what the status is at the beginning of the match
-    - find out wich value of armstatus is arm down
-    -implement better stopping when winchcurrent reaches (almost reaches) set value
-    -have a better stop for arming the catapult when arm is up (winchcurrent?)
-    */
+     begin - find out what the status is at the beginning of the match
+     - find out wich value of armstatus is arm down
+     -implement better stopping when winchcurrent reaches (almost reaches) set value
+     -have a better stop for arming the catapult when arm is up (winchcurrent?)
+     */
+
     public static void createShooter(EventSource begin, EventSource during, final FloatOutput winchMotor, BooleanOutput winchEngageSolenoid, BooleanOutput winchReleaseSolenoid, final FloatInputPoll winchCurrent, final BooleanInputPoll catapultCocked, EventSource rearmCatapult, EventSource fireButton, final BooleanInputPoll armStatus) {
         Logger.warning("Shooter TOFINISH");
         Logger.warning("Catapult/arm collision software-stop not implemented yet.");
         //Network Variables
-        TuningContext tuner = new TuningContext (CluckGlobals.node, "ShooterValues");
+        TuningContext tuner = new TuningContext(CluckGlobals.node, "ShooterValues");
         tuner.publishSavingEvent("Shooter");
         final FloatStatus winchSpeed = tuner.getFloat("Winch Speed", .25f);
         final FloatStatus drawBack = tuner.getFloat("Draw Back", 1f);
-        
+
         //state of the catapult
         //four score, etc. etc.
         final BooleanStatus engaged = new BooleanStatus(winchEngageSolenoid);
@@ -36,15 +37,14 @@ public class Shooter {
         engaged.setFalseWhen(Mixing.whenBooleanBecomes(disengaged, true));
         disengaged.setFalseWhen(Mixing.whenBooleanBecomes(engaged, true));
         final BooleanStatus running = new BooleanStatus();
-        
+
         //begin
         running.setFalseWhen(begin);
-        
-        //and more!
 
+        //and more!
         //during
-        fireButton.addListener(new EventConsumer () {
-            public void eventFired () {
+        fireButton.addListener(new EventConsumer() {
+            public void eventFired() {
                 if (running.readValue()) {
                     running.writeValue(false);
                 } else if (engaged.readValue() && !armStatus.readValue()) {
@@ -52,11 +52,11 @@ public class Shooter {
                 }
             }
         });
-        rearmCatapult.addListener(new EventConsumer () {
-            public void eventFired () {
+        rearmCatapult.addListener(new EventConsumer() {
+            public void eventFired() {
                 if (running.readValue()) {
                     running.writeValue(false);
-                } else if (!armStatus.readValue() && !catapultCocked.readValue()){
+                } else if (!armStatus.readValue() && !catapultCocked.readValue()) {
                     engaged.writeValue(true);
                     running.writeValue(true);
                 }
