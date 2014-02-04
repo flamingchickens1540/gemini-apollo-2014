@@ -28,8 +28,15 @@ public class ControlInterface {
     public static FloatInputPoll displayPressure(final FloatInputPoll f, EventSource update) {
         final FloatInputPoll pressure = Mixing.normalizeFloat(f, 100, 587);
         update.addListener(new EventConsumer() {
+            int prevValue = -1000;
+            int ctr = 0;
             public void eventFired() {
-                PhidgetReader.phidgetLCD[1].println("Pressure: " + pressure.readValue() + "%");
+                int c = (int) (1000 * pressure.readValue());
+                if (c == prevValue && (ctr++ % 100 != 0)) {
+                    return;
+                }
+                prevValue = c;
+                PhidgetReader.phidgetLCD[1].println("Pressure: " + prevValue / 10f + "%");
             }
         });
         return pressure;

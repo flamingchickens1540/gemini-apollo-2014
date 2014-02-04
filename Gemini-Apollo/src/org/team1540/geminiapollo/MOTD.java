@@ -41,12 +41,6 @@ public class MOTD {
                 }
             }
         }, "netmonitor");
-        PhidgetReader.attached.addTarget(new BooleanOutput() {
-            public void writeValue(boolean value) {
-                Logger.fine("New attached value: " + value);
-            }
-        });
-        Mixing.whenBooleanBecomes(PhidgetReader.attached, true).addListener(updateDisplay);
     }
 
 }
