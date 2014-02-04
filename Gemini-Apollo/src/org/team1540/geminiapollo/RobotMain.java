@@ -24,8 +24,8 @@ public class RobotMain extends SimpleCore {
         TestMode test = new TestMode(getIsTest());
         // ***** MOTORS *****
         // TODO: Better selection of ramping settings
-        FloatOutput leftDrive1 = makeTalonMotor(1, MOTOR_FORWARD, 0.1f);
-        FloatOutput leftDrive2 = makeTalonMotor(2, MOTOR_FORWARD, 0.1f);
+        FloatOutput leftDrive1 = makeTalonMotor(1, MOTOR_REVERSE, 0.1f);
+        FloatOutput leftDrive2 = makeTalonMotor(2, MOTOR_REVERSE, 0.1f);
         FloatOutput rightDrive1 = makeTalonMotor(3, MOTOR_FORWARD, 0.1f);
         FloatOutput rightDrive2 = makeTalonMotor(4, MOTOR_FORWARD, 0.1f);
         FloatOutput winchMotor = makeTalonMotor(5, MOTOR_FORWARD, 0.1f);
