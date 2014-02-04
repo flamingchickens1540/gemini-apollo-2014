@@ -5,6 +5,8 @@ import ccre.chan.BooleanInputPoll;
 import ccre.chan.BooleanOutput;
 import ccre.chan.FloatInputPoll;
 import ccre.chan.FloatOutput;
+import ccre.cluck.CluckGlobals;
+import ccre.cluck.tcp.CluckTCPServer;
 import ccre.ctrl.Mixing;
 import ccre.event.Event;
 import ccre.event.EventConsumer;
@@ -21,6 +23,7 @@ import java.util.Random;
 public class RobotMain extends SimpleCore {
 
     protected void createSimpleControl() {
+        new CluckTCPServer(CluckGlobals.node, 1540).start();
         TestMode test = new TestMode(getIsTest());
         // ***** MOTORS *****
         // TODO: Better selection of ramping settings
@@ -43,6 +46,7 @@ public class RobotMain extends SimpleCore {
         // TODO: Better selection of average bits
         FloatInputPoll winchCurrent = makeAnalogInput(1, 8);
         FloatInputPoll pressureSensor = makeAnalogInput(2, 8);
+        CluckGlobals.node.publish("analog-sense", Mixing.createDispatch(pressureSensor, globalPeriodic));
 
         // ***** DIGITAL INPUTS *****
         BooleanInputPoll catapultCocked = makeDigitalInput(2);

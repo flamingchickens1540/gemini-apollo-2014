@@ -26,7 +26,7 @@ public class ControlInterface {
     }
 
     public static FloatInputPoll displayPressure(final FloatInputPoll f, EventSource update) {
-        final FloatInputPoll pressure = Mixing.normalizeFloat(f, 100, 587);
+        final FloatInputPoll pressure = Mixing.normalizeFloat(f, -3f, 3f);
         update.addListener(new EventConsumer() {
             int prevValue = -1000;
             int ctr = 0;
