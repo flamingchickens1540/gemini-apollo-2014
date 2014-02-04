@@ -36,6 +36,8 @@ public class RobotMain extends SimpleCore {
         BooleanOutput armSolenoid = makeSolenoid(2);
         BooleanOutput winchReleaseSolenoid = makeSolenoid(3);
         BooleanOutput winchEngageSolenoid = makeSolenoid(4);
+        BooleanOutput rachetLoopRelease = makeSolenoid(5);
+        BooleanOutput armFloatSolenoid = makeSolenoid(6);
 
         // ***** ANALOG INPUTS *****
         // TODO: Better selection of average bits
@@ -82,7 +84,7 @@ public class RobotMain extends SimpleCore {
 
         // [[[[ ARM CODE ]]]]
         Logger.info("Actuators get startedTeleop irrelevently!");
-        Actuators.createCollector(startedTeleop, duringTeleop, collectorMotor, rollersOnOff);
+        Actuators.createCollector(startedTeleop, duringTeleop, collectorMotor, armFloatSolenoid, rollersOnOff);
         Actuators.createArm(startedTeleop, duringTeleop, armSolenoid, armUpDown);
 
         // [[[[ SHOOTER CODE ]]]]
@@ -93,7 +95,7 @@ public class RobotMain extends SimpleCore {
         Event updateShooterWhen = new Event();
         duringTeleop.addListener(updateShooterWhen);
         duringAutonomous.addListener(updateShooterWhen);
-        Shooter.createShooter(startedAutonomous, updateShooterWhen, winchMotor, winchEngageSolenoid, winchReleaseSolenoid, winchCurrent, catapultCocked, Mixing.filterEvent(getIsDisabled(), false, rearmCatapult), Mixing.filterEvent(getIsDisabled(), false, fireButton), armUpDown);
+        Shooter.createShooter(startedAutonomous, updateShooterWhen, winchMotor, winchEngageSolenoid, winchReleaseSolenoid, winchCurrent, catapultCocked, Mixing.filterEvent(getIsDisabled(), false, rearmCatapult), Mixing.filterEvent(getIsDisabled(), false, fireButton), armUpDown, rachetLoopRelease);
 
         // [[[[ MOTD CODE ]]]]
         MOTD.createMOTD();

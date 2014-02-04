@@ -21,7 +21,7 @@ public class Shooter {
      -have a better stop for arming the catapult when arm is up (winchcurrent?)
      */
 
-    public static void createShooter(EventSource begin, EventSource during, final FloatOutput winchMotor, BooleanOutput winchEngageSolenoid, BooleanOutput winchReleaseSolenoid, final FloatInputPoll winchCurrent, final BooleanInputPoll catapultCocked, EventSource rearmCatapult, EventSource fireButton, final BooleanInputPoll armStatus) {
+    public static void createShooter(EventSource begin, EventSource during, final FloatOutput winchMotor, BooleanOutput winchEngageSolenoid, BooleanOutput winchReleaseSolenoid, final FloatInputPoll winchCurrent, final BooleanInputPoll catapultCocked, EventSource rearmCatapult, EventSource fireButton, final BooleanInputPoll armStatus, BooleanOutput rachetLoopRelease) {
         Logger.warning("Shooter TOFINISH");
         Logger.warning("Catapult/arm collision software-stop not implemented yet.");
         //Network Variables

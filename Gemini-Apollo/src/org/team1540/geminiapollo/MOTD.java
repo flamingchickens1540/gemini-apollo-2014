@@ -6,6 +6,7 @@ import ccre.cluck.CluckNode;
 import ccre.cluck.CluckSubscriber;
 import ccre.ctrl.Mixing;
 import ccre.event.EventConsumer;
+import ccre.log.Logger;
 import ccre.phidget.PhidgetReader;
 import java.util.Random;
 
@@ -40,6 +41,11 @@ public class MOTD {
                 }
             }
         }, "netmonitor");
+        PhidgetReader.attached.addTarget(new BooleanOutput() {
+            public void writeValue(boolean value) {
+                Logger.fine("New attached value: " + value);
+            }
+        });
         Mixing.whenBooleanBecomes(PhidgetReader.attached, true).addListener(updateDisplay);
     }
 

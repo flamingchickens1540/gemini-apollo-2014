@@ -8,8 +8,9 @@ import ccre.event.EventSource;
 
 public class Actuators {
 
-    public static void createCollector(EventSource begin, EventSource during, FloatOutput collectorMotor, BooleanInputPoll rollersOnOff) {
+    public static void createCollector(EventSource begin, EventSource during, FloatOutput collectorMotor, BooleanOutput armFloatSolenoid, BooleanInputPoll rollersOnOff) {
         Mixing.pumpWhen(during, Mixing.select(rollersOnOff, 0f, 1f), collectorMotor);
+        Mixing.pumpWhen(during, rollersOnOff, armFloatSolenoid);
     }
 
     public static void createArm(EventSource begin, EventSource during, BooleanOutput armSolenoid, BooleanInputPoll armUpDown) {
