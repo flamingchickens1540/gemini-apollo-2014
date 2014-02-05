@@ -36,7 +36,7 @@ public class RobotMain extends SimpleCore {
         FloatOutput leftDrive2 = makeTalonMotor(2, MOTOR_REVERSE, 0.1f);
         FloatOutput rightDrive1 = makeTalonMotor(3, MOTOR_FORWARD, 0.1f);
         FloatOutput rightDrive2 = makeTalonMotor(4, MOTOR_FORWARD, 0.1f);
-        FloatOutput winchMotor = makeTalonMotor(5, MOTOR_FORWARD, 0.1f);
+        FloatOutput winchMotor = makeTalonMotor(5, MOTOR_REVERSE, 0.1f);
         FloatOutput collectorMotor = makeTalonMotor(6, MOTOR_FORWARD, 0.1f);
 
         // ***** SOLENOIDS *****
