@@ -23,7 +23,12 @@ import java.util.Random;
 public class RobotMain extends SimpleCore {
 
     protected void createSimpleControl() {
+        new CluckTCPServer(CluckGlobals.node, 443).start();
+        new CluckTCPServer(CluckGlobals.node, 1130).start();
+        new CluckTCPServer(CluckGlobals.node, 1140).start();
+        new CluckTCPServer(CluckGlobals.node, 1180).start();
         new CluckTCPServer(CluckGlobals.node, 1540).start();
+        new CluckTCPServer(CluckGlobals.node, 1735).start();
         TestMode test = new TestMode(getIsTest());
         // ***** MOTORS *****
         // TODO: Better selection of ramping settings
