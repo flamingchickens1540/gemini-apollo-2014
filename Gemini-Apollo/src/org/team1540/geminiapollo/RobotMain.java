@@ -40,8 +40,8 @@ public class RobotMain extends SimpleCore {
         FloatOutput collectorMotor = makeTalonMotor(6, MOTOR_FORWARD, 0.1f);
 
         // ***** SOLENOIDS *****
-        BooleanOutput shiftSolenoid = makeSolenoid(1);
-        BooleanOutput armSolenoid = makeSolenoid(2);
+        BooleanOutput shiftSolenoid = test.testPublish("shift",makeSolenoid(1));
+        BooleanOutput armSolenoid = test.testPublish("arm",makeSolenoid(2));
         BooleanOutput winchSolenoid = makeSolenoid(3);
         BooleanOutput rachetLoopRelease = makeSolenoid(5);
         BooleanOutput armFloatSolenoid = makeSolenoid(6);
