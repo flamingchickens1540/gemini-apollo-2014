@@ -99,12 +99,12 @@ public class RobotMain extends SimpleCore {
         Event updateShooterWhen = new Event();
         duringTeleop.addListener(updateShooterWhen);
         duringAutonomous.addListener(updateShooterWhen);
-        BooleanInputPoll canArmGoUp=Shooter.createShooter(startedAutonomous, startedTeleop, updateShooterWhen, winchMotor, winchSolenoid, winchCurrent, catapultCocked, Mixing.filterEvent(getIsDisabled(), false, rearmCatapult), Mixing.filterEvent(getIsDisabled(), false, fireButton), armUpDown, rachetLoopRelease);
+        BooleanInputPoll canArmMove=Shooter.createShooter(startedAutonomous, startedTeleop, updateShooterWhen, winchMotor, winchSolenoid, winchCurrent, catapultCocked, Mixing.filterEvent(getIsDisabled(), false, rearmCatapult), Mixing.filterEvent(getIsDisabled(), false, fireButton), armUpDown, rachetLoopRelease);
         
         // [[[[ ARM CODE ]]]]
         Logger.info("Actuators get startedTeleop irrelevently!");
         Actuators.createCollector(startedTeleop, duringTeleop, collectorMotor, armFloatSolenoid, rollersOnOff);
-        Actuators.createArm(startedTeleop, duringTeleop, armSolenoid, armUpDown,canArmGoUp);
+        Actuators.createArm(startedTeleop, duringTeleop, armSolenoid, armUpDown,canArmMove);
 
         // [[[[ MOTD CODE ]]]]
         MOTD.createMOTD();
