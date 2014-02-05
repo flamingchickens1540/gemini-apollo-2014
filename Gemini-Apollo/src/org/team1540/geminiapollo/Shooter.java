@@ -22,7 +22,7 @@ public class Shooter {
      -have a better stop for arming the catapult when arm is up (winchcurrent?)
      */
 
-    public static void createShooter(EventSource beginAutonomous, EventSource beginTeleop, EventSource during, final FloatOutput winchMotor, BooleanOutput winchSolenoid, final FloatInputPoll winchCurrent, final BooleanInputPoll catapultCocked, EventSource rearmCatapult, EventSource fireButton, final BooleanInputPoll armStatus, BooleanOutput rachetLoopRelease) {
+    public static void createShooter(EventSource beginAutonomous, final EventSource beginTeleop, EventSource during, final FloatOutput winchMotor, BooleanOutput winchSolenoid, final FloatInputPoll winchCurrent, final BooleanInputPoll catapultCocked, EventSource rearmCatapult, EventSource fireButton, final BooleanInputPoll armStatus, BooleanOutput rachetLoopRelease) {
         Logger.warning("Shooter TOFINISH");
         Logger.warning("Catapult/arm collision software-stop not implemented yet.");
         //Network Variables
@@ -56,9 +56,13 @@ public class Shooter {
         running.setFalseWhen(beginAutonomous);
         winchDisengaged.setFalseWhen(beginAutonomous);
         running.setFalseWhen(beginTeleop);
-        if (canEngage.readValue()) {
-            winchDisengaged.setFalseWhen(beginAutonomous);
-        }
+        beginTeleop.addListener(new EventConsumer() {
+            public void eventFired() {
+                if (canEngage.readValue()) {
+                    winchDisengaged.setFalseWhen(beginTeleop);
+                }
+            }
+        });
 
         //and more!
         //during
@@ -74,10 +78,12 @@ public class Shooter {
         });
         rearmCatapult.addListener(new EventConsumer() {
             public void eventFired() {
+                Logger.info("rearm");
                 if (running.readValue()) {
                     running.writeValue(false);
                 } else if (!armStatus.readValue() && !catapultCocked.readValue()) {
                     winchDisengaged.writeValue(false);
+                    Logger.info("actually rearm");
                     running.writeValue(true);
                 }
             }
