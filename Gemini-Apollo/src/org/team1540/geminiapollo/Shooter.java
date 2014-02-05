@@ -7,6 +7,7 @@ import ccre.chan.FloatInputPoll;
 import ccre.chan.FloatOutput;
 import ccre.chan.FloatStatus;
 import ccre.cluck.CluckGlobals;
+import ccre.ctrl.ExpirationTimer;
 import ccre.ctrl.Mixing;
 import ccre.event.EventConsumer;
 import ccre.event.EventSource;
@@ -21,7 +22,7 @@ public class Shooter {
      -have a better stop for arming the catapult when arm is up (winchcurrent?)
      */
 
-    public static void createShooter(EventSource begin, EventSource during, final FloatOutput winchMotor, BooleanOutput winchEngageSolenoid, BooleanOutput winchReleaseSolenoid, final FloatInputPoll winchCurrent, final BooleanInputPoll catapultCocked, EventSource rearmCatapult, EventSource fireButton, final BooleanInputPoll armStatus, BooleanOutput rachetLoopRelease) {
+    public static void createShooter(EventSource beginAutonomous, EventSource beginTeleop, EventSource during, final FloatOutput winchMotor, BooleanOutput winchSolenoid, final FloatInputPoll winchCurrent, final BooleanInputPoll catapultCocked, EventSource rearmCatapult, EventSource fireButton, final BooleanInputPoll armStatus, BooleanOutput rachetLoopRelease) {
         Logger.warning("Shooter TOFINISH");
         Logger.warning("Catapult/arm collision software-stop not implemented yet.");
         //Network Variables
@@ -29,17 +30,35 @@ public class Shooter {
         tuner.publishSavingEvent("Shooter");
         final FloatStatus winchSpeed = tuner.getFloat("Winch Speed", .25f);
         final FloatStatus drawBack = tuner.getFloat("Draw Back", 1f);
-
+        
+        //rearm safety
+        final ExpirationTimer timer = new ExpirationTimer ();
+        final BooleanStatus canEngage = new BooleanStatus ();
+        canEngage.writeValue(true);
+        timer.schedule(1, new EventConsumer () {
+            public void eventFired () {
+                canEngage.writeValue(false);
+            }
+        });
+        timer.schedule(1000, new EventConsumer () {
+            public void eventFired () {
+                canEngage.writeValue(true);
+                timer.stop();
+            }
+        });
+        
         //state of the catapult
         //four score, etc. etc.
-        final BooleanStatus engaged = new BooleanStatus(winchEngageSolenoid);
-        final BooleanStatus disengaged = new BooleanStatus(winchReleaseSolenoid);
-        engaged.setFalseWhen(Mixing.whenBooleanBecomes(disengaged, true));
-        disengaged.setFalseWhen(Mixing.whenBooleanBecomes(engaged, true));
+        final BooleanStatus winchDisengaged = new BooleanStatus(winchSolenoid);
         final BooleanStatus running = new BooleanStatus();
 
         //begin
-        running.setFalseWhen(begin);
+        running.setFalseWhen(beginAutonomous);
+        winchDisengaged.setFalseWhen(beginAutonomous);
+        running.setFalseWhen(beginTeleop);
+        if (canEngage.readValue()) {
+            winchDisengaged.setFalseWhen(beginAutonomous);
+        }
 
         //and more!
         //during
@@ -47,8 +66,9 @@ public class Shooter {
             public void eventFired() {
                 if (running.readValue()) {
                     running.writeValue(false);
-                } else if (engaged.readValue() && !armStatus.readValue()) {
-                    disengaged.writeValue(true);
+                } else if (!winchDisengaged.readValue() && !armStatus.readValue()) {
+                    winchDisengaged.writeValue(true);
+                    timer.start();
                 }
             }
         });
@@ -57,7 +77,7 @@ public class Shooter {
                 if (running.readValue()) {
                     running.writeValue(false);
                 } else if (!armStatus.readValue() && !catapultCocked.readValue()) {
-                    engaged.writeValue(true);
+                    winchDisengaged.writeValue(false);
                     running.writeValue(true);
                 }
             }
@@ -68,6 +88,7 @@ public class Shooter {
                     winchMotor.writeValue(winchSpeed.readValue());
                     if (catapultCocked.readValue() || winchCurrent.readValue() >= drawBack.readValue()) {
                         running.writeValue(false);
+                        winchMotor.writeValue(0f);
                     }
                 } else {
                     winchMotor.writeValue(0f);

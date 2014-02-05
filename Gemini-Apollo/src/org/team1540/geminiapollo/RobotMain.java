@@ -37,8 +37,7 @@ public class RobotMain extends SimpleCore {
         // ***** SOLENOIDS *****
         BooleanOutput shiftSolenoid = makeSolenoid(1);
         BooleanOutput armSolenoid = makeSolenoid(2);
-        BooleanOutput winchReleaseSolenoid = makeSolenoid(3);
-        BooleanOutput winchEngageSolenoid = makeSolenoid(4);
+        BooleanOutput winchSolenoid = makeSolenoid(3);
         BooleanOutput rachetLoopRelease = makeSolenoid(5);
         BooleanOutput armFloatSolenoid = makeSolenoid(6);
 
@@ -99,7 +98,7 @@ public class RobotMain extends SimpleCore {
         Event updateShooterWhen = new Event();
         duringTeleop.addListener(updateShooterWhen);
         duringAutonomous.addListener(updateShooterWhen);
-        Shooter.createShooter(startedAutonomous, updateShooterWhen, winchMotor, winchEngageSolenoid, winchReleaseSolenoid, winchCurrent, catapultCocked, Mixing.filterEvent(getIsDisabled(), false, rearmCatapult), Mixing.filterEvent(getIsDisabled(), false, fireButton), armUpDown, rachetLoopRelease);
+        Shooter.createShooter(startedAutonomous, startedTeleop, updateShooterWhen, winchMotor, winchSolenoid, winchCurrent, catapultCocked, Mixing.filterEvent(getIsDisabled(), false, rearmCatapult), Mixing.filterEvent(getIsDisabled(), false, fireButton), armUpDown, rachetLoopRelease);
 
         // [[[[ MOTD CODE ]]]]
         MOTD.createMOTD();
