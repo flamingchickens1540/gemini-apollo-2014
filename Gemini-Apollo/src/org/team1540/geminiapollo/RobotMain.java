@@ -89,11 +89,7 @@ public class RobotMain extends SimpleCore {
         DriveCode.createShifting(startedTeleop, duringTeleop, shiftSolenoid, shiftHighButton, shiftLowButton);
         // Possible other way to control:
         //new DriveCode().setDriveMotors(leftDrive1, leftDrive2, rightDrive1, rightDrive2).setControlAxes(leftDriveAxis, rightDriveAxis, forwardDriveAxis).run(startedTeleop, duringTeleop);
-
-        // [[[[ ARM CODE ]]]]
-        Logger.info("Actuators get startedTeleop irrelevently!");
-        Actuators.createCollector(startedTeleop, duringTeleop, collectorMotor, armFloatSolenoid, rollersOnOff);
-        Actuators.createArm(startedTeleop, duringTeleop, armSolenoid, armUpDown);
+        
 
         // [[[[ SHOOTER CODE ]]]]
         Event fireWhen = new Event();
@@ -103,7 +99,12 @@ public class RobotMain extends SimpleCore {
         Event updateShooterWhen = new Event();
         duringTeleop.addListener(updateShooterWhen);
         duringAutonomous.addListener(updateShooterWhen);
-        Shooter.createShooter(startedAutonomous, startedTeleop, updateShooterWhen, winchMotor, winchSolenoid, winchCurrent, catapultCocked, Mixing.filterEvent(getIsDisabled(), false, rearmCatapult), Mixing.filterEvent(getIsDisabled(), false, fireButton), armUpDown, rachetLoopRelease);
+        BooleanInputPoll canArmGoUp=Shooter.createShooter(startedAutonomous, startedTeleop, updateShooterWhen, winchMotor, winchSolenoid, winchCurrent, catapultCocked, Mixing.filterEvent(getIsDisabled(), false, rearmCatapult), Mixing.filterEvent(getIsDisabled(), false, fireButton), armUpDown, rachetLoopRelease);
+        
+        // [[[[ ARM CODE ]]]]
+        Logger.info("Actuators get startedTeleop irrelevently!");
+        Actuators.createCollector(startedTeleop, duringTeleop, collectorMotor, armFloatSolenoid, rollersOnOff);
+        Actuators.createArm(startedTeleop, duringTeleop, armSolenoid, armUpDown,canArmGoUp);
 
         // [[[[ MOTD CODE ]]]]
         MOTD.createMOTD();

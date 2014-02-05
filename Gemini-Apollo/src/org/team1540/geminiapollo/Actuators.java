@@ -13,7 +13,7 @@ public class Actuators {
         Mixing.pumpWhen(during, rollersOnOff, armFloatSolenoid);
     }
 
-    public static void createArm(EventSource begin, EventSource during, BooleanOutput armSolenoid, BooleanInputPoll armUpDown) {
+    public static void createArm(EventSource begin, EventSource during, BooleanOutput armSolenoid, BooleanInputPoll armUpDown,BooleanInputPoll canArmGoUp) {
         Mixing.pumpWhen(during, armUpDown, armSolenoid);
     }
 }
