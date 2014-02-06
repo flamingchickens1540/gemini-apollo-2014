@@ -33,21 +33,37 @@ public class Shooter {
         final FloatStatus drawBack = tuner.getFloat("Draw Back", 1.1f);
 
         //rearm safety
-        final ExpirationTimer timer = new ExpirationTimer();
+        final ExpirationTimer engageTimer = new ExpirationTimer();
         final BooleanStatus canEngage = new BooleanStatus();
         CluckGlobals.node.publish("DEBUG CanEngage", canEngage);
         canEngage.writeValue(true);
-        timer.schedule(1, new EventConsumer() {
+        engageTimer.schedule(1, new EventConsumer() {
             public void eventFired() {
-                Logger.info("Timer A");
+                Logger.info("After Fire Timer A");
                 canEngage.writeValue(false);
             }
         });
-        timer.schedule(1000, new EventConsumer() {
+        engageTimer.schedule(1000, new EventConsumer() {
             public void eventFired() {
-                Logger.info("Timer B");
+                Logger.info("After Fire Timer B");
                 canEngage.writeValue(true);
-                timer.stop();
+                engageTimer.stop();
+            }
+        });
+        
+        //ease pressure on winch solenoid before firing
+        final ExpirationTimer fireTimer = new ExpirationTimer ();
+        fireTimer.schedule(1, new EventConsumer () {
+            public void eventFired () {
+                Logger.info("During Fire Timer A");
+                winchMotor.writeValue(-1f);
+            }
+        });
+        fireTimer.schedule(100, new EventConsumer () {
+            public void eventFired () {
+                winchMotor.writeValue(0f);
+                Logger.info("During Fire Timer B");
+                fireTimer.stop();
             }
         });
 
@@ -80,8 +96,9 @@ public class Shooter {
                     running.writeValue(false);
                 } else if (!winchDisengaged.readValue() && armDown.readValue()) {
                     Logger.info("Fire B");
+                    fireTimer.start();
                     winchDisengaged.writeValue(true);
-                    timer.start();
+                    engageTimer.start();
                 } else {
                     Logger.info("Fire C");
                 }
