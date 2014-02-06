@@ -50,18 +50,21 @@ public class Shooter {
                 engageTimer.stop();
             }
         });
-        
+
         //ease pressure on winch solenoid before firing
-        final ExpirationTimer fireTimer = new ExpirationTimer ();
-        fireTimer.schedule(1, new EventConsumer () {
-            public void eventFired () {
+        final ExpirationTimer fireTimer = new ExpirationTimer();
+        final BooleanStatus fireTimerRunning = new BooleanStatus();
+        CluckGlobals.node.publish("DEBUG fireTimerRunning", fireTimerRunning);
+        fireTimerRunning.writeValue(false);
+        fireTimer.schedule(1, new EventConsumer() {
+            public void eventFired() {
+                fireTimerRunning.writeValue(true);
                 Logger.info("During Fire Timer A");
-                winchMotor.writeValue(-1f);
             }
         });
-        fireTimer.schedule(100, new EventConsumer () {
-            public void eventFired () {
-                winchMotor.writeValue(0f);
+        fireTimer.schedule(100, new EventConsumer() {
+            public void eventFired() {
+                fireTimerRunning.writeValue(false);
                 Logger.info("During Fire Timer B");
                 fireTimer.stop();
             }
@@ -127,6 +130,8 @@ public class Shooter {
                         running.writeValue(false);
                         winchMotor.writeValue(0f);
                     }
+                } else if (fireTimerRunning.readValue()) {
+                    winchMotor.writeValue(-1f);
                 } else {
                     winchMotor.writeValue(0f);
                 }
