@@ -37,11 +37,11 @@ public class RobotMain extends SimpleCore {
         FloatOutput rightDrive1 = makeTalonMotor(3, MOTOR_FORWARD, 0.1f);
         FloatOutput rightDrive2 = makeTalonMotor(4, MOTOR_FORWARD, 0.1f);
         FloatOutput winchMotor = makeTalonMotor(5, MOTOR_FORWARD, 0.1f);
-        FloatOutput collectorMotor = makeTalonMotor(6, MOTOR_FORWARD, 0.1f);
+        FloatOutput collectorMotor = makeTalonMotor(6, MOTOR_REVERSE, 0.1f);
 
         // ***** SOLENOIDS *****
-        BooleanOutput shiftSolenoid = test.testPublish("shift",makeSolenoid(1));
-        BooleanOutput armSolenoid = test.testPublish("arm",makeSolenoid(2));
+        BooleanOutput shiftSolenoid = test.testPublish("shift", makeSolenoid(1));
+        BooleanOutput armSolenoid = test.testPublish("arm", makeSolenoid(2));
         BooleanOutput winchSolenoid = makeSolenoid(3);
         BooleanOutput rachetLoopRelease = makeSolenoid(5);
         BooleanOutput armFloatSolenoid = makeSolenoid(6);
@@ -89,7 +89,6 @@ public class RobotMain extends SimpleCore {
         DriveCode.createShifting(startedTeleop, duringTeleop, shiftSolenoid, shiftHighButton, shiftLowButton);
         // Possible other way to control:
         //new DriveCode().setDriveMotors(leftDrive1, leftDrive2, rightDrive1, rightDrive2).setControlAxes(leftDriveAxis, rightDriveAxis, forwardDriveAxis).run(startedTeleop, duringTeleop);
-        
 
         // [[[[ SHOOTER CODE ]]]]
         Event fireWhen = new Event();
@@ -99,12 +98,12 @@ public class RobotMain extends SimpleCore {
         Event updateShooterWhen = new Event();
         duringTeleop.addListener(updateShooterWhen);
         duringAutonomous.addListener(updateShooterWhen);
-        BooleanInputPoll canArmMove=Shooter.createShooter(startedAutonomous, startedTeleop, updateShooterWhen, winchMotor, winchSolenoid, winchCurrent, catapultCocked, Mixing.filterEvent(getIsDisabled(), false, rearmCatapult), Mixing.filterEvent(getIsDisabled(), false, fireButton), armUpDown, rachetLoopRelease);
-        
+        BooleanInputPoll canArmMove = Shooter.createShooter(startedAutonomous, startedTeleop, updateShooterWhen, winchMotor, winchSolenoid, winchCurrent, catapultCocked, Mixing.filterEvent(getIsDisabled(), false, rearmCatapult), Mixing.filterEvent(getIsDisabled(), false, fireButton), armUpDown, rachetLoopRelease);
+
         // [[[[ ARM CODE ]]]]
         Logger.info("Actuators get startedTeleop irrelevently!");
         Actuators.createCollector(startedTeleop, duringTeleop, collectorMotor, armFloatSolenoid, rollersOnOff);
-        Actuators.createArm(startedTeleop, duringTeleop, armSolenoid, armUpDown,canArmMove);
+        Actuators.createArm(startedTeleop, duringTeleop, armSolenoid, armUpDown, canArmMove);
 
         // [[[[ MOTD CODE ]]]]
         MOTD.createMOTD();
