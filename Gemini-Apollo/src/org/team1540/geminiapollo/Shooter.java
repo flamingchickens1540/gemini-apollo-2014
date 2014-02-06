@@ -115,6 +115,6 @@ public class Shooter {
                 }
             }
         });
-        return Mixing.invert(running);
+        return Mixing.invert((BooleanInputPoll) running);
     }
 }
