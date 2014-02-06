@@ -26,22 +26,26 @@ public class Shooter {
         Logger.warning("Shooter TOFINISH");
         Logger.warning("Catapult/arm collision software-stop not implemented yet.");
         //Network Variables
+        CluckGlobals.node.publish("DEBUG rachet-loop", rachetLoopRelease);
         TuningContext tuner = new TuningContext(CluckGlobals.node, "ShooterValues");
         tuner.publishSavingEvent("Shooter");
-        final FloatStatus winchSpeed = tuner.getFloat("Winch Speed", .25f);
-        final FloatStatus drawBack = tuner.getFloat("Draw Back", 1f);
+        final FloatStatus winchSpeed = tuner.getFloat("Winch Speed", .3f);
+        final FloatStatus drawBack = tuner.getFloat("Draw Back", 1.1f);
         
         //rearm safety
         final ExpirationTimer timer = new ExpirationTimer ();
         final BooleanStatus canEngage = new BooleanStatus ();
+        CluckGlobals.node.publish("DEBUG CanEngage", canEngage);
         canEngage.writeValue(true);
         timer.schedule(1, new EventConsumer () {
             public void eventFired () {
+                Logger.info("Timer A");
                 canEngage.writeValue(false);
             }
         });
         timer.schedule(1000, new EventConsumer () {
             public void eventFired () {
+                Logger.info("Timer B");
                 canEngage.writeValue(true);
                 timer.stop();
             }
@@ -50,7 +54,9 @@ public class Shooter {
         //state of the catapult
         //four score, etc. etc.
         final BooleanStatus winchDisengaged = new BooleanStatus(winchSolenoid);
+        CluckGlobals.node.publish("DEBUG WinchDisengaged", winchDisengaged);
         final BooleanStatus running = new BooleanStatus();
+        CluckGlobals.node.publish("DEBUG running", running);
 
         //begin
         running.setFalseWhen(beginAutonomous);
@@ -59,7 +65,8 @@ public class Shooter {
         beginTeleop.addListener(new EventConsumer() {
             public void eventFired() {
                 if (canEngage.readValue()) {
-                    winchDisengaged.setFalseWhen(beginTeleop);
+                    winchDisengaged.writeValue(false);
+                    //winchDisengaged.setFalseWhen(beginTeleop);
                 }
             }
         });
@@ -69,10 +76,14 @@ public class Shooter {
         fireButton.addListener(new EventConsumer() {
             public void eventFired() {
                 if (running.readValue()) {
+                    Logger.info("Fire A");
                     running.writeValue(false);
                 } else if (!winchDisengaged.readValue() && armDown.readValue()) {
+                    Logger.info("Fire B");
                     winchDisengaged.writeValue(true);
                     timer.start();
+                } else {
+                    Logger.info("Fire C");
                 }
             }
         });
@@ -80,11 +91,14 @@ public class Shooter {
             public void eventFired() {
                 Logger.info("rearm");
                 if (running.readValue()) {
+                    Logger.info("stop rearm");
                     running.writeValue(false);
                 } else if (armDown.readValue() && catapultNotCocked.readValue()) {
                     winchDisengaged.writeValue(false);
                     Logger.info("actually rearm");
                     running.writeValue(true);
+                } else {
+                    Logger.info("else rearm");
                 }
             }
         });
