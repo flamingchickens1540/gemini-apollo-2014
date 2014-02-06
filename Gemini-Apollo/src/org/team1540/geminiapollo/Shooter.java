@@ -22,7 +22,7 @@ public class Shooter {
      -have a better stop for arming the catapult when arm is up (winchcurrent?)
      */
 
-    public static BooleanInputPoll createShooter(EventSource beginAutonomous, final EventSource beginTeleop, EventSource during, final FloatOutput winchMotor, BooleanOutput winchSolenoid, final FloatInputPoll winchCurrent, final BooleanInputPoll catapultCocked, EventSource rearmCatapult, EventSource fireButton, final BooleanInputPoll armStatus, BooleanOutput rachetLoopRelease) {
+    public static BooleanInputPoll createShooter(EventSource beginAutonomous, final EventSource beginTeleop, EventSource during, final FloatOutput winchMotor, BooleanOutput winchSolenoid, final FloatInputPoll winchCurrent, final BooleanInputPoll catapultNotCocked, EventSource rearmCatapult, EventSource fireButton, final BooleanInputPoll armDown, BooleanOutput rachetLoopRelease) {
         Logger.warning("Shooter TOFINISH");
         Logger.warning("Catapult/arm collision software-stop not implemented yet.");
         //Network Variables
@@ -70,7 +70,7 @@ public class Shooter {
             public void eventFired() {
                 if (running.readValue()) {
                     running.writeValue(false);
-                } else if (!winchDisengaged.readValue() && !armStatus.readValue()) {
+                } else if (!winchDisengaged.readValue() && armDown.readValue()) {
                     winchDisengaged.writeValue(true);
                     timer.start();
                 }
@@ -81,7 +81,7 @@ public class Shooter {
                 Logger.info("rearm");
                 if (running.readValue()) {
                     running.writeValue(false);
-                } else if (!armStatus.readValue() && !catapultCocked.readValue()) {
+                } else if (armDown.readValue() && catapultNotCocked.readValue()) {
                     winchDisengaged.writeValue(false);
                     Logger.info("actually rearm");
                     running.writeValue(true);
@@ -92,7 +92,7 @@ public class Shooter {
             public void eventFired() {
                 if (running.readValue()) {
                     winchMotor.writeValue(winchSpeed.readValue());
-                    if (catapultCocked.readValue() || winchCurrent.readValue() >= drawBack.readValue()) {
+                    if (!catapultNotCocked.readValue() || winchCurrent.readValue() >= drawBack.readValue()) {
                         running.writeValue(false);
                         winchMotor.writeValue(0f);
                     }
