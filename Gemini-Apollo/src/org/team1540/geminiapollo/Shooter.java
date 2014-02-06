@@ -31,26 +31,26 @@ public class Shooter {
         tuner.publishSavingEvent("Shooter");
         final FloatStatus winchSpeed = tuner.getFloat("Winch Speed", .3f);
         final FloatStatus drawBack = tuner.getFloat("Draw Back", 1.1f);
-        
+
         //rearm safety
-        final ExpirationTimer timer = new ExpirationTimer ();
-        final BooleanStatus canEngage = new BooleanStatus ();
+        final ExpirationTimer timer = new ExpirationTimer();
+        final BooleanStatus canEngage = new BooleanStatus();
         CluckGlobals.node.publish("DEBUG CanEngage", canEngage);
         canEngage.writeValue(true);
-        timer.schedule(1, new EventConsumer () {
-            public void eventFired () {
+        timer.schedule(1, new EventConsumer() {
+            public void eventFired() {
                 Logger.info("Timer A");
                 canEngage.writeValue(false);
             }
         });
-        timer.schedule(1000, new EventConsumer () {
-            public void eventFired () {
+        timer.schedule(1000, new EventConsumer() {
+            public void eventFired() {
                 Logger.info("Timer B");
                 canEngage.writeValue(true);
                 timer.stop();
             }
         });
-        
+
         //state of the catapult
         //four score, etc. etc.
         final BooleanStatus winchDisengaged = new BooleanStatus(winchSolenoid);
@@ -115,11 +115,6 @@ public class Shooter {
                 }
             }
         });
-        return new BooleanInputPoll(){
-
-            public boolean readValue() {
-                return !running.readValue();
-            }
-        };
+        return Mixing.invert(running);
     }
 }
