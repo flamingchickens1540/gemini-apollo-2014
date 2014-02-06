@@ -40,11 +40,11 @@ public class RobotMain extends SimpleCore {
         FloatOutput collectorMotor = makeTalonMotor(6, MOTOR_REVERSE, 0.1f);
 
         // ***** SOLENOIDS *****
-        BooleanOutput shiftSolenoid = test.testPublish("shift", makeSolenoid(1));
-        BooleanOutput armSolenoid = test.testPublish("arm", makeSolenoid(2));
-        BooleanOutput winchSolenoid = makeSolenoid(3);
-        BooleanOutput rachetLoopRelease = makeSolenoid(5);
-        BooleanOutput armFloatSolenoid = makeSolenoid(6);
+        BooleanOutput shiftSolenoid = test.testPublish("sol-shift-1", makeSolenoid(1));
+        BooleanOutput armSolenoid = test.testPublish("sol-arm-2", makeSolenoid(2));
+        BooleanOutput winchSolenoid = test.testPublish("sol-winch-3", makeSolenoid(3));
+        BooleanOutput rachetLoopRelease = test.testPublish("sol-rachet-5", makeSolenoid(5));
+        BooleanOutput armFloatSolenoid = test.testPublish("sol-float-6", makeSolenoid(6));
 
         // ***** ANALOG INPUTS *****
         // TODO: Better selection of average bits

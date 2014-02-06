@@ -3,6 +3,7 @@ package org.team1540.geminiapollo;
 import ccre.chan.BooleanInputPoll;
 import ccre.chan.BooleanOutput;
 import ccre.chan.FloatOutput;
+import ccre.cluck.CluckGlobals;
 import ccre.ctrl.Mixing;
 import ccre.event.EventSource;
 
@@ -13,7 +14,7 @@ public class Actuators {
         Mixing.pumpWhen(during, rollersOnOff, armFloatSolenoid);
     }
 
-    public static void createArm(EventSource begin, EventSource during, BooleanOutput armSolenoid, BooleanInputPoll armUpDown,BooleanInputPoll canArmMove) {
-        Mixing.pumpWhen(Mixing.filterEvent(canArmMove, true, begin), armUpDown, armSolenoid);
+    public static void createArm(EventSource begin, EventSource during, BooleanOutput armSolenoid, BooleanInputPoll armUpDown, BooleanInputPoll canArmMove) {
+        Mixing.pumpWhen(Mixing.filterEvent(canArmMove, true, during), armUpDown, armSolenoid);
     }
 }
