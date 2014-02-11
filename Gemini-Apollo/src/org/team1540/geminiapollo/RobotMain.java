@@ -1,6 +1,5 @@
 package org.team1540.geminiapollo;
 
-import ccre.chan.BooleanInput;
 import ccre.chan.BooleanInputPoll;
 import ccre.chan.BooleanOutput;
 import ccre.chan.FloatInputPoll;
@@ -9,20 +8,16 @@ import ccre.cluck.CluckGlobals;
 import ccre.cluck.tcp.CluckTCPServer;
 import ccre.ctrl.Mixing;
 import ccre.event.Event;
-import ccre.event.EventConsumer;
 import ccre.event.EventLogger;
 import ccre.event.EventSource;
 import ccre.igneous.SimpleCore;
 import ccre.log.LogLevel;
 import ccre.log.Logger;
-import ccre.phidget.PhidgetReader;
-import ccre.saver.StorageProvider;
-import ccre.saver.StorageSegment;
-import java.util.Random;
 
 public class RobotMain extends SimpleCore {
 
     protected void createSimpleControl() {
+        // ***** CLUCK *****
         new CluckTCPServer(CluckGlobals.node, 443).start();
         new CluckTCPServer(CluckGlobals.node, 1130).start();
         new CluckTCPServer(CluckGlobals.node, 1140).start();
@@ -62,7 +57,6 @@ public class RobotMain extends SimpleCore {
         useCompressor(1, 1);
 
         // ***** CONTROL INTERFACE *****
-        // TODO: Check if these should be Producers.
         BooleanInputPoll armUpDown = ControlInterface.getArmUpDown();
         BooleanInputPoll rollersOnOff = ControlInterface.getRollersOnOff();
         EventSource rearmCatapult = ControlInterface.getRearmCatapult();
@@ -87,8 +81,6 @@ public class RobotMain extends SimpleCore {
         // [[[[ DRIVE CODE ]]]]
         DriveCode.createDrive(startedTeleop, duringTeleop, leftDrive1, leftDrive2, rightDrive1, rightDrive2, leftDriveAxis, rightDriveAxis, forwardDriveAxis);
         DriveCode.createShifting(startedTeleop, duringTeleop, shiftSolenoid, shiftHighButton, shiftLowButton);
-        // Possible other way to control:
-        //new DriveCode().setDriveMotors(leftDrive1, leftDrive2, rightDrive1, rightDrive2).setControlAxes(leftDriveAxis, rightDriveAxis, forwardDriveAxis).run(startedTeleop, duringTeleop);
 
         // [[[[ SHOOTER CODE ]]]]
         Event fireWhen = new Event();
