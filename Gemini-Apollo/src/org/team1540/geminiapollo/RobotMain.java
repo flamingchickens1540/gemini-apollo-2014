@@ -1,5 +1,6 @@
 package org.team1540.geminiapollo;
 
+import ccre.chan.BooleanInput;
 import ccre.chan.BooleanInputPoll;
 import ccre.chan.BooleanOutput;
 import ccre.chan.FloatInputPoll;
@@ -27,12 +28,12 @@ public class RobotMain extends SimpleCore {
         TestMode test = new TestMode(getIsTest());
         // ***** MOTORS *****
         // TODO: Better selection of ramping settings
-        FloatOutput leftDrive1 = makeTalonMotor(1, MOTOR_REVERSE, 0.1f);
-        FloatOutput leftDrive2 = makeTalonMotor(2, MOTOR_REVERSE, 0.1f);
-        FloatOutput rightDrive1 = makeTalonMotor(3, MOTOR_FORWARD, 0.1f);
-        FloatOutput rightDrive2 = makeTalonMotor(4, MOTOR_FORWARD, 0.1f);
-        FloatOutput winchMotor = makeTalonMotor(5, MOTOR_REVERSE, 0.1f);
-        FloatOutput collectorMotor = makeTalonMotor(6, MOTOR_REVERSE, 0.1f);
+        FloatOutput leftDrive1 = test.testPublish("leftDrive1",makeTalonMotor(1, MOTOR_REVERSE, 0.1f));
+        FloatOutput leftDrive2 = test.testPublish("leftDrive2",makeTalonMotor(2, MOTOR_REVERSE, 0.1f));
+        FloatOutput rightDrive1 = test.testPublish("rightDrive1",makeTalonMotor(3, MOTOR_FORWARD, 0.1f));
+        FloatOutput rightDrive2 = test.testPublish("rightDrive2",makeTalonMotor(4, MOTOR_FORWARD, 0.1f));
+        FloatOutput winchMotor = test.testPublish("winch",makeTalonMotor(5, MOTOR_REVERSE, 0.1f));
+        FloatOutput collectorMotor = test.testPublish("collectorMotor",makeTalonMotor(6, MOTOR_REVERSE, 0.1f));
 
         // ***** SOLENOIDS *****
         BooleanOutput shiftSolenoid = test.testPublish("sol-shift-1", makeSolenoid(1));
