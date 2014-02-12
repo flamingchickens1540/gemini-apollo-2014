@@ -3,7 +3,6 @@ package org.team1540.geminiapollo;
 import ccre.chan.BooleanInputPoll;
 import ccre.chan.BooleanOutput;
 import ccre.chan.FloatOutput;
-import ccre.cluck.CluckGlobals;
 import ccre.ctrl.Mixing;
 import ccre.event.EventSource;
 

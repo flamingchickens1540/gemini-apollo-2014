@@ -1,12 +1,9 @@
 package org.team1540.geminiapollo;
 
-import ccre.chan.BooleanOutput;
 import ccre.cluck.CluckGlobals;
 import ccre.cluck.CluckNode;
 import ccre.cluck.CluckSubscriber;
-import ccre.ctrl.Mixing;
 import ccre.event.EventConsumer;
-import ccre.log.Logger;
 import ccre.phidget.PhidgetReader;
 import java.util.Random;
 

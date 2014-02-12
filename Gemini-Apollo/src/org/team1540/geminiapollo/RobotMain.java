@@ -9,22 +9,18 @@ import ccre.cluck.CluckGlobals;
 import ccre.cluck.tcp.CluckTCPServer;
 import ccre.ctrl.Mixing;
 import ccre.event.Event;
-import ccre.event.EventConsumer;
 import ccre.event.EventLogger;
 import ccre.event.EventSource;
 import ccre.igneous.SimpleCore;
 import ccre.log.LogLevel;
 import ccre.log.Logger;
-import ccre.phidget.PhidgetReader;
-import ccre.saver.StorageProvider;
-import ccre.saver.StorageSegment;
-import java.util.Random;
 
 public class RobotMain extends SimpleCore {
     
     public static boolean IS_COMPETITION_ROBOT = false;
 
     protected void createSimpleControl() {
+        // ***** CLUCK *****
         new CluckTCPServer(CluckGlobals.node, 443).start();
         new CluckTCPServer(CluckGlobals.node, 1130).start();
         new CluckTCPServer(CluckGlobals.node, 1140).start();
@@ -34,12 +30,12 @@ public class RobotMain extends SimpleCore {
         TestMode test = new TestMode(getIsTest());
         // ***** MOTORS *****
         // TODO: Better selection of ramping settings
-        FloatOutput leftDrive1 = makeTalonMotor(1, MOTOR_REVERSE, 0.1f);
-        FloatOutput leftDrive2 = makeTalonMotor(2, MOTOR_REVERSE, 0.1f);
-        FloatOutput rightDrive1 = makeTalonMotor(3, MOTOR_FORWARD, 0.1f);
-        FloatOutput rightDrive2 = makeTalonMotor(4, MOTOR_FORWARD, 0.1f);
-        FloatOutput winchMotor = makeTalonMotor(5, MOTOR_REVERSE, 0.1f);
-        FloatOutput collectorMotor = makeTalonMotor(6, MOTOR_REVERSE, 0.1f);
+        FloatOutput leftDrive1 = test.testPublish("leftDrive1",makeTalonMotor(1, MOTOR_REVERSE, 0.1f));
+        FloatOutput leftDrive2 = test.testPublish("leftDrive2",makeTalonMotor(2, MOTOR_REVERSE, 0.1f));
+        FloatOutput rightDrive1 = test.testPublish("rightDrive1",makeTalonMotor(3, MOTOR_FORWARD, 0.1f));
+        FloatOutput rightDrive2 = test.testPublish("rightDrive2",makeTalonMotor(4, MOTOR_FORWARD, 0.1f));
+        FloatOutput winchMotor = test.testPublish("winch",makeTalonMotor(5, MOTOR_REVERSE, 0.1f));
+        FloatOutput collectorMotor = test.testPublish("collectorMotor",makeTalonMotor(6, MOTOR_REVERSE, 0.1f));
 
         // ***** SOLENOIDS *****
         BooleanOutput shiftSolenoid = test.testPublish("sol-shift-1", makeSolenoid(1));
@@ -64,7 +60,6 @@ public class RobotMain extends SimpleCore {
         useCompressor(1, 1);
 
         // ***** CONTROL INTERFACE *****
-        // TODO: Check if these should be Producers.
         BooleanInputPoll armUpDown = ControlInterface.getArmUpDown();
         BooleanInputPoll rollersOnOff = ControlInterface.getRollersOnOff();
         EventSource rearmCatapult = ControlInterface.getRearmCatapult();
@@ -89,8 +84,6 @@ public class RobotMain extends SimpleCore {
         // [[[[ DRIVE CODE ]]]]
         DriveCode.createDrive(startedTeleop, duringTeleop, leftDrive1, leftDrive2, rightDrive1, rightDrive2, leftDriveAxis, rightDriveAxis, forwardDriveAxis);
         DriveCode.createShifting(startedTeleop, duringTeleop, shiftSolenoid, shiftHighButton, shiftLowButton);
-        // Possible other way to control:
-        //new DriveCode().setDriveMotors(leftDrive1, leftDrive2, rightDrive1, rightDrive2).setControlAxes(leftDriveAxis, rightDriveAxis, forwardDriveAxis).run(startedTeleop, duringTeleop);
 
         // [[[[ SHOOTER CODE ]]]]
         Event fireWhen = new Event();
