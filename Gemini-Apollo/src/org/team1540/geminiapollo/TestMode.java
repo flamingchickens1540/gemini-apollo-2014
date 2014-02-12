@@ -12,7 +12,7 @@ public class TestMode {
     public TestMode(BooleanInputPoll inTest) {
         this.inTest = inTest;
     }
-    
+
     private static String testify(String name) {
         return "test_" + name;
     }
