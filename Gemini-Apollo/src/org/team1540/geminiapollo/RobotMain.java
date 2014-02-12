@@ -21,6 +21,8 @@ import ccre.saver.StorageSegment;
 import java.util.Random;
 
 public class RobotMain extends SimpleCore {
+    
+    public static boolean IS_COMPETITION_ROBOT = false;
 
     protected void createSimpleControl() {
         new CluckTCPServer(CluckGlobals.node, 443).start();
