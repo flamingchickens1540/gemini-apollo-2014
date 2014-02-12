@@ -13,12 +13,11 @@ import ccre.log.Logger;
 public class DriveCode {
 
     /*TO DO:
-     -make sure shifting boolean is correct
      -add motor adjustors...
      -during for createShifting is currently unnecessary, might remove
      */
     public static void createDrive(EventSource begin, EventSource during, final FloatOutput leftDrive1, final FloatOutput leftDrive2, final FloatOutput rightDrive1, final FloatOutput rightDrive2, FloatInputPoll leftDriveAxis, FloatInputPoll rightDriveAxis, FloatInputPoll forwardDriveAxis) {
-        Logger.warning("DriveCode TOFINISH");
+        Logger.warning("Drivecode is swervy. In a bad way.");
         //dead zone
         FloatFilter deadZone = Mixing.deadzone(.05f);
         final FloatInputPoll leftDriveAxisW = deadZone.wrap(leftDriveAxis);

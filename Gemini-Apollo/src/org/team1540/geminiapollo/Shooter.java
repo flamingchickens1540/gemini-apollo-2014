@@ -16,16 +16,13 @@ import ccre.log.Logger;
 
 public class Shooter {
     /* TODO LIST:
-     begin - find out what the status is at the beginning of the match
-     - find out wich value of armstatus is arm down
      -implement better stopping when winchcurrent reaches (almost reaches) set value
      -have a better stop for arming the catapult when arm is up (winchcurrent?)
      */
 
     public static BooleanInputPoll createShooter(EventSource beginAutonomous, final EventSource beginTeleop, EventSource during, final FloatOutput winchMotor, BooleanOutput winchSolenoid, final FloatInputPoll winchCurrent, final BooleanInputPoll catapultNotCocked, EventSource rearmCatapult, EventSource fireButton, final BooleanInputPoll armDown, BooleanOutput rachetLoopRelease) {
-        Logger.warning("Shooter TOFINISH");
-        Logger.warning("Catapult/arm collision software-stop not implemented yet.");
         //Network Variables
+        rachetLoopRelease.writeValue(true);
         CluckGlobals.node.publish("DEBUG rachet-loop", rachetLoopRelease);
         TuningContext tuner = new TuningContext(CluckGlobals.node, "ShooterValues");
         tuner.publishSavingEvent("Shooter");
