@@ -30,10 +30,10 @@ public class ControlInterface {
     public static void displayPressure(final FloatInputPoll f, EventSource update) {
         final TuningContext tuner=new TuningContext(CluckGlobals.node,"PressureTuner");
         tuner.publishSavingEvent("Pressure");
-        final FloatInputPoll zeroP=tuner.getFloat("LowPressure",-3f);
         //0.5
-        final FloatInputPoll oneP=tuner.getFloat("HighPressure", 3f);
+        final FloatInputPoll zeroP=tuner.getFloat("LowPressure",-3f);
         //2.745
+        final FloatInputPoll oneP=tuner.getFloat("HighPressure", 3f);
         update.addListener(new EventConsumer() {
             int prevValue = -1000;
             int ctr = 0;
