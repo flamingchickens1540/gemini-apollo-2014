@@ -18,22 +18,22 @@ public class Shooter {
     /* TODO LIST:
      -implement better stopping when winchcurrent reaches (almost reaches) set value
      -have a better stop for arming the catapult when arm is up (winchcurrent?)
+    -get rid of log
      */
 
     public static BooleanInputPoll createShooter(EventSource beginAutonomous, final EventSource beginTeleop, EventSource during, final FloatOutput winchMotor, BooleanOutput winchSolenoid, final FloatInputPoll winchCurrent, final BooleanInputPoll catapultNotCocked, EventSource rearmCatapult, EventSource fireButton, final BooleanInputPoll armDown, BooleanOutput rachetLoopRelease) {
-        //Network Variables
         rachetLoopRelease.writeValue(true);
+
+        //Network Variables
         CluckGlobals.node.publish("DEBUG rachet-loop", rachetLoopRelease);
         TuningContext tuner = new TuningContext(CluckGlobals.node, "ShooterValues");
         tuner.publishSavingEvent("Shooter");
         final FloatStatus winchSpeed = tuner.getFloat("Winch Speed", .3f);
         final FloatStatus drawBack = tuner.getFloat("Draw Back", 1.1f);
 
-        //rearm safety
+        //engage safety after firing safety
         final ExpirationTimer engageTimer = new ExpirationTimer();
-        final BooleanStatus canEngage = new BooleanStatus();
-        CluckGlobals.node.publish("DEBUG CanEngage", canEngage);
-        canEngage.writeValue(true);
+        final BooleanStatus canEngage = new BooleanStatus(true);
         engageTimer.schedule(1, new EventConsumer() {
             public void eventFired() {
                 Logger.info("After Fire Timer A");
@@ -48,10 +48,9 @@ public class Shooter {
             }
         });
 
-        //ease pressure on winch solenoid before firing
+        //run winch motor in reverse before firing
         final ExpirationTimer fireTimer = new ExpirationTimer();
         final BooleanStatus fireTimerRunning = new BooleanStatus();
-        CluckGlobals.node.publish("DEBUG fireTimerRunning", fireTimerRunning);
         fireTimerRunning.writeValue(false);
         fireTimer.schedule(1, new EventConsumer() {
             public void eventFired() {
@@ -70,14 +69,12 @@ public class Shooter {
         //state of the catapult
         //four score, etc. etc.
         final BooleanStatus winchDisengaged = new BooleanStatus(winchSolenoid);
-        CluckGlobals.node.publish("DEBUG WinchDisengaged", winchDisengaged);
-        final BooleanStatus running = new BooleanStatus();
-        CluckGlobals.node.publish("DEBUG running", running);
+        final BooleanStatus rearming = new BooleanStatus();
 
-        //begin
-        running.setFalseWhen(beginAutonomous);
+        //begin listeners
+        rearming.setFalseWhen(beginAutonomous);
         winchDisengaged.setFalseWhen(beginAutonomous);
-        running.setFalseWhen(beginTeleop);
+        rearming.setFalseWhen(beginTeleop);
         beginTeleop.addListener(new EventConsumer() {
             public void eventFired() {
                 if (canEngage.readValue()) {
@@ -87,13 +84,12 @@ public class Shooter {
             }
         });
 
-        //and more!
-        //during
+        //Buttons
         fireButton.addListener(new EventConsumer() {
             public void eventFired() {
-                if (running.readValue()) {
+                if (rearming.readValue()) {
                     Logger.info("Fire A");
-                    running.writeValue(false);
+                    rearming.writeValue(false);
                 } else if (!winchDisengaged.readValue() && armDown.readValue()) {
                     Logger.info("Fire B");
                     fireTimer.start();
@@ -107,24 +103,25 @@ public class Shooter {
         rearmCatapult.addListener(new EventConsumer() {
             public void eventFired() {
                 Logger.info("rearm");
-                if (running.readValue()) {
+                if (rearming.readValue()) {
                     Logger.info("stop rearm");
-                    running.writeValue(false);
+                    rearming.writeValue(false);
                 } else if (armDown.readValue() && catapultNotCocked.readValue()) {
                     winchDisengaged.writeValue(false);
                     Logger.info("actually rearm");
-                    running.writeValue(true);
+                    rearming.writeValue(true);
                 } else {
-                    Logger.info("else rearm");
+                    Logger.info("no rearm");
                 }
             }
         });
+        //during listener
         during.addListener(new EventConsumer() {
             public void eventFired() {
-                if (running.readValue()) {
+                if (rearming.readValue()) {
                     winchMotor.writeValue(winchSpeed.readValue());
                     if (!catapultNotCocked.readValue() || winchCurrent.readValue() >= drawBack.readValue()) {
-                        running.writeValue(false);
+                        rearming.writeValue(false);
                         winchMotor.writeValue(0f);
                     }
                 } else if (fireTimerRunning.readValue()) {
@@ -134,6 +131,7 @@ public class Shooter {
                 }
             }
         });
-        return Mixing.invert((BooleanInputPoll) running);
+        //this is for Gregor... I don't remeber what it's for but I think it is so he can't lift the arm when the catapult is rearming
+        return Mixing.invert((BooleanInputPoll) rearming);
     }
 }
