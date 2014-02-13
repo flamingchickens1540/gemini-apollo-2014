@@ -39,10 +39,7 @@ public class ControlInterface {
             int ctr = 0;
 
             public void eventFired() {
-                float zero = zeroP.readValue();
-                float one = oneP.readValue();
-                float range = one - zero;
-                int c = (int) (1000 * (f.readValue() - zero) / range);
+                int c = normalize(zeroP.readValue(), oneP.readValue(),f.readValue());
                 if (c == prevValue && (ctr++ % 100 != 0)) {
                     return;
                 }
@@ -50,5 +47,9 @@ public class ControlInterface {
                 PhidgetReader.phidgetLCD[1].println("Pressure: " + c / 10f + "%");
             }
         });
+    }
+    private static int normalize(float zero,float one,float value){
+        float range=one-zero;
+        return (int) (1000 * (value - zero) / range);
     }
 }
