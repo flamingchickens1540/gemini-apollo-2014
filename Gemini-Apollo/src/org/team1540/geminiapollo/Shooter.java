@@ -27,7 +27,7 @@ public class Shooter {
         //Network Variables
         CluckGlobals.node.publish("DEBUG rachet-loop", rachetLoopRelease);
         TuningContext tuner = new TuningContext(CluckGlobals.node, "ShooterValues");
-        tuner.publishSavingEvent("Shooter");
+        tuner.publishSavingEvent("Shooter Save");
         final FloatStatus winchSpeed = tuner.getFloat("Winch Speed", .3f);
         final FloatStatus drawBack = tuner.getFloat("Draw Back", 1.1f);
 
