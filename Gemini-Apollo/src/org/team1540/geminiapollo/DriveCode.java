@@ -16,7 +16,7 @@ public class DriveCode {
      -add motor adjustors...
      -during for createShifting is currently unnecessary, might remove
      */
-    public static void createDrive(EventSource begin, EventSource during, final FloatOutput leftDrive1, final FloatOutput leftDrive2, final FloatOutput rightDrive1, final FloatOutput rightDrive2, FloatInputPoll leftDriveAxis, FloatInputPoll rightDriveAxis, FloatInputPoll forwardDriveAxis) {
+    public static void createDrive(EventSource begin, EventSource during, final FloatOutput leftDrive1, final FloatOutput leftDrive2, final FloatOutput rightDrive1, final FloatOutput rightDrive2, FloatInputPoll leftDriveAxis, FloatInputPoll rightDriveAxis, FloatInputPoll forwardDriveAxis, final boolean competitionRobot) {
         Logger.warning("Drivecode is swervy. In a bad way.");
         //dead zone
         FloatFilter deadZone = Mixing.deadzone(.05f);
@@ -38,17 +38,23 @@ public class DriveCode {
         during.addListener(new EventConsumer() {
             public void eventFired() {
                 //motor values
-                float leftDrive1Value = (leftDriveAxisW.readValue() + forwardDriveAxisW.readValue());
-                float leftDrive2Value = (leftDriveAxisW.readValue() + forwardDriveAxisW.readValue());
-                float rightDrive1Value = (rightDriveAxisW.readValue() + forwardDriveAxisW.readValue());
-                float rightDrive2Value = (rightDriveAxisW.readValue() + forwardDriveAxisW.readValue());
+                float leftDriveValue = (leftDriveAxisW.readValue() + forwardDriveAxisW.readValue());
+                float rightDriveValue = (rightDriveAxisW.readValue() + forwardDriveAxisW.readValue());
 
                 //adjust motor values
+                if (competitionRobot) {
+                    /*leftDriveValue = leftDriveValue;
+                     rightDriveValue = rightDriveValue;*/
+                } else {
+                    leftDriveValue = leftDriveValue * (619f / 697);
+                    /*rightDriveValue = rightDriveValue;*/
+                }
+
                 //write motor values
-                leftDrive1.writeValue(leftDrive1Value);
-                leftDrive2.writeValue(leftDrive2Value);
-                rightDrive1.writeValue(rightDrive1Value);
-                rightDrive2.writeValue(rightDrive2Value);
+                leftDrive1.writeValue(leftDriveValue);
+                leftDrive2.writeValue(leftDriveValue);
+                rightDrive1.writeValue(rightDriveValue);
+                rightDrive2.writeValue(rightDriveValue);
             }
         });
     }

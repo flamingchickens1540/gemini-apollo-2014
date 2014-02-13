@@ -82,7 +82,7 @@ public class RobotMain extends SimpleCore {
         EventSource fireAutonomousTrigger = controller.getWhenToFire();
 
         // [[[[ DRIVE CODE ]]]]
-        DriveCode.createDrive(startedTeleop, duringTeleop, leftDrive1, leftDrive2, rightDrive1, rightDrive2, leftDriveAxis, rightDriveAxis, forwardDriveAxis);
+        DriveCode.createDrive(startedTeleop, duringTeleop, leftDrive1, leftDrive2, rightDrive1, rightDrive2, leftDriveAxis, rightDriveAxis, forwardDriveAxis, IS_COMPETITION_ROBOT);
         DriveCode.createShifting(startedTeleop, duringTeleop, shiftSolenoid, shiftHighButton, shiftLowButton);
 
         // [[[[ SHOOTER CODE ]]]]
