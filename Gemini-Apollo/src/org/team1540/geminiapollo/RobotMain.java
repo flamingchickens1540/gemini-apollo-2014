@@ -1,20 +1,12 @@
 package org.team1540.geminiapollo;
 
-import ccre.chan.BooleanInput;
-import ccre.chan.BooleanInputPoll;
-import ccre.chan.BooleanOutput;
-import ccre.chan.BooleanStatus;
-import ccre.chan.FloatInputPoll;
-import ccre.chan.FloatOutput;
+import ccre.chan.*;
 import ccre.cluck.CluckGlobals;
 import ccre.cluck.tcp.CluckTCPServer;
 import ccre.ctrl.Mixing;
-import ccre.event.Event;
-import ccre.event.EventLogger;
-import ccre.event.EventSource;
+import ccre.event.*;
 import ccre.igneous.SimpleCore;
-import ccre.log.LogLevel;
-import ccre.log.Logger;
+import ccre.log.*;
 
 public class RobotMain extends SimpleCore {
 

@@ -1,17 +1,10 @@
 package org.team1540.geminiapollo;
 
-import ccre.chan.BooleanOutput;
-import ccre.chan.BooleanStatus;
-import ccre.chan.FloatFilter;
-import ccre.chan.FloatInputPoll;
-import ccre.chan.FloatOutput;
-import ccre.chan.FloatStatus;
+import ccre.chan.*;
 import ccre.cluck.CluckGlobals;
 import ccre.ctrl.Mixing;
-import ccre.event.EventConsumer;
-import ccre.event.EventSource;
+import ccre.event.*;
 import ccre.holders.TuningContext;
-import ccre.log.Logger;
 
 public class DriveCode {
 
@@ -20,20 +13,18 @@ public class DriveCode {
      */
     public static void createDrive(EventSource begin, EventSource during, final FloatOutput leftDrive1, final FloatOutput leftDrive2, final FloatOutput rightDrive1, final FloatOutput rightDrive2, FloatInputPoll leftDriveAxis, FloatInputPoll rightDriveAxis, FloatInputPoll forwardDriveAxis, final boolean competitionRobot, final BooleanStatus shifted) {
         //High Tuning
-        TuningContext hWheelTuner = new TuningContext(CluckGlobals.node, "HighDriveTuningValues");
-        hWheelTuner.publishSavingEvent("High Drive Tuning Save");
-        final FloatStatus hfLeft = hWheelTuner.getFloat("High Left Forwards", 1f);
-        final FloatStatus hbLeft = hWheelTuner.getFloat("High Left Backwards", 1f);
-        final FloatStatus hfRight = hWheelTuner.getFloat("High Right Forwards", 1f);
-        final FloatStatus hbRight = hWheelTuner.getFloat("High Right Backwards", 1f);
+        TuningContext wheelTuner = new TuningContext(CluckGlobals.node, "TuningValues");
+        wheelTuner.publishSavingEvent("Drive Tuning");
+        final FloatStatus hfLeft = wheelTuner.getFloat("High Left Forwards", 1f);
+        final FloatStatus hbLeft = wheelTuner.getFloat("High Left Backwards", 1f);
+        final FloatStatus hfRight = wheelTuner.getFloat("High Right Forwards", 1f);
+        final FloatStatus hbRight = wheelTuner.getFloat("High Right Backwards", 1f);
 
         //Low Tuning
-        TuningContext lWheelTuner = new TuningContext(CluckGlobals.node, "LowDriveTuningValues");
-        lWheelTuner.publishSavingEvent("Low Drive Tuning Save");
-        final FloatStatus lfLeft = lWheelTuner.getFloat("Low Left Forwards", 1f);
-        final FloatStatus lbLeft = lWheelTuner.getFloat("Low Left Backwards", 1f);
-        final FloatStatus lfRight = lWheelTuner.getFloat("Low Right Forwards", 1f);
-        final FloatStatus lbRight = lWheelTuner.getFloat("Low Right Backwards", 1f);
+        final FloatStatus lfLeft = wheelTuner.getFloat("Low Left Forwards", 1f);
+        final FloatStatus lbLeft = wheelTuner.getFloat("Low Left Backwards", 1f);
+        final FloatStatus lfRight = wheelTuner.getFloat("Low Right Forwards", 1f);
+        final FloatStatus lbRight = wheelTuner.getFloat("Low Right Backwards", 1f);
 
         //dead zone
         FloatFilter deadZone = Mixing.deadzone(.1f);

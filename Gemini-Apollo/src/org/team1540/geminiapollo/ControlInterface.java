@@ -1,11 +1,9 @@
 package org.team1540.geminiapollo;
 
-import ccre.chan.BooleanInputPoll;
-import ccre.chan.FloatInputPoll;
+import ccre.chan.*;
 import ccre.cluck.CluckGlobals;
 import ccre.ctrl.Mixing;
-import ccre.event.EventConsumer;
-import ccre.event.EventSource;
+import ccre.event.*;
 import ccre.holders.TuningContext;
 import ccre.phidget.PhidgetReader;
 
@@ -39,7 +37,7 @@ public class ControlInterface {
             int ctr = 0;
 
             public void eventFired() {
-                int c = normalize(zeroP.readValue(), oneP.readValue(),f.readValue());
+                int c = normalize(zeroP.readValue(), oneP.readValue(), f.readValue());
                 if (c == prevValue && (ctr++ % 100 != 0)) {
                     return;
                 }
@@ -48,8 +46,9 @@ public class ControlInterface {
             }
         });
     }
-    private static int normalize(float zero,float one,float value){
-        float range=one-zero;
+
+    private static int normalize(float zero, float one, float value) {
+        float range = one - zero;
         return (int) (1000 * (value - zero) / range);
     }
 }

@@ -1,8 +1,7 @@
 package org.team1540.geminiapollo;
 
 import ccre.cluck.CluckGlobals;
-import ccre.event.EventConsumer;
-import ccre.event.EventSource;
+import ccre.event.*;
 import ccre.chan.*;
 
 public class TestMode {
