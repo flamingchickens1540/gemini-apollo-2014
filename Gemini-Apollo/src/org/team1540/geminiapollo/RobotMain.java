@@ -51,7 +51,7 @@ public class RobotMain extends SimpleCore {
         // TODO: Better selection of average bits
         FloatInputPoll winchCurrent = makeAnalogInput(1, 8);
         FloatInputPoll pressureSensor = makeAnalogInput(2, 8);
-        CluckGlobals.node.publish("analog-sense", Mixing.createDispatch(pressureSensor, globalPeriodic));
+        CluckGlobals.node.publish("Pressure Sensor", Mixing.createDispatch(pressureSensor, globalPeriodic));
 
         // ***** DIGITAL INPUTS *****
         BooleanInputPoll catapultCocked = makeDigitalInput(2);
@@ -96,7 +96,7 @@ public class RobotMain extends SimpleCore {
         Event updateShooterWhen = new Event();
         duringTeleop.addListener(updateShooterWhen);
         duringAutonomous.addListener(updateShooterWhen);
-        BooleanInputPoll canArmMove = Shooter.createShooter(startedAutonomous, startedTeleop, updateShooterWhen, winchMotor, winchSolenoid, winchCurrent, catapultCocked, Mixing.filterEvent(getIsDisabled(), false, rearmCatapult), Mixing.filterEvent(getIsDisabled(), false, fireButton), armUpDown, rachetLoopRelease);
+        BooleanInputPoll canArmMove = Shooter.createShooter(startedAutonomous, startedTeleop, updateShooterWhen, winchMotor, winchSolenoid, winchCurrent, catapultCocked, Mixing.filterEvent(getIsDisabled(), false, rearmCatapult), Mixing.filterEvent(getIsDisabled(), false, (EventSource) fireWhen), armUpDown, rachetLoopRelease);
 
         // [[[[ ARM CODE ]]]]
         Logger.info("Actuators get startedTeleop irrelevently!");

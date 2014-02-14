@@ -15,7 +15,7 @@ import ccre.util.Utils;
 public class AutonomousController extends InstinctModule {
 
     private final StorageSegment seg = StorageProvider.openStorage("autonomous");
-    private final TuningContext tune = new TuningContext(CluckGlobals.node, seg).publishSavingEvent("save-autonomous");
+    private final TuningContext tune = new TuningContext(CluckGlobals.node, seg).publishSavingEvent("Autonomous");
     // Provided channels
     private FloatOutput leftDrive, rightDrive;
     private BooleanInputPoll isHotzone;
@@ -44,8 +44,8 @@ public class AutonomousController extends InstinctModule {
         // Really. Just do nothing.
     }
 
-    private final FloatStatus forwardMovement = tune.getFloat("a-forward-speed", 0.5f);
-    private final FloatStatus forwardDelay = tune.getFloat("a-forward-delay", 0.5f);
+    private final FloatStatus forwardMovement = tune.getFloat("autom-forward-speed", 0.5f);
+    private final FloatStatus forwardDelay = tune.getFloat("autom-forward-delay", 0.5f);
 
     private void autoForward() throws AutonomousModeOverException, InterruptedException {
         float speed = forwardMovement.readValue(); // [0, 1]
@@ -57,7 +57,10 @@ public class AutonomousController extends InstinctModule {
         leftDrive.writeValue(0);
     }
 
-    private final FloatStatus hotcheckMaxDelay = tune.getFloat("a-hotcheck-maxwait", 6);
+    private final FloatStatus hotcheckMaxDelay = tune.getFloat("autom-hotcheck-maxwait", 6);
+    private final FloatStatus hotcheckPreDelay = tune.getFloat("autom-hotcheck-fire-wait", 0.5f);
+    private final FloatStatus hotcheckMovement = tune.getFloat("autom-hotcheck-move-speed", 0.5f);
+    private final FloatStatus hotcheckMoveDelay = tune.getFloat("autom-hotcheck-move-duration", 0);
 
     private void autoHotcheck() throws AutonomousModeOverException, InterruptedException {
         FloatInputPoll cur = Utils.currentTimeSeconds;
@@ -68,6 +71,12 @@ public class AutonomousController extends InstinctModule {
             Logger.warning("Cancelled wait for HotZone after " + hotcheckMaxDelay.readValue() + " seconds: " + cur.readValue() + " and " + target);
         }
         fireWhenEvent.produce();
+        waitForTime((long) (1000L * hotcheckPreDelay.readValue() + 0.5f));
+        leftDrive.writeValue(hotcheckMovement.readValue());
+        rightDrive.writeValue(hotcheckMovement.readValue());
+        waitForTime((long) (1000L * hotcheckMoveDelay.readValue() + 0.5f));
+        leftDrive.writeValue(0);
+        rightDrive.writeValue(0);
     }
 
     // *** Framework ***
@@ -77,7 +86,7 @@ public class AutonomousController extends InstinctModule {
 
     public void setup(InstinctRegistrar reg) {
         seg.attachStringHolder("autonomous-mode", option);
-        CluckGlobals.node.publish("next-autonomous", new EventConsumer() {
+        CluckGlobals.node.publish("autom-next", new EventConsumer() {
             public void eventFired() {
                 int i;
                 String cur = option.get();
@@ -96,12 +105,12 @@ public class AutonomousController extends InstinctModule {
                 }
             }
         });
-        CluckGlobals.node.publish("check-autonomous", new EventConsumer() {
+        CluckGlobals.node.publish("autom-check", new EventConsumer() {
             public void eventFired() {
                 sayCurrent();
             }
         });
-        CluckGlobals.node.publish("prev-autonomous", new EventConsumer() {
+        CluckGlobals.node.publish("autom-prev", new EventConsumer() {
             public void eventFired() {
                 int i;
                 String cur = option.get();

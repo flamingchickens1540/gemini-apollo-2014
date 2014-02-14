@@ -22,7 +22,7 @@ public class Shooter {
      */
 
     public static BooleanInputPoll createShooter(EventSource beginAutonomous, final EventSource beginTeleop, EventSource during, final FloatOutput winchMotor, BooleanOutput winchSolenoid, final FloatInputPoll winchCurrent, final BooleanInputPoll catapultNotCocked, EventSource rearmCatapult, EventSource fireButton, final BooleanInputPoll armDown, BooleanOutput rachetLoopRelease) {
-        rachetLoopRelease.writeValue(true);
+        rachetLoopRelease.writeValue(false); // We switched the polarity.
 
         //Network Variables
         CluckGlobals.node.publish("DEBUG rachet-loop", rachetLoopRelease);
