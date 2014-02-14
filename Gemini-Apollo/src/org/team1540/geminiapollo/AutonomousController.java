@@ -10,7 +10,7 @@ import ccre.instinct.*;
 import ccre.log.Logger;
 import ccre.saver.StorageProvider;
 import ccre.saver.StorageSegment;
-import ccre.util.Utils;
+import ccre.util.*;
 
 public class AutonomousController extends InstinctModule {
 
@@ -22,6 +22,7 @@ public class AutonomousController extends InstinctModule {
     // Tuned constants are below near the autonomous modes.
     private final StringHolder option = new StringHolder("none");
     private final String[] options = {"none", "forward", "hotcheck"};
+    private final CList optionList = CArrayUtils.asList(options);
     private final Event fireWhenEvent = new Event();
 
     protected void autonomousMain() throws AutonomousModeOverException, InterruptedException {
@@ -88,21 +89,8 @@ public class AutonomousController extends InstinctModule {
         seg.attachStringHolder("autonomous-mode", option);
         CluckGlobals.node.publish("autom-next", new EventConsumer() {
             public void eventFired() {
-                int i;
-                String cur = option.get();
-                for (i = 1; i < options.length; i++) {
-                    if (cur.equals(options[i - 1])) {
-                        option.set(options[i]);
-                        sayCurrent();
-                        return;
-                    }
-                }
-                if (cur.equals(options[options.length - 1])) {
-                    option.set(options[0]);
-                    sayCurrent();
-                } else {
-                    Logger.warning("Invalid autonomous mode: " + cur + ": resetting.");
-                }
+                option.set(options[(optionList.indexOf(option.get()) + 1) % options.length]);
+                sayCurrent();
             }
         });
         CluckGlobals.node.publish("autom-check", new EventConsumer() {
@@ -112,21 +100,8 @@ public class AutonomousController extends InstinctModule {
         });
         CluckGlobals.node.publish("autom-prev", new EventConsumer() {
             public void eventFired() {
-                int i;
-                String cur = option.get();
-                for (i = 1; i < options.length; i++) {
-                    if (cur.equals(options[i])) {
-                        option.set(options[i - 1]);
-                        sayCurrent();
-                        return;
-                    }
-                }
-                if (cur.equals(options[0])) {
-                    option.set(options[options.length - 1]);
-                    sayCurrent();
-                } else {
-                    Logger.warning("Invalid autonomous mode: " + cur + ": resetting.");
-                }
+                option.set(options[(optionList.indexOf(option.get()) - 1 + options.length) % options.length]);
+                sayCurrent();
             }
         });
         sayCurrent();

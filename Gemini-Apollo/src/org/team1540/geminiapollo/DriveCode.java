@@ -8,10 +8,9 @@ import ccre.holders.TuningContext;
 
 public class DriveCode {
 
-    /*TO DO:
-     -left motor adjustors flipped... figure out why
-     */
-    public static void createDrive(EventSource begin, EventSource during, final FloatOutput leftDrive1, final FloatOutput leftDrive2, final FloatOutput rightDrive1, final FloatOutput rightDrive2, FloatInputPoll leftDriveAxis, FloatInputPoll rightDriveAxis, FloatInputPoll forwardDriveAxis, final boolean competitionRobot, final BooleanStatus shifted) {
+    public static void createDrive(EventSource begin, EventSource during, FloatOutput leftDrive1, FloatOutput leftDrive2, FloatOutput rightDrive1, FloatOutput rightDrive2, FloatInputPoll leftDriveAxis, FloatInputPoll rightDriveAxis, FloatInputPoll forwardDriveAxis, final boolean competitionRobot, final BooleanStatus shifted) {
+        final FloatOutput leftDrive = Mixing.combine(leftDrive1, leftDrive2);
+        final FloatOutput rightDrive = Mixing.combine(rightDrive1, rightDrive2);
         //High Tuning
         TuningContext wheelTuner = new TuningContext(CluckGlobals.node, "TuningValues");
         wheelTuner.publishSavingEvent("Drive Tuning");
@@ -19,7 +18,6 @@ public class DriveCode {
         final FloatStatus hbLeft = wheelTuner.getFloat("High Left Backwards", 1f);
         final FloatStatus hfRight = wheelTuner.getFloat("High Right Forwards", 1f);
         final FloatStatus hbRight = wheelTuner.getFloat("High Right Backwards", 1f);
-
         //Low Tuning
         final FloatStatus lfLeft = wheelTuner.getFloat("Low Left Forwards", 1f);
         final FloatStatus lbLeft = wheelTuner.getFloat("Low Left Backwards", 1f);
@@ -35,10 +33,8 @@ public class DriveCode {
         //begin
         begin.addListener(new EventConsumer() {
             public void eventFired() {
-                leftDrive1.writeValue(0);
-                leftDrive2.writeValue(0);
-                rightDrive1.writeValue(0);
-                rightDrive2.writeValue(0);
+                leftDrive.writeValue(0);
+                rightDrive.writeValue(0);
             }
         });
 
@@ -46,39 +42,21 @@ public class DriveCode {
         during.addListener(new EventConsumer() {
             public void eventFired() {
                 //motor values
-                float leftDriveValue = (leftDriveAxisW.readValue() + forwardDriveAxisW.readValue());
-                float rightDriveValue = (rightDriveAxisW.readValue() + forwardDriveAxisW.readValue());
+                float leftDriveValue = leftDriveAxisW.readValue() + forwardDriveAxisW.readValue();
+                float rightDriveValue = rightDriveAxisW.readValue() + forwardDriveAxisW.readValue();
 
                 //adjust motor values
                 if (shifted.readValue()) {
-                    if (leftDriveValue > 0) {
-                        leftDriveValue *= hfLeft.readValue();
-                    } else if (leftDriveValue < 0) {
-                        leftDriveValue *= hbLeft.readValue();
-                    }
-                    if (rightDriveValue > 0) {
-                        rightDriveValue *= hfRight.readValue();
-                    } else if (rightDriveValue < 0) {
-                        rightDriveValue *= hbRight.readValue();
-                    }
+                    leftDriveValue *= leftDriveValue > 0 ? hfLeft.readValue() : hbLeft.readValue();
+                    rightDriveValue *= rightDriveValue > 0 ? hfRight.readValue() : hbRight.readValue();
                 } else {
-                    if (leftDriveValue > 0) {
-                        leftDriveValue *= lfLeft.readValue();
-                    } else if (leftDriveValue < 0) {
-                        leftDriveValue *= lbLeft.readValue();
-                    }
-                    if (rightDriveValue > 0) {
-                        rightDriveValue *= lfRight.readValue();
-                    } else if (rightDriveValue < 0) {
-                        rightDriveValue *= lbRight.readValue();
-                    }
+                    leftDriveValue *= leftDriveValue > 0 ? lfLeft.readValue() : lbLeft.readValue();
+                    rightDriveValue *= rightDriveValue > 0 ? lfRight.readValue() : lbRight.readValue();
                 }
 
                 //write motor values
-                leftDrive1.writeValue(leftDriveValue);
-                leftDrive2.writeValue(leftDriveValue);
-                rightDrive1.writeValue(rightDriveValue);
-                rightDrive2.writeValue(rightDriveValue);
+                leftDrive.writeValue(leftDriveValue);
+                rightDrive.writeValue(rightDriveValue);
             }
         });
     }
