@@ -1,25 +1,31 @@
 package org.team1540.geminiapollo;
 
-import ccre.chan.BooleanOutput;
-import ccre.chan.BooleanStatus;
-import ccre.chan.FloatFilter;
-import ccre.chan.FloatInputPoll;
-import ccre.chan.FloatOutput;
+import ccre.chan.*;
+import ccre.cluck.CluckGlobals;
 import ccre.ctrl.Mixing;
-import ccre.event.EventConsumer;
-import ccre.event.EventSource;
-import ccre.log.Logger;
+import ccre.event.*;
+import ccre.holders.TuningContext;
 
 public class DriveCode {
 
-    /*TO DO:
-     -add motor adjustors...
-     -during for createShifting is currently unnecessary, might remove
-     */
-    public static void createDrive(EventSource begin, EventSource during, final FloatOutput leftDrive1, final FloatOutput leftDrive2, final FloatOutput rightDrive1, final FloatOutput rightDrive2, FloatInputPoll leftDriveAxis, FloatInputPoll rightDriveAxis, FloatInputPoll forwardDriveAxis) {
-        Logger.warning("Drivecode is swervy. In a bad way.");
+    public static void createDrive(EventSource begin, EventSource during, FloatOutput leftDrive1, FloatOutput leftDrive2, FloatOutput rightDrive1, FloatOutput rightDrive2, FloatInputPoll leftDriveAxis, FloatInputPoll rightDriveAxis, FloatInputPoll forwardDriveAxis, final boolean competitionRobot, final BooleanStatus notShifted) {
+        final FloatOutput leftDrive = Mixing.combine(leftDrive1, leftDrive2);
+        final FloatOutput rightDrive = Mixing.combine(rightDrive1, rightDrive2);
+        //High Tuning
+        TuningContext wheelTuner = new TuningContext(CluckGlobals.node, "DriveTuning");
+        wheelTuner.publishSavingEvent("Drive Tuning");
+        final FloatStatus hfLeft = wheelTuner.getFloat("High Left Forwards", 1f);
+        final FloatStatus hbLeft = wheelTuner.getFloat("High Left Backwards", 1f);
+        final FloatStatus hfRight = wheelTuner.getFloat("High Right Forwards", 1f);
+        final FloatStatus hbRight = wheelTuner.getFloat("High Right Backwards", 1f);
+        //Low Tuning
+        final FloatStatus lfLeft = wheelTuner.getFloat("Low Left Forwards", 1f);
+        final FloatStatus lbLeft = wheelTuner.getFloat("Low Left Backwards", 1f);
+        final FloatStatus lfRight = wheelTuner.getFloat("Low Right Forwards", 1f);
+        final FloatStatus lbRight = wheelTuner.getFloat("Low Right Backwards", 1f);
+
         //dead zone
-        FloatFilter deadZone = Mixing.deadzone(.05f);
+        FloatFilter deadZone = Mixing.deadzone(.1f);
         final FloatInputPoll leftDriveAxisW = deadZone.wrap(leftDriveAxis);
         final FloatInputPoll rightDriveAxisW = deadZone.wrap(rightDriveAxis);
         final FloatInputPoll forwardDriveAxisW = deadZone.wrap(forwardDriveAxis);
@@ -27,10 +33,8 @@ public class DriveCode {
         //begin
         begin.addListener(new EventConsumer() {
             public void eventFired() {
-                leftDrive1.writeValue(0);
-                leftDrive2.writeValue(0);
-                rightDrive1.writeValue(0);
-                rightDrive2.writeValue(0);
+                leftDrive.writeValue(0);
+                rightDrive.writeValue(0);
             }
         });
 
@@ -38,23 +42,26 @@ public class DriveCode {
         during.addListener(new EventConsumer() {
             public void eventFired() {
                 //motor values
-                float leftDrive1Value = (leftDriveAxisW.readValue() + forwardDriveAxisW.readValue());
-                float leftDrive2Value = (leftDriveAxisW.readValue() + forwardDriveAxisW.readValue());
-                float rightDrive1Value = (rightDriveAxisW.readValue() + forwardDriveAxisW.readValue());
-                float rightDrive2Value = (rightDriveAxisW.readValue() + forwardDriveAxisW.readValue());
+                float leftDriveValue = leftDriveAxisW.readValue() + forwardDriveAxisW.readValue();
+                float rightDriveValue = rightDriveAxisW.readValue() + forwardDriveAxisW.readValue();
 
                 //adjust motor values
+                if (!notShifted.readValue()) {
+                    leftDriveValue *= leftDriveValue > 0 ? hfLeft.readValue() : hbLeft.readValue();
+                    rightDriveValue *= rightDriveValue > 0 ? hfRight.readValue() : hbRight.readValue();
+                } else {
+                    leftDriveValue *= leftDriveValue > 0 ? lfLeft.readValue() : lbLeft.readValue();
+                    rightDriveValue *= rightDriveValue > 0 ? lfRight.readValue() : lbRight.readValue();
+                }
+
                 //write motor values
-                leftDrive1.writeValue(leftDrive1Value);
-                leftDrive2.writeValue(leftDrive2Value);
-                rightDrive1.writeValue(rightDrive1Value);
-                rightDrive2.writeValue(rightDrive2Value);
+                leftDrive.writeValue(leftDriveValue);
+                rightDrive.writeValue(rightDriveValue);
             }
         });
     }
 
-    public static void createShifting(EventSource begin, EventSource during, BooleanOutput shiftSolenoid, EventSource shiftHighButton, EventSource shiftLowButton) {
-        Logger.warning("DriveCode TOFINISH");
+    public static BooleanStatus createShifting(EventSource begin, EventSource during, BooleanOutput shiftSolenoid, EventSource shiftHighButton, EventSource shiftLowButton) {
         final BooleanStatus shifted = new BooleanStatus(shiftSolenoid);
 
         //begin
@@ -65,5 +72,7 @@ public class DriveCode {
 
         //low
         shifted.setFalseWhen(shiftLowButton);
+
+        return shifted;
     }
 }

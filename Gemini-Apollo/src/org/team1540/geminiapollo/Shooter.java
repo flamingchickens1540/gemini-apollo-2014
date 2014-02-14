@@ -1,16 +1,10 @@
 package org.team1540.geminiapollo;
 
-import ccre.chan.BooleanInputPoll;
-import ccre.chan.BooleanOutput;
-import ccre.chan.BooleanStatus;
-import ccre.chan.FloatInputPoll;
-import ccre.chan.FloatOutput;
-import ccre.chan.FloatStatus;
+import ccre.chan.*;
 import ccre.cluck.CluckGlobals;
 import ccre.ctrl.ExpirationTimer;
 import ccre.ctrl.Mixing;
-import ccre.event.EventConsumer;
-import ccre.event.EventSource;
+import ccre.event.*;
 import ccre.holders.TuningContext;
 import ccre.log.Logger;
 
@@ -18,14 +12,14 @@ public class Shooter {
     /* TODO LIST:
      -implement better stopping when winchcurrent reaches (almost reaches) set value
      -have a better stop for arming the catapult when arm is up (winchcurrent?)
-    -get rid of log
+     -get rid of log
      */
 
     public static BooleanInputPoll createShooter(EventSource beginAutonomous, final EventSource beginTeleop, EventSource during, final FloatOutput winchMotor, BooleanOutput winchSolenoid, final FloatInputPoll winchCurrent, final BooleanInputPoll catapultNotCocked, EventSource rearmCatapult, EventSource fireButton, final BooleanInputPoll armDown, BooleanOutput rachetLoopRelease) {
-        rachetLoopRelease.writeValue(true);
+        rachetLoopRelease.writeValue(false); // We switched the polarity.
 
         //Network Variables
-        CluckGlobals.node.publish("DEBUG rachet-loop", rachetLoopRelease);
+        CluckGlobals.node.publish("Rachet", rachetLoopRelease);
         TuningContext tuner = new TuningContext(CluckGlobals.node, "ShooterValues");
         tuner.publishSavingEvent("Shooter");
         final FloatStatus winchSpeed = tuner.getFloat("Winch Speed", .3f);
@@ -58,7 +52,7 @@ public class Shooter {
                 Logger.info("During Fire Timer A");
             }
         });
-        fireTimer.schedule(100, new EventConsumer() {
+        fireTimer.schedule(250, new EventConsumer() {
             public void eventFired() {
                 fireTimerRunning.writeValue(false);
                 Logger.info("During Fire Timer B");
@@ -125,7 +119,7 @@ public class Shooter {
                         winchMotor.writeValue(0f);
                     }
                 } else if (fireTimerRunning.readValue()) {
-                    winchMotor.writeValue(-1f);
+                    winchMotor.writeValue(1f);
                 } else {
                     winchMotor.writeValue(0f);
                 }

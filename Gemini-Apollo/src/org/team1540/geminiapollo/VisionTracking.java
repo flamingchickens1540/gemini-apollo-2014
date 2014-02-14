@@ -1,11 +1,9 @@
 package org.team1540.geminiapollo;
 
-import ccre.chan.BooleanInput;
-import ccre.chan.BooleanInputPoll;
+import ccre.chan.*;
 import ccre.cluck.CluckGlobals;
 import ccre.ctrl.ExpirationTimer;
-import ccre.event.EventLogger;
-import ccre.event.EventSource;
+import ccre.event.*;
 import ccre.log.LogLevel;
 
 public class VisionTracking {

@@ -1,2 +1,7 @@
 Phidget=phidget.*
 TestMode=robot/test_.*
+Autonomous=robot/(autom-.*|Save Tuning for Autonomous)
+Driving=robot/((High|Low) (Left|Right) .*|Save Tuning for Drive Tuning)
+Shooter=robot/(Rachet|Winch|Draw|Save Tuning for Shooter).*
+Pressure=robot/(Pressure Sensor|(High|Low)Pressure.*|Save Tuning for Pressure)
+Camera=robot/periscope/.*

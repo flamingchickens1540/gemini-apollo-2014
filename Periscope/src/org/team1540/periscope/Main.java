@@ -67,7 +67,7 @@ public class Main extends javax.swing.JFrame {
 
         txtCluckRemote.setColumns(15);
         txtCluckRemote.setFont(new java.awt.Font("Monospaced", 0, 11)); // NOI18N
-        txtCluckRemote.setText("10.15.40.2");
+        txtCluckRemote.setText("10.15.40.2:443");
         txtCluckRemote.setToolTipText("");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());

@@ -1,10 +1,7 @@
 package org.team1540.geminiapollo;
 
-import ccre.chan.BooleanInputPoll;
-import ccre.chan.BooleanOutput;
-import ccre.chan.FloatOutput;
+import ccre.chan.*;
 import ccre.ctrl.Mixing;
-import ccre.event.EventConsumer;
 import ccre.event.EventSource;
 
 public class Actuators {

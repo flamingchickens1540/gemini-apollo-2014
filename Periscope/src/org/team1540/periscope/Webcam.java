@@ -37,7 +37,7 @@ public final class Webcam extends ReporterThread {
         this.keepRunning = true;
         this.start();
     }
-    
+
     public Webcam(String address, ImageOutput output) {
         this();
         setOutput(output);
@@ -86,12 +86,14 @@ public final class Webcam extends ReporterThread {
         while (keepRunning) {
             System.out.println("Try connect at " + System.currentTimeMillis());
             try {
-                if (address != null && output != null) {
-                    connectToWebcam(address);
+                try {
+                    if (address != null && output != null) {
+                        connectToWebcam(address);
+                    }
+                } catch (IOException ioe) {
+                    Logger.log(LogLevel.WARNING, "IO Exception", ioe);
                 }
                 Thread.sleep(1000);
-            } catch (IOException ioe) {
-                Logger.log(LogLevel.WARNING, "IO Exception", ioe);
             } catch (InterruptedException inte) {
                 Logger.log(LogLevel.WARNING, "Interrupted", inte);
             }
@@ -109,6 +111,7 @@ public final class Webcam extends ReporterThread {
         Socket socket = new Socket(address, 80);
         curclose = socket;
         try {
+            socket.setSoTimeout(500);
             BufferedInputStream socketInputStream = new BufferedInputStream(socket.getInputStream());
             BufferedOutputStream socketOutputStream = new BufferedOutputStream(socket.getOutputStream());
             socketOutputStream.write(requestString.getBytes());
