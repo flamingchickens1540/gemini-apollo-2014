@@ -65,7 +65,7 @@ public class DriveCode {
         final BooleanStatus shifted = new BooleanStatus(shiftSolenoid);
 
         //begin
-        shifted.setFalseWhen(begin);
+        shifted.setTrueWhen(begin);
 
         //high
         shifted.setTrueWhen(shiftHighButton);
