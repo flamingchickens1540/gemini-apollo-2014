@@ -24,9 +24,11 @@ public class CVProcessor implements ImageOutput {
     private final Event notifyAck = new Event();
 
     {
-        CluckGlobals.node.publish("is-vt-autonomous", (BooleanInput) bout);
-        CluckGlobals.node.publish("ack-vt-autonomous", (EventSource) notifyAck);
-        CluckGlobals.node.publish("enable-vt-autonomous", Mixing.combine(waitingForAck.getSetTrueEvent(), new EventLogger(LogLevel.INFO, "Got enable!")));
+        if (CluckGlobals.node != null) {
+            CluckGlobals.node.publish("is-vt-autonomous", (BooleanInput) bout);
+            CluckGlobals.node.publish("ack-vt-autonomous", (EventSource) notifyAck);
+            CluckGlobals.node.publish("enable-vt-autonomous", Mixing.combine(waitingForAck.getSetTrueEvent(), new EventLogger(LogLevel.INFO, "Got enable!")));
+        }
     }
 
     public ComboBoxModel<String> getPointSettings() {
