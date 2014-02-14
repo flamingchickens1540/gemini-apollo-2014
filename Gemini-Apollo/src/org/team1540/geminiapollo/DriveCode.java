@@ -12,7 +12,7 @@ public class DriveCode {
         final FloatOutput leftDrive = Mixing.combine(leftDrive1, leftDrive2);
         final FloatOutput rightDrive = Mixing.combine(rightDrive1, rightDrive2);
         //High Tuning
-        TuningContext wheelTuner = new TuningContext(CluckGlobals.node, "TuningValues");
+        TuningContext wheelTuner = new TuningContext(CluckGlobals.node, "DriveTuning");
         wheelTuner.publishSavingEvent("Drive Tuning");
         final FloatStatus hfLeft = wheelTuner.getFloat("High Left Forwards", 1f);
         final FloatStatus hbLeft = wheelTuner.getFloat("High Left Backwards", 1f);
