@@ -8,7 +8,7 @@ import ccre.holders.TuningContext;
 
 public class DriveCode {
 
-    public static void createDrive(EventSource begin, EventSource during, FloatOutput leftDrive1, FloatOutput leftDrive2, FloatOutput rightDrive1, FloatOutput rightDrive2, FloatInputPoll leftDriveAxis, FloatInputPoll rightDriveAxis, FloatInputPoll forwardDriveAxis, final boolean competitionRobot, final BooleanStatus shifted) {
+    public static void createDrive(EventSource begin, EventSource during, FloatOutput leftDrive1, FloatOutput leftDrive2, FloatOutput rightDrive1, FloatOutput rightDrive2, FloatInputPoll leftDriveAxis, FloatInputPoll rightDriveAxis, FloatInputPoll forwardDriveAxis, final boolean competitionRobot, final BooleanStatus notShifted) {
         final FloatOutput leftDrive = Mixing.combine(leftDrive1, leftDrive2);
         final FloatOutput rightDrive = Mixing.combine(rightDrive1, rightDrive2);
         //High Tuning
@@ -46,7 +46,7 @@ public class DriveCode {
                 float rightDriveValue = rightDriveAxisW.readValue() + forwardDriveAxisW.readValue();
 
                 //adjust motor values
-                if (shifted.readValue()) {
+                if (!notShifted.readValue()) {
                     leftDriveValue *= leftDriveValue > 0 ? hfLeft.readValue() : hbLeft.readValue();
                     rightDriveValue *= rightDriveValue > 0 ? hfRight.readValue() : hbRight.readValue();
                 } else {
