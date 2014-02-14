@@ -61,7 +61,8 @@ public class RobotMain extends SimpleCore {
 
         // ***** CONTROL INTERFACE *****
         BooleanInputPoll armUpDown = ControlInterface.getArmUpDown();
-        BooleanInputPoll rollersOnOff = ControlInterface.getRollersOnOff();
+        BooleanInputPoll rollersIn = ControlInterface.rollerIn();
+        BooleanInputPoll rollersOut = ControlInterface.rollerOut();
         EventSource rearmCatapult = ControlInterface.getRearmCatapult();
         EventSource fireButton = ControlInterface.getFireButton();
         ControlInterface.displayPressure(pressureSensor, globalPeriodic);
@@ -97,7 +98,7 @@ public class RobotMain extends SimpleCore {
 
         // [[[[ ARM CODE ]]]]
         Logger.info("Actuators get startedTeleop irrelevently!");
-        Actuators.createCollector(startedTeleop, duringTeleop, collectorMotor, armFloatSolenoid, rollersOnOff);
+        Actuators.createCollector(startedTeleop, duringTeleop, collectorMotor, armFloatSolenoid, rollersIn,rollersOut);
         Actuators.createArm(startedTeleop, duringTeleop, armSolenoid, armUpDown, canArmMove);
 
         // [[[[ MOTD CODE ]]]]

@@ -10,15 +10,20 @@ import ccre.holders.TuningContext;
 import ccre.phidget.PhidgetReader;
 
 public class ControlInterface {
-
+    
     public static BooleanInputPoll getArmUpDown() {
         return PhidgetReader.getDigitalInput(2);
     }
 
-    public static BooleanInputPoll getRollersOnOff() {
+    public static BooleanInputPoll rollerIn() {
         return PhidgetReader.getDigitalInput(3);
     }
-
+    public static BooleanInputPoll rollerOut() {
+        return PhidgetReader.getDigitalInput(4);
+    }
+    public static FloatInputPoll powerSlider(){
+        return PhidgetReader.getAnalogInput(0);
+    }
     public static EventSource getRearmCatapult() {
         return Mixing.whenBooleanBecomes(PhidgetReader.digitalInputs[0], true);
     }
