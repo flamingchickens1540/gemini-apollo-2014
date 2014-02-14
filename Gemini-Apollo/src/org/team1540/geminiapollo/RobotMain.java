@@ -30,10 +30,12 @@ public class RobotMain extends SimpleCore {
         TestMode test = new TestMode(getIsTest());
         // ***** MOTORS *****
         // TODO: Better selection of ramping settings
-        FloatOutput leftDrive1 = test.testPublish("leftDrive1", makeTalonMotor(1, MOTOR_REVERSE, 0.1f));
-        FloatOutput leftDrive2 = test.testPublish("leftDrive2", makeTalonMotor(2, MOTOR_REVERSE, 0.1f));
-        FloatOutput rightDrive1 = test.testPublish("rightDrive1", makeTalonMotor(3, MOTOR_FORWARD, 0.1f));
-        FloatOutput rightDrive2 = test.testPublish("rightDrive2", makeTalonMotor(4, MOTOR_FORWARD, 0.1f));
+        FloatOutput leftDrive1 = test.testPublish("leftDrive1", makeTalonMotor(1, MOTOR_FORWARD, 0.1f));
+        FloatOutput leftDrive2 = test.testPublish("leftDrive2", makeTalonMotor(2, MOTOR_FORWARD, 0.1f));
+        test.testPublish("leftDrive", Mixing.combine(leftDrive1, leftDrive2));
+        FloatOutput rightDrive1 = test.testPublish("rightDrive1", makeTalonMotor(3, MOTOR_REVERSE, 0.1f));
+        FloatOutput rightDrive2 = test.testPublish("rightDrive2", makeTalonMotor(4, MOTOR_REVERSE, 0.1f));
+        test.testPublish("rightDrive", Mixing.combine(rightDrive1, rightDrive2));
         FloatOutput winchMotor = test.testPublish("winch", makeTalonMotor(5, MOTOR_REVERSE, 0.1f));
         FloatOutput collectorMotor = test.testPublish("collectorMotor", makeTalonMotor(6, MOTOR_REVERSE, 0.1f));
 
@@ -67,9 +69,9 @@ public class RobotMain extends SimpleCore {
         ControlInterface.displayPressure(pressureSensor, globalPeriodic);
 
         // ***** DRIVE JOYSTICK *****
-        FloatInputPoll leftDriveAxis = joystick1.getAxisChannel(2);
-        FloatInputPoll forwardDriveAxis = joystick1.getAxisChannel(3);
-        FloatInputPoll rightDriveAxis = joystick1.getAxisChannel(5);
+        FloatInputPoll leftDriveAxis = Mixing.negate(joystick1.getAxisChannel(2));
+        FloatInputPoll forwardDriveAxis = Mixing.negate(joystick1.getAxisChannel(3));
+        FloatInputPoll rightDriveAxis = Mixing.negate(joystick1.getAxisChannel(5));
 
         EventSource shiftHighButton = joystick1.getButtonSource(1);
         EventSource shiftLowButton = joystick1.getButtonSource(3);

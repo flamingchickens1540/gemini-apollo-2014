@@ -16,25 +16,16 @@ import ccre.log.Logger;
 public class DriveCode {
 
     /*TO DO:
-     -add motor adjustors...
-     -during for createShifting is currently unnecessary, might remove
+     -left motor adjustors flipped... figure out why
      */
     public static void createDrive(EventSource begin, EventSource during, final FloatOutput leftDrive1, final FloatOutput leftDrive2, final FloatOutput rightDrive1, final FloatOutput rightDrive2, FloatInputPoll leftDriveAxis, FloatInputPoll rightDriveAxis, FloatInputPoll forwardDriveAxis, final boolean competitionRobot) {
-        //Gemini tuning
-        TuningContext gWheelTuner = new TuningContext(CluckGlobals.node, "Gemini Wheel Values");
-        gWheelTuner.publishSavingEvent("Gemini Wheel Save");
-        final FloatStatus gfLeft = gWheelTuner.getFloat("Gemini Left Forwards", 624 / 691f);
-        final FloatStatus gbLeft = gWheelTuner.getFloat("Gemini Left Backwards", 613 / 704f);
-        final FloatStatus gfRight = gWheelTuner.getFloat("Gemini Right Forwards", 1f);
-        final FloatStatus gbRight = gWheelTuner.getFloat("Gemini Right Backwards", 1f);
-
-        //Apollo tuning
-        TuningContext aWheelTuner = new TuningContext(CluckGlobals.node, "Apollo Wheel Values");
-        aWheelTuner.publishSavingEvent("Apollo Wheel Save");
-        final FloatStatus afLeft = aWheelTuner.getFloat("Apollo Left Forwards", 1f);
-        final FloatStatus abLeft = aWheelTuner.getFloat("Apollo Left Backwards", 1f);
-        final FloatStatus afRight = aWheelTuner.getFloat("Apollo Right Forwards", 1f);
-        final FloatStatus abRight = aWheelTuner.getFloat("Apollo Right Backwards", 1f);
+        //Tuning
+        TuningContext WheelTuner = new TuningContext(CluckGlobals.node, "DriveTuningValues");
+        WheelTuner.publishSavingEvent("Drive Tuning Save");
+        final FloatStatus fLeft = WheelTuner.getFloat("Left Forwards", 1f);
+        final FloatStatus bLeft = WheelTuner.getFloat("Left Backwards", 1f);
+        final FloatStatus fRight = WheelTuner.getFloat("Right Forwards", 1f);
+        final FloatStatus bRight = WheelTuner.getFloat("Right Backwards", 1f);
 
         //dead zone
         FloatFilter deadZone = Mixing.deadzone(.1f);
@@ -60,28 +51,15 @@ public class DriveCode {
                 float rightDriveValue = (rightDriveAxisW.readValue() + forwardDriveAxisW.readValue());
 
                 //adjust motor values
-                if (competitionRobot) {
-                    if (leftDriveValue > 0) {
-                        leftDriveValue *= afLeft.readValue();
-                    } else if (leftDriveValue < 0) {
-                        leftDriveValue *= abLeft.readValue();
-                    }
-                    if (rightDriveValue > 0) {
-                        rightDriveValue *= afRight.readValue();
-                    } else if (rightDriveValue < 0) {
-                        rightDriveValue *= abRight.readValue();
-                    }
-                } else {
-                    if (leftDriveValue > 0) {
-                        leftDriveValue *= gfLeft.readValue();
-                    } else if (leftDriveValue < 0) {
-                        leftDriveValue *= gbLeft.readValue();
-                    }
-                    if (rightDriveValue > 0) {
-                        rightDriveValue *= gfRight.readValue();
-                    } else if (rightDriveValue < 0) {
-                        rightDriveValue *= gbRight.readValue();
-                    }
+                if (leftDriveValue > 0) {
+                    leftDriveValue *= fLeft.readValue();
+                } else if (leftDriveValue < 0) {
+                    leftDriveValue *= bLeft.readValue();
+                }
+                if (rightDriveValue > 0) {
+                    rightDriveValue *= fRight.readValue();
+                } else if (rightDriveValue < 0) {
+                    rightDriveValue *= bRight.readValue();
                 }
 
                 //write motor values
