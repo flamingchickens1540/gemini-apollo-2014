@@ -52,7 +52,7 @@ public class Shooter {
                 Logger.info("During Fire Timer A");
             }
         });
-        fireTimer.schedule(100, new EventConsumer() {
+        fireTimer.schedule(250, new EventConsumer() {
             public void eventFired() {
                 fireTimerRunning.writeValue(false);
                 Logger.info("During Fire Timer B");
@@ -119,7 +119,7 @@ public class Shooter {
                         winchMotor.writeValue(0f);
                     }
                 } else if (fireTimerRunning.readValue()) {
-                    winchMotor.writeValue(-1f);
+                    winchMotor.writeValue(1f);
                 } else {
                     winchMotor.writeValue(0f);
                 }
