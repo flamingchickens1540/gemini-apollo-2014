@@ -18,14 +18,22 @@ public class DriveCode {
     /*TO DO:
      -left motor adjustors flipped... figure out why
      */
-    public static void createDrive(EventSource begin, EventSource during, final FloatOutput leftDrive1, final FloatOutput leftDrive2, final FloatOutput rightDrive1, final FloatOutput rightDrive2, FloatInputPoll leftDriveAxis, FloatInputPoll rightDriveAxis, FloatInputPoll forwardDriveAxis, final boolean competitionRobot) {
-        //Tuning
-        TuningContext WheelTuner = new TuningContext(CluckGlobals.node, "DriveTuningValues");
-        WheelTuner.publishSavingEvent("Drive Tuning Save");
-        final FloatStatus fLeft = WheelTuner.getFloat("Left Forwards", 1f);
-        final FloatStatus bLeft = WheelTuner.getFloat("Left Backwards", 1f);
-        final FloatStatus fRight = WheelTuner.getFloat("Right Forwards", 1f);
-        final FloatStatus bRight = WheelTuner.getFloat("Right Backwards", 1f);
+    public static void createDrive(EventSource begin, EventSource during, final FloatOutput leftDrive1, final FloatOutput leftDrive2, final FloatOutput rightDrive1, final FloatOutput rightDrive2, FloatInputPoll leftDriveAxis, FloatInputPoll rightDriveAxis, FloatInputPoll forwardDriveAxis, final boolean competitionRobot, final BooleanStatus shifted) {
+        //High Tuning
+        TuningContext hWheelTuner = new TuningContext(CluckGlobals.node, "HighDriveTuningValues");
+        hWheelTuner.publishSavingEvent("High Drive Tuning Save");
+        final FloatStatus hfLeft = hWheelTuner.getFloat("High Left Forwards", 1f);
+        final FloatStatus hbLeft = hWheelTuner.getFloat("High Left Backwards", 1f);
+        final FloatStatus hfRight = hWheelTuner.getFloat("High Right Forwards", 1f);
+        final FloatStatus hbRight = hWheelTuner.getFloat("High Right Backwards", 1f);
+
+        //Low Tuning
+        TuningContext lWheelTuner = new TuningContext(CluckGlobals.node, "LowDriveTuningValues");
+        lWheelTuner.publishSavingEvent("Low Drive Tuning Save");
+        final FloatStatus lfLeft = lWheelTuner.getFloat("Low Left Forwards", 1f);
+        final FloatStatus lbLeft = lWheelTuner.getFloat("Low Left Backwards", 1f);
+        final FloatStatus lfRight = lWheelTuner.getFloat("Low Right Forwards", 1f);
+        final FloatStatus lbRight = lWheelTuner.getFloat("Low Right Backwards", 1f);
 
         //dead zone
         FloatFilter deadZone = Mixing.deadzone(.1f);
@@ -51,15 +59,28 @@ public class DriveCode {
                 float rightDriveValue = (rightDriveAxisW.readValue() + forwardDriveAxisW.readValue());
 
                 //adjust motor values
-                if (leftDriveValue > 0) {
-                    leftDriveValue *= fLeft.readValue();
-                } else if (leftDriveValue < 0) {
-                    leftDriveValue *= bLeft.readValue();
-                }
-                if (rightDriveValue > 0) {
-                    rightDriveValue *= fRight.readValue();
-                } else if (rightDriveValue < 0) {
-                    rightDriveValue *= bRight.readValue();
+                if (shifted.readValue()) {
+                    if (leftDriveValue > 0) {
+                        leftDriveValue *= hfLeft.readValue();
+                    } else if (leftDriveValue < 0) {
+                        leftDriveValue *= hbLeft.readValue();
+                    }
+                    if (rightDriveValue > 0) {
+                        rightDriveValue *= hfRight.readValue();
+                    } else if (rightDriveValue < 0) {
+                        rightDriveValue *= hbRight.readValue();
+                    }
+                } else {
+                    if (leftDriveValue > 0) {
+                        leftDriveValue *= lfLeft.readValue();
+                    } else if (leftDriveValue < 0) {
+                        leftDriveValue *= lbLeft.readValue();
+                    }
+                    if (rightDriveValue > 0) {
+                        rightDriveValue *= lfRight.readValue();
+                    } else if (rightDriveValue < 0) {
+                        rightDriveValue *= lbRight.readValue();
+                    }
                 }
 
                 //write motor values
@@ -71,16 +92,18 @@ public class DriveCode {
         });
     }
 
-    public static void createShifting(EventSource begin, EventSource during, BooleanOutput shiftSolenoid, EventSource shiftHighButton, EventSource shiftLowButton) {
+    public static BooleanStatus createShifting(EventSource begin, EventSource during, BooleanOutput shiftSolenoid, EventSource shiftHighButton, EventSource shiftLowButton) {
         final BooleanStatus shifted = new BooleanStatus(shiftSolenoid);
 
         //begin
-        shifted.setTrueWhen(begin);
+        shifted.setFalseWhen(begin);
 
         //high
         shifted.setTrueWhen(shiftHighButton);
 
         //low
         shifted.setFalseWhen(shiftLowButton);
+
+        return shifted;
     }
 }

@@ -3,6 +3,7 @@ package org.team1540.geminiapollo;
 import ccre.chan.BooleanInput;
 import ccre.chan.BooleanInputPoll;
 import ccre.chan.BooleanOutput;
+import ccre.chan.BooleanStatus;
 import ccre.chan.FloatInputPoll;
 import ccre.chan.FloatOutput;
 import ccre.cluck.CluckGlobals;
@@ -84,8 +85,8 @@ public class RobotMain extends SimpleCore {
         EventSource fireAutonomousTrigger = controller.getWhenToFire();
 
         // [[[[ DRIVE CODE ]]]]
-        DriveCode.createDrive(startedTeleop, duringTeleop, leftDrive1, leftDrive2, rightDrive1, rightDrive2, leftDriveAxis, rightDriveAxis, forwardDriveAxis, IS_COMPETITION_ROBOT);
-        DriveCode.createShifting(startedTeleop, duringTeleop, shiftSolenoid, shiftHighButton, shiftLowButton);
+        BooleanStatus shiftBoolean = DriveCode.createShifting(startedTeleop, duringTeleop, shiftSolenoid, shiftHighButton, shiftLowButton);
+        DriveCode.createDrive(startedTeleop, duringTeleop, leftDrive1, leftDrive2, rightDrive1, rightDrive2, leftDriveAxis, rightDriveAxis, forwardDriveAxis, IS_COMPETITION_ROBOT, shiftBoolean);
 
         // [[[[ SHOOTER CODE ]]]]
         Event fireWhen = new Event();
