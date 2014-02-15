@@ -15,7 +15,13 @@ public class Shooter {
      -get rid of log
      */
 
-    public static BooleanInputPoll createShooter(EventSource beginAutonomous, final EventSource beginTeleop, EventSource during, final FloatOutput winchMotor, BooleanOutput winchSolenoid, final FloatInputPoll winchCurrent, final BooleanInputPoll catapultNotCocked, EventSource rearmCatapult, EventSource fireButton, final BooleanInputPoll armDown, BooleanOutput rachetLoopRelease) {
+    public static BooleanInputPoll createShooter(
+            final EventSource beginAutonomous, final EventSource beginTeleop, final EventSource during,
+            final FloatOutput winchMotor, 
+            final BooleanOutput winchSolenoid, final BooleanOutput rachetLoopRelease,
+            final FloatInputPoll winchCurrent,
+            final BooleanInputPoll catapultNotCocked, final BooleanInputPoll armDown, final BooleanInputPoll detentioning,
+            EventSource rearmCatapult, EventSource fireButton) {
         rachetLoopRelease.writeValue(false); // We switched the polarity.
 
         //Network Variables
@@ -120,6 +126,8 @@ public class Shooter {
                     }
                 } else if (fireTimerRunning.readValue()) {
                     winchMotor.writeValue(1f);
+                } else if (detentioning.readValue()) {
+                    winchMotor.writeValue(-winchSpeed.readValue());
                 } else {
                     winchMotor.writeValue(0f);
                 }

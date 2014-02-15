@@ -46,7 +46,7 @@ public class RobotMain extends SimpleCore {
         CluckGlobals.node.publish("Pressure Sensor", Mixing.createDispatch(pressureSensor, globalPeriodic));
 
         // ***** DIGITAL INPUTS *****
-        BooleanInputPoll catapultCocked = makeDigitalInput(2);
+        BooleanInputPoll catapultNotCocked = makeDigitalInput(2);
 
         // ***** VISION TRACKING *****
         VisionTracking.setup(startedAutonomous);
@@ -58,6 +58,7 @@ public class RobotMain extends SimpleCore {
         BooleanInputPoll armUpDown = ControlInterface.getArmUpDown();
         BooleanInputPoll rollersIn = ControlInterface.rollerIn();
         BooleanInputPoll rollersOut = ControlInterface.rollerOut();
+        BooleanInputPoll detensioning=ControlInterface.detensioning();
         EventSource rearmCatapult = ControlInterface.getRearmCatapult();
         EventSource fireButton = ControlInterface.getFireButton();
         ControlInterface.displayPressure(pressureSensor, globalPeriodic);
@@ -82,15 +83,17 @@ public class RobotMain extends SimpleCore {
         DriveCode.createDrive(startedTeleop, duringTeleop, leftDrive1, leftDrive2, rightDrive1, rightDrive2, leftDriveAxis, rightDriveAxis, forwardDriveAxis, IS_COMPETITION_ROBOT, shiftBoolean);
 
         // [[[[ SHOOTER CODE ]]]]
-        Event fireWhen = new Event();
-        fireButton.addListener(fireWhen);
-        fireAutonomousTrigger.addListener(fireWhen);
+        EventSource fireWhen=combine(fireAutonomousTrigger,fireButton);
         EventLogger.log(fireWhen, LogLevel.FINE, "Fire now!");
-        Event updateShooterWhen = new Event();
-        duringTeleop.addListener(updateShooterWhen);
-        duringAutonomous.addListener(updateShooterWhen);
-        BooleanInputPoll canArmMove = Shooter.createShooter(startedAutonomous, startedTeleop, updateShooterWhen, winchMotor, winchSolenoid, winchCurrent, catapultCocked, Mixing.filterEvent(getIsDisabled(), false, rearmCatapult), Mixing.filterEvent(getIsDisabled(), false, (EventSource) fireWhen), armUpDown, rachetLoopRelease);
-
+        EventSource updateShooterWhen=combine(duringTeleop,duringAutonomous);
+        BooleanInputPoll canArmMove = Shooter.createShooter(
+                startedAutonomous,startedTeleop,updateShooterWhen,
+                winchMotor,
+                winchSolenoid,rachetLoopRelease,
+                winchCurrent,
+                catapultNotCocked,armUpDown,detensioning,
+                rearmCatapult,fireWhen
+        );
         // [[[[ ARM CODE ]]]]
         Logger.info("Actuators get startedTeleop irrelevently!");
         Actuators.createCollector(startedTeleop, duringTeleop, collectorMotor, armFloatSolenoid, rollersIn,rollersOut);
@@ -98,5 +101,16 @@ public class RobotMain extends SimpleCore {
 
         // [[[[ MOTD CODE ]]]]
         MOTD.createMOTD();
+    }
+    public EventSource combine(final EventSource a,final EventSource b){
+        return new EventSource(){
+            public boolean addListener(EventConsumer ec) {
+                return a.addListener(ec) && b.addListener(ec);
+            }
+            public void removeListener(EventConsumer ec) throws IllegalStateException {
+                a.removeListener(ec);
+                b.removeListener(ec);
+            }
+        };
     }
 }

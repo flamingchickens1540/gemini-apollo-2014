@@ -29,7 +29,9 @@ public class ControlInterface {
     public static EventSource getFireButton() {
         return Mixing.whenBooleanBecomes(PhidgetReader.digitalInputs[1], true);
     }
-
+    public static BooleanInputPoll detensioning(){
+        return PhidgetReader.getDigitalInput(7);
+    }
     public static void displayPressure(final FloatInputPoll f, EventSource update) {
         final TuningContext tuner = new TuningContext(CluckGlobals.node, "PressureTuner");
         tuner.publishSavingEvent("Pressure");
