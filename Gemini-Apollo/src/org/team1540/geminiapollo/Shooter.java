@@ -138,4 +138,25 @@ public class Shooter {
         //this is for Gregor... I don't remeber what it's for but I think it is so he can't lift the arm when the catapult is rearming
         return Mixing.invert((BooleanInputPoll) rearming);
     }
+
+    public static void createTuner(EventSource during, final FloatInputPoll sensor, EventSource rearmCatapult, final BooleanInputPoll catapultNotCocked) {
+        final FloatStatus active = new FloatStatus(-1);
+        final BooleanStatus enabled = new BooleanStatus();
+        enabled.setTrueWhen(rearmCatapult);
+        active.setWhen(0, rearmCatapult);
+        during.addListener(new EventConsumer() {
+            public void eventFired() {
+                if (enabled.readValue()) {
+                    float sense = sensor.readValue();
+                    if (sense > active.readValue()) {
+                        active.writeValue(sense);
+                    }
+                    if (catapultNotCocked.readValue()) {
+                        enabled.writeValue(false);
+                    }
+                }
+            }
+        });
+        CluckGlobals.node.publish("Winch Max Current", active);
+    }
 }

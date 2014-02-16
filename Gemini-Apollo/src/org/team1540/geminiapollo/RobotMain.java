@@ -97,6 +97,8 @@ public class RobotMain extends SimpleCore {
                 catapultNotCocked, armUpDown, detensioning,
                 rearmCatapult, fireWhen
         );
+        
+        
         // [[[[ ARM CODE ]]]]
         Logger.info("Actuators get startedTeleop irrelevently!");
         Actuators.createCollector(startedTeleop, duringTeleop, collectorMotor, armFloatSolenoid, rollersIn, rollersOut);
@@ -105,32 +107,5 @@ public class RobotMain extends SimpleCore {
         // [[[[ Phidget Display Code ]]]]
         ControlInterface.displayPressure(pressureSensor, globalPeriodic);
         MOTD.createMOTD();
-
-        /*CluckGlobals.node.publish("Test-LibC", new EventConsumer() {
-            public void eventFired() {
-                try {
-                    Logger.info("Starting test...");
-                    LibC c = LibC.INSTANCE;
-                    int fd = c.open("test-file", LibC.O_CREAT | LibC.O_WRONLY | LibC.O_EXCL, 0666);
-                    Logger.info("Got FD: " + fd);
-                    if (fd == -1) {
-                        throw new IOException("LibC error.A: " + LibCUtil.errno());
-                    }
-                    int count = c.write(fd, "Testing\n".getBytes(), 8);
-                    Logger.info("Got count: " + count);
-                    if (count != 8) {
-                        throw new IOException("LibC error.B: " + count + " (" + LibCUtil.errno() + ")");
-                    }
-                    int out = c.close(fd);
-                    Logger.info("Got out: " + out);
-                    if (out != 0) {
-                        throw new IOException("LibC error.C: " + count + " (" + LibCUtil.errno() + ")");
-                    }
-                    Logger.info("Success!");
-                } catch (IOException ex) {
-                    Logger.log(LogLevel.WARNING, "LibC write failed!", ex);
-                }
-            }
-        });*/
     }
 }
