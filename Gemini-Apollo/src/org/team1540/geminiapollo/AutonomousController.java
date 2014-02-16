@@ -2,6 +2,7 @@ package org.team1540.geminiapollo;
 
 import ccre.chan.*;
 import ccre.cluck.CluckGlobals;
+import ccre.cluck.rpc.RemoteProcedure;
 import ccre.ctrl.Mixing;
 import ccre.event.*;
 import ccre.holders.StringHolder;
@@ -11,6 +12,7 @@ import ccre.log.Logger;
 import ccre.saver.StorageProvider;
 import ccre.saver.StorageSegment;
 import ccre.util.*;
+import java.io.ByteArrayOutputStream;
 
 public class AutonomousController extends InstinctModule {
 
@@ -19,9 +21,10 @@ public class AutonomousController extends InstinctModule {
     // Provided channels
     private FloatOutput leftDrive, rightDrive;
     private BooleanInputPoll isHotzone;
+    private FloatInputPoll ultrasonicSensor;
     // Tuned constants are below near the autonomous modes.
     private final StringHolder option = new StringHolder("none");
-    private final String[] options = {"none", "forward", "hotcheck"};
+    private final String[] options = {"none", "forward", "hotcheck", "ultrasonic"};
     private final CList optionList = CArrayUtils.asList(options);
     private final Event fireWhenEvent = new Event();
 
@@ -33,6 +36,8 @@ public class AutonomousController extends InstinctModule {
             autoForward();
         } else if (cur.equals("hotcheck")) {
             autoHotcheck();
+        } else if (cur.equals("ultrasonic")) {
+            autoUltrasonic();
         } else {
             Logger.severe("Nonexistent autonomous mode: " + option.get());
         }
@@ -80,6 +85,17 @@ public class AutonomousController extends InstinctModule {
         rightDrive.writeValue(0);
     }
 
+    private final FloatStatus ultrasonicMovement = tune.getFloat("autom-ultrasonic-move-speed", 0.5f);
+    private final FloatStatus ultrasonicTarget = tune.getFloat("autom-ultrasonic-target", 3);
+
+    private void autoUltrasonic() throws AutonomousModeOverException, InterruptedException {
+        leftDrive.writeValue(ultrasonicMovement.readValue());
+        rightDrive.writeValue(ultrasonicMovement.readValue());
+        waitUntilAtMost(ultrasonicSensor, ultrasonicTarget.readValue());
+        leftDrive.writeValue(0);
+        rightDrive.writeValue(0);
+    }
+
     // *** Framework ***
     private void sayCurrent() {
         Logger.info("Autonomous mode is currently set to: " + option.get());
@@ -104,6 +120,29 @@ public class AutonomousController extends InstinctModule {
                 sayCurrent();
             }
         });
+        final RemoteProcedure openDialog = CluckGlobals.node.subscribeRP("phidget/display-dialog", 11000);
+        CluckGlobals.node.publish("autom-select", new EventConsumer() {
+            public void eventFired() {
+                StringBuffer sb = new StringBuffer("TITLE Select Autonomous Mode\n");
+                for (int i = 0; i < options.length; i++) {
+                    String option = options[i];
+                    sb.append("BUTTON ").append(option).append('\n');
+                }
+                openDialog.invoke(sb.toString().getBytes(), new ByteArrayOutputStream() {
+                    public void close() {
+                        String str = new String(this.toByteArray());
+                        if (str.length() == 0) {
+                            return;
+                        }
+                        int index = optionList.indexOf(str);
+                        if (index != -1) {
+                            option.set(str);
+                            sayCurrent();
+                        }
+                    }
+                });
+            }
+        });
         sayCurrent();
         register(reg);
     }
@@ -115,6 +154,10 @@ public class AutonomousController extends InstinctModule {
 
     public void putHotzone(BooleanInputPoll isHotzone) {
         this.isHotzone = isHotzone;
+    }
+    
+    public void putUltrasonic(FloatInputPoll ultrasonic) {
+        ultrasonicSensor = ultrasonic;
     }
 
     public EventSource getWhenToFire() {

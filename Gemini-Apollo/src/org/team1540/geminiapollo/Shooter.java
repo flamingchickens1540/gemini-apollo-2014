@@ -30,6 +30,8 @@ public class Shooter {
         tuner.publishSavingEvent("Shooter");
         final FloatStatus winchSpeed = tuner.getFloat("Winch Speed", .3f);
         final FloatStatus drawBack = tuner.getFloat("Draw Back", 1.1f);
+        final BooleanStatus shouldWinchDuringFire = new BooleanStatus(true);
+        CluckGlobals.node.publish("Winch During Fire", shouldWinchDuringFire);
 
         //engage safety after firing safety
         final ExpirationTimer engageTimer = new ExpirationTimer();
@@ -124,7 +126,7 @@ public class Shooter {
                         rearming.writeValue(false);
                         winchMotor.writeValue(0f);
                     }
-                } else if (fireTimerRunning.readValue()) {
+                } else if (fireTimerRunning.readValue() && shouldWinchDuringFire.readValue()) {
                     winchMotor.writeValue(1f);
                 } else if (detentioning.readValue()) {
                     winchMotor.writeValue(-winchSpeed.readValue());

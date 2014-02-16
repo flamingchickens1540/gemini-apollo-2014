@@ -43,7 +43,10 @@ public class RobotMain extends SimpleCore {
         // TODO: Better selection of average bits
         FloatInputPoll winchCurrent = makeAnalogInput(1, 8);
         FloatInputPoll pressureSensor = makeAnalogInput(2, 8);
+        FloatInputPoll ultrasonicSensor = makeAnalogInput(3, 8);
+        CluckGlobals.node.publish("Winch Current", Mixing.createDispatch(pressureSensor, globalPeriodic));
         CluckGlobals.node.publish("Pressure Sensor", Mixing.createDispatch(pressureSensor, globalPeriodic));
+        CluckGlobals.node.publish("Ultrasonic Sensor", Mixing.createDispatch(pressureSensor, globalPeriodic));
 
         // ***** DIGITAL INPUTS *****
         BooleanInputPoll catapultNotCocked = makeDigitalInput(2);
@@ -76,6 +79,7 @@ public class RobotMain extends SimpleCore {
         controller.setup(this);
         controller.putDriveMotors(leftDrive1, leftDrive2, rightDrive1, rightDrive2);
         controller.putHotzone(isHotZone);
+        controller.putUltrasonic(ultrasonicSensor);
         EventSource fireAutonomousTrigger = controller.getWhenToFire();
 
         // [[[[ DRIVE CODE ]]]]
