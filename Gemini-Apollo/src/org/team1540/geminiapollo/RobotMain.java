@@ -7,6 +7,9 @@ import ccre.ctrl.Mixing;
 import ccre.event.*;
 import ccre.igneous.SimpleCore;
 import ccre.log.*;
+import com.sun.squawk.platform.posix.LibCUtil;
+import com.sun.squawk.platform.posix.natives.LibC;
+import java.io.IOException;
 
 public class RobotMain extends SimpleCore {
 
@@ -61,7 +64,7 @@ public class RobotMain extends SimpleCore {
         BooleanInputPoll armUpDown = ControlInterface.getArmUpDown();
         BooleanInputPoll rollersIn = ControlInterface.rollerIn();
         BooleanInputPoll rollersOut = ControlInterface.rollerOut();
-        BooleanInputPoll detensioning=ControlInterface.detensioning();
+        BooleanInputPoll detensioning = ControlInterface.detensioning();
         EventSource rearmCatapult = ControlInterface.getRearmCatapult();
         EventSource fireButton = ControlInterface.getFireButton();
         ControlInterface.displayPressure(pressureSensor, globalPeriodic);
@@ -87,34 +90,50 @@ public class RobotMain extends SimpleCore {
         DriveCode.createDrive(startedTeleop, duringTeleop, leftDrive1, leftDrive2, rightDrive1, rightDrive2, leftDriveAxis, rightDriveAxis, forwardDriveAxis, IS_COMPETITION_ROBOT, shiftBoolean);
 
         // [[[[ SHOOTER CODE ]]]]
-        EventSource fireWhen=combine(fireAutonomousTrigger,fireButton);
+        EventSource fireWhen = Mixing.combine(fireAutonomousTrigger, fireButton);
         EventLogger.log(fireWhen, LogLevel.FINE, "Fire now!");
-        EventSource updateShooterWhen=combine(duringTeleop,duringAutonomous);
+        EventSource updateShooterWhen = Mixing.combine(duringTeleop, duringAutonomous);
         BooleanInputPoll canArmMove = Shooter.createShooter(
-                startedAutonomous,startedTeleop,updateShooterWhen,
+                startedAutonomous, startedTeleop, updateShooterWhen,
                 winchMotor,
-                winchSolenoid,rachetLoopRelease,
+                winchSolenoid, rachetLoopRelease,
                 winchCurrent,
-                catapultNotCocked,armUpDown,detensioning,
-                rearmCatapult,fireWhen
+                catapultNotCocked, armUpDown, detensioning,
+                rearmCatapult, fireWhen
         );
         // [[[[ ARM CODE ]]]]
         Logger.info("Actuators get startedTeleop irrelevently!");
-        Actuators.createCollector(startedTeleop, duringTeleop, collectorMotor, armFloatSolenoid, rollersIn,rollersOut);
+        Actuators.createCollector(startedTeleop, duringTeleop, collectorMotor, armFloatSolenoid, rollersIn, rollersOut);
         Actuators.createArm(startedTeleop, duringTeleop, armSolenoid, armUpDown, canArmMove);
 
         // [[[[ MOTD CODE ]]]]
         MOTD.createMOTD();
-    }
-    public EventSource combine(final EventSource a,final EventSource b){
-        return new EventSource(){
-            public boolean addListener(EventConsumer ec) {
-                return a.addListener(ec) && b.addListener(ec);
+
+        CluckGlobals.node.publish("Test-LibC", new EventConsumer() {
+            public void eventFired() {
+                try {
+                    Logger.info("Starting test...");
+                    LibC c = LibC.INSTANCE;
+                    int fd = c.open("test-file", LibC.O_CREAT | LibC.O_WRONLY | LibC.O_EXCL, 0666);
+                    Logger.info("Got FD: " + fd);
+                    if (fd == -1) {
+                        throw new IOException("LibC error.A: " + LibCUtil.errno());
+                    }
+                    int count = c.write(fd, "Testing\n".getBytes(), 8);
+                    Logger.info("Got count: " + count);
+                    if (count != 8) {
+                        throw new IOException("LibC error.B: " + count + " (" + LibCUtil.errno() + ")");
+                    }
+                    int out = c.close(fd);
+                    Logger.info("Got out: " + out);
+                    if (out != 0) {
+                        throw new IOException("LibC error.C: " + count + " (" + LibCUtil.errno() + ")");
+                    }
+                    Logger.info("Success!");
+                } catch (IOException ex) {
+                    Logger.log(LogLevel.WARNING, "LibC write failed!", ex);
+                }
             }
-            public void removeListener(EventConsumer ec) throws IllegalStateException {
-                a.removeListener(ec);
-                b.removeListener(ec);
-            }
-        };
+        });
     }
 }

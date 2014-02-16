@@ -155,7 +155,7 @@ public class AutonomousController extends InstinctModule {
     public void putHotzone(BooleanInputPoll isHotzone) {
         this.isHotzone = isHotzone;
     }
-    
+
     public void putUltrasonic(FloatInputPoll ultrasonic) {
         ultrasonicSensor = ultrasonic;
     }

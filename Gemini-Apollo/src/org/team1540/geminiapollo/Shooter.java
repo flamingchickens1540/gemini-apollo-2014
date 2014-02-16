@@ -17,7 +17,7 @@ public class Shooter {
 
     public static BooleanInputPoll createShooter(
             final EventSource beginAutonomous, final EventSource beginTeleop, final EventSource during,
-            final FloatOutput winchMotor, 
+            final FloatOutput winchMotor,
             final BooleanOutput winchSolenoid, final BooleanOutput rachetLoopRelease,
             final FloatInputPoll winchCurrent,
             final BooleanInputPoll catapultNotCocked, final BooleanInputPoll armDown, final BooleanInputPoll detentioning,
