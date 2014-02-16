@@ -8,19 +8,15 @@ import ccre.holders.TuningContext;
 import ccre.phidget.PhidgetReader;
 
 public class ControlInterface {
-<<<<<<< HEAD
 
-=======
-    
-     public static EventSource getRearmCatapult() {
+    public static EventSource getRearmCatapult() {
         return Mixing.whenBooleanBecomes(PhidgetReader.digitalInputs[0], true);
     }
 
     public static EventSource getFireButton() {
         return Mixing.whenBooleanBecomes(PhidgetReader.digitalInputs[1], true);
     }
-    
->>>>>>> 37719f1c150872fb11e5c290447fbc0932dd0607
+
     public static BooleanInputPoll getArmUpDown() {
         return PhidgetReader.getDigitalInput(2);
     }
@@ -32,33 +28,15 @@ public class ControlInterface {
     public static BooleanInputPoll rollerOut() {
         return PhidgetReader.getDigitalInput(4);
     }
-<<<<<<< HEAD
 
     public static FloatInputPoll powerSlider() {
         return PhidgetReader.getAnalogInput(0);
-    }
-
-    public static EventSource getRearmCatapult() {
-        return Mixing.whenBooleanBecomes(PhidgetReader.digitalInputs[0], true);
-    }
-
-    public static EventSource getFireButton() {
-        return Mixing.whenBooleanBecomes(PhidgetReader.digitalInputs[1], true);
     }
 
     public static BooleanInputPoll detensioning() {
         return PhidgetReader.getDigitalInput(7);
     }
 
-=======
-    
-    public static BooleanInputPoll detensioning(){
-        return PhidgetReader.getDigitalInput(7);
-    }
-        public static FloatInputPoll powerSlider(){
-        return PhidgetReader.getAnalogInput(0);
-    }
->>>>>>> 37719f1c150872fb11e5c290447fbc0932dd0607
     public static void displayPressure(final FloatInputPoll f, EventSource update) {
         final TuningContext tuner = new TuningContext(CluckGlobals.node, "PressureTuner");
         tuner.publishSavingEvent("Pressure");
