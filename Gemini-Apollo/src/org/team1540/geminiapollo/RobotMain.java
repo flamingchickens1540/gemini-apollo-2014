@@ -43,7 +43,10 @@ public class RobotMain extends SimpleCore {
         // TODO: Better selection of average bits
         FloatInputPoll winchCurrent = makeAnalogInput(1, 8);
         FloatInputPoll pressureSensor = makeAnalogInput(2, 8);
+        FloatInputPoll ultrasonicSensor = makeAnalogInput(3, 8);
+        CluckGlobals.node.publish("Winch Current", Mixing.createDispatch(pressureSensor, globalPeriodic));
         CluckGlobals.node.publish("Pressure Sensor", Mixing.createDispatch(pressureSensor, globalPeriodic));
+        CluckGlobals.node.publish("Ultrasonic Sensor", Mixing.createDispatch(pressureSensor, globalPeriodic));
 
         // ***** DIGITAL INPUTS *****
         BooleanInputPoll catapultNotCocked = makeDigitalInput(2);
@@ -58,10 +61,9 @@ public class RobotMain extends SimpleCore {
         BooleanInputPoll armUpDown = ControlInterface.getArmUpDown();
         BooleanInputPoll rollersIn = ControlInterface.rollerIn();
         BooleanInputPoll rollersOut = ControlInterface.rollerOut();
-        BooleanInputPoll detensioning=ControlInterface.detensioning();
+        BooleanInputPoll detensioning = ControlInterface.detensioning();
         EventSource rearmCatapult = ControlInterface.getRearmCatapult();
         EventSource fireButton = ControlInterface.getFireButton();
-        ControlInterface.displayPressure(pressureSensor, globalPeriodic);
 
         // ***** DRIVE JOYSTICK *****
         FloatInputPoll leftDriveAxis = Mixing.negate(joystick1.getAxisChannel(2));
@@ -76,6 +78,7 @@ public class RobotMain extends SimpleCore {
         controller.setup(this);
         controller.putDriveMotors(leftDrive1, leftDrive2, rightDrive1, rightDrive2);
         controller.putHotzone(isHotZone);
+        controller.putUltrasonic(ultrasonicSensor);
         EventSource fireAutonomousTrigger = controller.getWhenToFire();
 
         // [[[[ DRIVE CODE ]]]]
@@ -83,34 +86,51 @@ public class RobotMain extends SimpleCore {
         DriveCode.createDrive(startedTeleop, duringTeleop, leftDrive1, leftDrive2, rightDrive1, rightDrive2, leftDriveAxis, rightDriveAxis, forwardDriveAxis, IS_COMPETITION_ROBOT, shiftBoolean);
 
         // [[[[ SHOOTER CODE ]]]]
-        EventSource fireWhen=combine(fireAutonomousTrigger,fireButton);
+        EventSource fireWhen = test.testPublish("fire", Mixing.combine(fireAutonomousTrigger, fireButton));
         EventLogger.log(fireWhen, LogLevel.FINE, "Fire now!");
-        EventSource updateShooterWhen=combine(duringTeleop,duringAutonomous);
+        EventSource updateShooterWhen = Mixing.combine(duringTeleop, duringAutonomous);
         BooleanInputPoll canArmMove = Shooter.createShooter(
-                startedAutonomous,startedTeleop,updateShooterWhen,
+                startedAutonomous, startedTeleop, updateShooterWhen,
                 winchMotor,
-                winchSolenoid,rachetLoopRelease,
+                winchSolenoid, rachetLoopRelease,
                 winchCurrent,
-                catapultNotCocked,armUpDown,detensioning,
-                rearmCatapult,fireWhen
+                catapultNotCocked, armUpDown, detensioning,
+                rearmCatapult, fireWhen
         );
         // [[[[ ARM CODE ]]]]
         Logger.info("Actuators get startedTeleop irrelevently!");
-        Actuators.createCollector(startedTeleop, duringTeleop, collectorMotor, armFloatSolenoid, rollersIn,rollersOut);
+        Actuators.createCollector(startedTeleop, duringTeleop, collectorMotor, armFloatSolenoid, rollersIn, rollersOut);
         Actuators.createArm(startedTeleop, duringTeleop, armSolenoid, armUpDown, canArmMove);
 
-        // [[[[ MOTD CODE ]]]]
+        // [[[[ Phidget Display Code ]]]]
+        ControlInterface.displayPressure(pressureSensor, globalPeriodic);
         MOTD.createMOTD();
-    }
-    public EventSource combine(final EventSource a,final EventSource b){
-        return new EventSource(){
-            public boolean addListener(EventConsumer ec) {
-                return a.addListener(ec) && b.addListener(ec);
+
+        /*CluckGlobals.node.publish("Test-LibC", new EventConsumer() {
+            public void eventFired() {
+                try {
+                    Logger.info("Starting test...");
+                    LibC c = LibC.INSTANCE;
+                    int fd = c.open("test-file", LibC.O_CREAT | LibC.O_WRONLY | LibC.O_EXCL, 0666);
+                    Logger.info("Got FD: " + fd);
+                    if (fd == -1) {
+                        throw new IOException("LibC error.A: " + LibCUtil.errno());
+                    }
+                    int count = c.write(fd, "Testing\n".getBytes(), 8);
+                    Logger.info("Got count: " + count);
+                    if (count != 8) {
+                        throw new IOException("LibC error.B: " + count + " (" + LibCUtil.errno() + ")");
+                    }
+                    int out = c.close(fd);
+                    Logger.info("Got out: " + out);
+                    if (out != 0) {
+                        throw new IOException("LibC error.C: " + count + " (" + LibCUtil.errno() + ")");
+                    }
+                    Logger.info("Success!");
+                } catch (IOException ex) {
+                    Logger.log(LogLevel.WARNING, "LibC write failed!", ex);
+                }
             }
-            public void removeListener(EventConsumer ec) throws IllegalStateException {
-                a.removeListener(ec);
-                b.removeListener(ec);
-            }
-        };
+        });*/
     }
 }
