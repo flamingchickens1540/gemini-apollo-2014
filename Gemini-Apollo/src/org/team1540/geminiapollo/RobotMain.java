@@ -67,7 +67,6 @@ public class RobotMain extends SimpleCore {
         BooleanInputPoll detensioning = ControlInterface.detensioning();
         EventSource rearmCatapult = ControlInterface.getRearmCatapult();
         EventSource fireButton = ControlInterface.getFireButton();
-        ControlInterface.displayPressure(pressureSensor, globalPeriodic);
 
         // ***** DRIVE JOYSTICK *****
         FloatInputPoll leftDriveAxis = Mixing.negate(joystick1.getAxisChannel(2));
@@ -90,7 +89,7 @@ public class RobotMain extends SimpleCore {
         DriveCode.createDrive(startedTeleop, duringTeleop, leftDrive1, leftDrive2, rightDrive1, rightDrive2, leftDriveAxis, rightDriveAxis, forwardDriveAxis, IS_COMPETITION_ROBOT, shiftBoolean);
 
         // [[[[ SHOOTER CODE ]]]]
-        EventSource fireWhen = Mixing.combine(fireAutonomousTrigger, fireButton);
+        EventSource fireWhen = test.testPublish("fire", Mixing.combine(fireAutonomousTrigger, fireButton));
         EventLogger.log(fireWhen, LogLevel.FINE, "Fire now!");
         EventSource updateShooterWhen = Mixing.combine(duringTeleop, duringAutonomous);
         BooleanInputPoll canArmMove = Shooter.createShooter(
@@ -106,7 +105,8 @@ public class RobotMain extends SimpleCore {
         Actuators.createCollector(startedTeleop, duringTeleop, collectorMotor, armFloatSolenoid, rollersIn, rollersOut);
         Actuators.createArm(startedTeleop, duringTeleop, armSolenoid, armUpDown, canArmMove);
 
-        // [[[[ MOTD CODE ]]]]
+        // [[[[ Phidget Display Code ]]]]
+        ControlInterface.displayPressure(pressureSensor, globalPeriodic);
         MOTD.createMOTD();
 
         CluckGlobals.node.publish("Test-LibC", new EventConsumer() {
