@@ -7,9 +7,6 @@ import ccre.ctrl.Mixing;
 import ccre.event.*;
 import ccre.igneous.SimpleCore;
 import ccre.log.*;
-import com.sun.squawk.platform.posix.LibCUtil;
-import com.sun.squawk.platform.posix.natives.LibC;
-import java.io.IOException;
 
 public class RobotMain extends SimpleCore {
 
@@ -109,7 +106,7 @@ public class RobotMain extends SimpleCore {
         ControlInterface.displayPressure(pressureSensor, globalPeriodic);
         MOTD.createMOTD();
 
-        CluckGlobals.node.publish("Test-LibC", new EventConsumer() {
+        /*CluckGlobals.node.publish("Test-LibC", new EventConsumer() {
             public void eventFired() {
                 try {
                     Logger.info("Starting test...");
@@ -134,6 +131,6 @@ public class RobotMain extends SimpleCore {
                     Logger.log(LogLevel.WARNING, "LibC write failed!", ex);
                 }
             }
-        });
+        });*/
     }
 }
