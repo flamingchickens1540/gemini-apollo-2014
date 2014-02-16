@@ -97,7 +97,7 @@ public class RobotMain extends SimpleCore {
                 catapultNotCocked, armUpDown, detensioning,
                 rearmCatapult, fireWhen
         );
-        
+        Shooter.createTuner(globalPeriodic, winchCurrent, rearmCatapult, catapultNotCocked);
         
         // [[[[ ARM CODE ]]]]
         Logger.info("Actuators get startedTeleop irrelevently!");
