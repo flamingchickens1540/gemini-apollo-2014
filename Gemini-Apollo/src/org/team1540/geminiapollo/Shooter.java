@@ -151,12 +151,13 @@ public class Shooter {
                     if (sense > active.readValue()) {
                         active.writeValue(sense);
                     }
-                    if (catapultNotCocked.readValue()) {
+                    if (!catapultNotCocked.readValue()) {
                         enabled.writeValue(false);
                     }
                 }
             }
         });
-        CluckGlobals.node.publish("Winch Max Current", active);
+        CluckGlobals.node.publish("Winch Max Current", (FloatInput) active);
+        CluckGlobals.node.publish("Winch Max Enabled", (BooleanInput) enabled);
     }
 }
