@@ -1,6 +1,8 @@
 package org.team1540.periscope;
 
 import ccre.cluck.CluckGlobals;
+import ccre.log.LogLevel;
+import ccre.log.Logger;
 import ccre.log.NetworkAutologger;
 import java.awt.Dimension;
 import java.awt.Point;
@@ -106,7 +108,7 @@ public class Main extends javax.swing.JFrame {
         cVProcessor1.putPoint(new Point(pX, pY));
     }//GEN-LAST:event_updatePoint
 
-    public static void main(String args[]) {
+    public static void main(final String args[]) {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
         /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
@@ -137,6 +139,20 @@ public class Main extends javax.swing.JFrame {
                 CluckGlobals.ensureInitializedCore();
                 NetworkAutologger.register();
                 Main m = new Main();
+                if (args.length >= 2) {
+                    try {
+                        m.setSize(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
+                    } catch (NumberFormatException ex) {
+                        Logger.log(LogLevel.WARNING, "Bad window position!", ex);
+                    }
+                }
+                if (args.length >= 4) {
+                    try {
+                        m.setLocation(Integer.parseInt(args[2]), Integer.parseInt(args[3]));
+                    } catch (NumberFormatException ex) {
+                        Logger.log(LogLevel.WARNING, "Bad window position!", ex);
+                    }
+                }
                 m.setVisible(true);
             }
         });
