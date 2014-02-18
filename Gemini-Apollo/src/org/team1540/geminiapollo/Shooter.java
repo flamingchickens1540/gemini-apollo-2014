@@ -80,7 +80,13 @@ public class Shooter {
                 return (winchCurrent.readValue()*currentMultiplierAdjustor.readValue () + currentMinAdjustor.readValue ());
             }
         };
-
+        
+        //detentioning
+        Mixing.whenBooleanBecomes(detentioning, true, during).addListener(new EventConsumer () {
+            public void eventFired () {
+                rachetLoopRelease.writeValue (true);
+            }
+        });
         //begin listeners
         rearming.setFalseWhen(beginAutonomous);
         winchDisengaged.setFalseWhen(beginAutonomous);
@@ -118,6 +124,7 @@ public class Shooter {
                 } else if (armDown.readValue() && catapultNotCocked.readValue()) {
                     winchDisengaged.writeValue(false);
                     Logger.info("rearm");
+                    rachetLoopRelease.writeValue(false);
                     rearming.writeValue(true);
                 } else {
                     Logger.info("no rearm");
