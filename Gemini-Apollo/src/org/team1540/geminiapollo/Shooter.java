@@ -51,7 +51,7 @@ public class Shooter {
                 engageTimer.stop();
             }
         });
-
+        /*not used currently
         //run winch motor in reverse before firing
         final ExpirationTimer fireTimer = new ExpirationTimer();
         final BooleanStatus fireTimerRunning = new BooleanStatus();
@@ -69,7 +69,7 @@ public class Shooter {
                 fireTimer.stop();
             }
         });
-
+        */
         //state of the catapult
         //four score, etc. etc.
         final BooleanStatus winchDisengaged = new BooleanStatus(winchSolenoid);
@@ -102,7 +102,7 @@ public class Shooter {
                     rearming.writeValue(false);
                 } else if (!winchDisengaged.readValue() && armDown.readValue()) {
                     Logger.info("Fire B");
-                    fireTimer.start();
+                    //fireTimer.start();
                     winchDisengaged.writeValue(true);
                     engageTimer.start();
                 } else {
@@ -134,8 +134,8 @@ public class Shooter {
                         rearming.writeValue(false);
                         winchMotor.writeValue(0f);
                     }
-                } else if (fireTimerRunning.readValue() && shouldWinchDuringFire.readValue()) {
-                    winchMotor.writeValue(1f);
+                /*} else if (fireTimerRunning.readValue() && shouldWinchDuringFire.readValue()) {
+                    winchMotor.writeValue(1f);*/
                 } else if (detentioning.readValue()) {
                     winchMotor.writeValue(-winchSpeed.readValue());
                 } else {
