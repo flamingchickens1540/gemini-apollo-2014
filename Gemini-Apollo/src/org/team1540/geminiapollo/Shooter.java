@@ -30,6 +30,8 @@ public class Shooter {
         tuner.publishSavingEvent("Shooter");
         final FloatStatus winchSpeed = tuner.getFloat("Winch Speed", .3f);
         final FloatStatus drawBack = tuner.getFloat("Draw Back", 1.1f);
+        final FloatStatus currentMinAdjustor = tuner.getFloat ("Minimum Current Adjustor", 1f);
+        final FloatStatus currentMultiplierAdjustor = tuner.getFloat ("Multiplier Current Adjustor", 1.5f);
         final BooleanStatus shouldWinchDuringFire = new BooleanStatus(true);
         CluckGlobals.node.publish("Winch During Fire", shouldWinchDuringFire);
 
@@ -72,6 +74,12 @@ public class Shooter {
         //four score, etc. etc.
         final BooleanStatus winchDisengaged = new BooleanStatus(winchSolenoid);
         final BooleanStatus rearming = new BooleanStatus();
+        final FloatInputPoll adjustedWinchCurrent = new FloatInputPoll () {
+
+            public float readValue() {
+                return (winchCurrent.readValue()*currentMultiplierAdjustor.readValue () + currentMinAdjustor.readValue ());
+            }
+        };
 
         //begin listeners
         rearming.setFalseWhen(beginAutonomous);
@@ -122,7 +130,7 @@ public class Shooter {
             public void eventFired() {
                 if (rearming.readValue()) {
                     winchMotor.writeValue(winchSpeed.readValue());
-                    if (!catapultNotCocked.readValue() || winchCurrent.readValue() >= drawBack.readValue()) {
+                    if (!catapultNotCocked.readValue() || adjustedWinchCurrent.readValue() >= drawBack.readValue()) {
                         rearming.writeValue(false);
                         winchMotor.writeValue(0f);
                     }
@@ -135,7 +143,7 @@ public class Shooter {
                 }
             }
         });
-        //this is for Gregor... I don't remeber what it's for but I think it is so he can't lift the arm when the catapult is rearming
+        //this is for Gregor, I think it is so he can't lift the arm when the catapult is rearming
         return Mixing.invert((BooleanInputPoll) rearming);
     }
 
