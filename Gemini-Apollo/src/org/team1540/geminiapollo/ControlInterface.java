@@ -30,7 +30,8 @@ public class ControlInterface {
     }
 
     public static FloatInputPoll powerSlider() {
-        return PhidgetReader.getAnalogInput(0);
+        //values range from roughly 0 to 1
+        return Mixing.normalizeFloat(PhidgetReader.getAnalogInput(4), -.974f, .934f);
     }
 
     public static BooleanInputPoll detensioning() {

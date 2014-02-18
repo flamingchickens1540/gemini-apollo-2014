@@ -28,14 +28,15 @@ public class Shooter {
         CluckGlobals.node.publish("Rachet", rachetLoopRelease);
         TuningContext tuner = new TuningContext(CluckGlobals.node, "ShooterValues");
         tuner.publishSavingEvent("Shooter");
-        final FloatStatus winchSpeed = tuner.getFloat("Winch Speed", .3f);
-        final FloatStatus drawBack = tuner.getFloat("Draw Back", 1.1f);
-        final FloatStatus currentMinAdjustor = tuner.getFloat("Minimum Current Adjustor", 1f);
-        final FloatStatus currentMultiplierAdjustor = tuner.getFloat("Multiplier Current Adjustor", 1.5f);
+        final FloatStatus winchSpeed = tuner.getFloat("Winch Speed", 1f);
+        final FloatStatus drawBack = tuner.getFloat("Draw Back", 6f);
+        final FloatStatus currentMinAdjustor = tuner.getFloat("Minimum Current Adjustor", 0f);
+        final FloatStatus currentMultiplierAdjustor = tuner.getFloat("Multiplier Current Adjustor", 5f);
         final BooleanStatus shouldWinchDuringFire = new BooleanStatus(true);
         CluckGlobals.node.publish("Winch During Fire", shouldWinchDuringFire);
         final BooleanStatus useSlider = new BooleanStatus(true);
         CluckGlobals.node.publish("Use Slider Drawback Value", useSlider);
+        CluckGlobals.node.publish("Slider Value", Mixing.createDispatch(slider, during));
 
         //engage safety after firing safety
         final ExpirationTimer engageTimer = new ExpirationTimer();
@@ -142,7 +143,7 @@ public class Shooter {
                         rearming.writeValue(false);
                         winchMotor.writeValue(0f);
                         Logger.info("limit switch stop rearm");
-                    } else if (useSlider.readValue() && winchCurrent.readValue () >= adjustedSlider.readValue()) {
+                    } else if (useSlider.readValue() && winchCurrent.readValue() >= adjustedSlider.readValue()) {
                         rearming.writeValue(false);
                         winchMotor.writeValue(0f);
                         Logger.info("slider drawback current stop rearm");

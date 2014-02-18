@@ -93,7 +93,7 @@ public class RobotMain extends SimpleCore {
                 startedAutonomous, startedTeleop, updateShooterWhen,
                 winchMotor,
                 winchSolenoid, rachetLoopRelease,
-                winchCurrent, Mixing.always(0f),//GREGOR: REPLACE MIXING.ALWAYS WITH THE SLIDER FLOATINPUTPOLL FROM THE PHIGET
+                winchCurrent, ControlInterface.powerSlider(),
                 catapultNotCocked, armUpDown, detensioning,
                 rearmCatapult, fireWhen
         );
