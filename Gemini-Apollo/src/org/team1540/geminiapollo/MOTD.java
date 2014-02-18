@@ -20,7 +20,11 @@ public class MOTD {
             "Only twenty characters", "Blood", "Smoking kills.", "Peer",
             "Just say no!", "SPAAAAAAAAAAAAACE!!!", "$YOLO SWAGGINS$",
             "Don't drop the soap.", "This is SPARTA!!!", "Close the door...",
-            "Get a room.", "SINUSOIDS", "Iron", "That's not a knife!", "Knoife"};
+            "Get a room.", "SINUSOIDS", "Iron", "That's not a knife!", "Knoife",
+            "Lana. Lana! LAAANNAA!", "David Whitson", "It's a trap!", "That's no moon!",
+            "That's what she said", "My precious...", "Ha. Haha. Ha.",
+            "I get that reference", "I'm always angry.","I said... I said....",
+            "Tactical Turtleneck", "Ah yes, 'Reapers.'", "OP: Fire-Cobra-Claw"};
         final String message = messages[new Random().nextInt(messages.length)];
         final EventConsumer updateDisplay = new EventConsumer() {
             public void eventFired() {

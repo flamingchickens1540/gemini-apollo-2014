@@ -98,27 +98,26 @@ public class Shooter {
         fireButton.addListener(new EventConsumer() {
             public void eventFired() {
                 if (rearming.readValue()) {
-                    Logger.info("Fire A");
+                    Logger.info("fire- stop rearm");
                     rearming.writeValue(false);
                 } else if (!winchDisengaged.readValue() && armDown.readValue()) {
-                    Logger.info("Fire B");
+                    Logger.info("fire");
                     //fireTimer.start();
                     winchDisengaged.writeValue(true);
                     engageTimer.start();
                 } else {
-                    Logger.info("Fire C");
+                    Logger.info("no fire");
                 }
             }
         });
         rearmCatapult.addListener(new EventConsumer() {
             public void eventFired() {
-                Logger.info("rearm");
                 if (rearming.readValue()) {
                     Logger.info("stop rearm");
                     rearming.writeValue(false);
                 } else if (armDown.readValue() && catapultNotCocked.readValue()) {
                     winchDisengaged.writeValue(false);
-                    Logger.info("actually rearm");
+                    Logger.info("rearm");
                     rearming.writeValue(true);
                 } else {
                     Logger.info("no rearm");
