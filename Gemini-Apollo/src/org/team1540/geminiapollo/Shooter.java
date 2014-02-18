@@ -19,7 +19,7 @@ public class Shooter {
             final EventSource beginAutonomous, final EventSource beginTeleop, final EventSource during,
             final FloatOutput winchMotor,
             final BooleanOutput winchSolenoid, final BooleanOutput rachetLoopRelease,
-            final FloatInputPoll winchCurrent,
+            final FloatInputPoll winchCurrent, final FloatInputPoll slider,
             final BooleanInputPoll catapultNotCocked, final BooleanInputPoll armDown, final BooleanInputPoll detentioning,
             EventSource rearmCatapult, EventSource fireButton) {
         rachetLoopRelease.writeValue(false); // We switched the polarity.
@@ -30,10 +30,12 @@ public class Shooter {
         tuner.publishSavingEvent("Shooter");
         final FloatStatus winchSpeed = tuner.getFloat("Winch Speed", .3f);
         final FloatStatus drawBack = tuner.getFloat("Draw Back", 1.1f);
-        final FloatStatus currentMinAdjustor = tuner.getFloat ("Minimum Current Adjustor", 1f);
-        final FloatStatus currentMultiplierAdjustor = tuner.getFloat ("Multiplier Current Adjustor", 1.5f);
+        final FloatStatus currentMinAdjustor = tuner.getFloat("Minimum Current Adjustor", 1f);
+        final FloatStatus currentMultiplierAdjustor = tuner.getFloat("Multiplier Current Adjustor", 1.5f);
         final BooleanStatus shouldWinchDuringFire = new BooleanStatus(true);
         CluckGlobals.node.publish("Winch During Fire", shouldWinchDuringFire);
+        final BooleanStatus useSlider = new BooleanStatus(true);
+        CluckGlobals.node.publish("Use Slider Drawback Value", useSlider);
 
         //engage safety after firing safety
         final ExpirationTimer engageTimer = new ExpirationTimer();
@@ -52,39 +54,39 @@ public class Shooter {
             }
         });
         /*not used currently
-        //run winch motor in reverse before firing
-        final ExpirationTimer fireTimer = new ExpirationTimer();
-        final BooleanStatus fireTimerRunning = new BooleanStatus();
-        fireTimerRunning.writeValue(false);
-        fireTimer.schedule(1, new EventConsumer() {
-            public void eventFired() {
-                fireTimerRunning.writeValue(true);
-                Logger.info("During Fire Timer A");
-            }
-        });
-        fireTimer.schedule(250, new EventConsumer() {
-            public void eventFired() {
-                fireTimerRunning.writeValue(false);
-                Logger.info("During Fire Timer B");
-                fireTimer.stop();
-            }
-        });
-        */
+         //run winch motor in reverse before firing
+         final ExpirationTimer fireTimer = new ExpirationTimer();
+         final BooleanStatus fireTimerRunning = new BooleanStatus();
+         fireTimerRunning.writeValue(false);
+         fireTimer.schedule(1, new EventConsumer() {
+         public void eventFired() {
+         fireTimerRunning.writeValue(true);
+         Logger.info("During Fire Timer A");
+         }
+         });
+         fireTimer.schedule(250, new EventConsumer() {
+         public void eventFired() {
+         fireTimerRunning.writeValue(false);
+         Logger.info("During Fire Timer B");
+         fireTimer.stop();
+         }
+         });
+         */
         //state of the catapult
         //four score, etc. etc.
         final BooleanStatus winchDisengaged = new BooleanStatus(winchSolenoid);
         final BooleanStatus rearming = new BooleanStatus();
-        final FloatInputPoll adjustedWinchCurrent = new FloatInputPoll () {
+        final FloatInputPoll adjustedSlider = new FloatInputPoll() {
 
             public float readValue() {
-                return (winchCurrent.readValue()*currentMultiplierAdjustor.readValue () + currentMinAdjustor.readValue ());
+                return ((slider.readValue() + currentMinAdjustor.readValue()) * currentMultiplierAdjustor.readValue());
             }
         };
-        
+
         //detentioning
-        Mixing.whenBooleanBecomes(detentioning, true, during).addListener(new EventConsumer () {
-            public void eventFired () {
-                rachetLoopRelease.writeValue (true);
+        Mixing.whenBooleanBecomes(detentioning, true, during).addListener(new EventConsumer() {
+            public void eventFired() {
+                rachetLoopRelease.writeValue(true);
             }
         });
         //begin listeners
@@ -136,12 +138,12 @@ public class Shooter {
             public void eventFired() {
                 if (rearming.readValue()) {
                     winchMotor.writeValue(winchSpeed.readValue());
-                    if (!catapultNotCocked.readValue() || adjustedWinchCurrent.readValue() >= drawBack.readValue()) {
+                    if (!catapultNotCocked.readValue() || (useSlider.readValue() && adjustedSlider.readValue() >= drawBack.readValue()) || winchCurrent.readValue() >= drawBack.readValue()) {
                         rearming.writeValue(false);
                         winchMotor.writeValue(0f);
                     }
-                /*} else if (fireTimerRunning.readValue() && shouldWinchDuringFire.readValue()) {
-                    winchMotor.writeValue(1f);*/
+                    /*} else if (fireTimerRunning.readValue() && shouldWinchDuringFire.readValue()) {
+                     winchMotor.writeValue(1f);*/
                 } else if (detentioning.readValue()) {
                     winchMotor.writeValue(-winchSpeed.readValue());
                 } else {
