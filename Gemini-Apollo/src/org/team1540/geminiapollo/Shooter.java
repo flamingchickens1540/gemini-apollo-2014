@@ -123,7 +123,7 @@ public class Shooter {
                 if (rearming.readValue()) {
                     Logger.info("stop rearm");
                     rearming.writeValue(false);
-                } else if (armDown.readValue() && catapultNotCocked.readValue()) {
+                } else if (catapultNotCocked.readValue()) {
                     winchDisengaged.writeValue(false);
                     Logger.info("rearm");
                     rachetLoopRelease.writeValue(false);
@@ -138,9 +138,18 @@ public class Shooter {
             public void eventFired() {
                 if (rearming.readValue()) {
                     winchMotor.writeValue(winchSpeed.readValue());
-                    if (!catapultNotCocked.readValue() || (useSlider.readValue() && adjustedSlider.readValue() >= drawBack.readValue()) || winchCurrent.readValue() >= drawBack.readValue()) {
+                    if (!catapultNotCocked.readValue()) {
                         rearming.writeValue(false);
                         winchMotor.writeValue(0f);
+                        Logger.info("limit switch stop rearm");
+                    } else if (useSlider.readValue() && winchCurrent.readValue () >= adjustedSlider.readValue()) {
+                        rearming.writeValue(false);
+                        winchMotor.writeValue(0f);
+                        Logger.info("slider drawback current stop rearm");
+                    } else if (!useSlider.readValue() && winchCurrent.readValue() >= drawBack.readValue()) {
+                        rearming.writeValue(false);
+                        winchMotor.writeValue(0f);
+                        Logger.info("manual drawback current stop rearm");
                     }
                     /*} else if (fireTimerRunning.readValue() && shouldWinchDuringFire.readValue()) {
                      winchMotor.writeValue(1f);*/
