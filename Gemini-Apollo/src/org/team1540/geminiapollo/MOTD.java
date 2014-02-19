@@ -23,7 +23,7 @@ public class MOTD {
             "Get a room.", "SINUSOIDS", "Iron", "That's not a knife!", "Knoife",
             "Lana. Lana! LAAANNAA!", "David Whitson", "It's a trap!", "That's no moon!",
             "That's what she said", "My precious...", "Ha. Haha. Ha.",
-            "I get that reference", "I'm always angry.","I said... I said....",
+            "I get that reference", "I'm always angry.", "I said... I said....",
             "Tactical Turtleneck", "Ah yes, 'Reapers.'", "OP: Fire-Cobra-Claw"};
         final String message = messages[new Random().nextInt(messages.length)];
         final EventConsumer updateDisplay = new EventConsumer() {

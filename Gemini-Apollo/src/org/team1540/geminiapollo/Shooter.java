@@ -54,25 +54,25 @@ public class Shooter {
                 engageTimer.stop();
             }
         });
-        
-         //run winch motor in reverse to reduce tension
-         final ExpirationTimer reduceTensionTimer = new ExpirationTimer();
-         final BooleanStatus reduceTensionTimerRunning = new BooleanStatus();
-         reduceTensionTimerRunning.writeValue(false);
-         reduceTensionTimer.schedule(1, new EventConsumer() {
-         public void eventFired() {
-         reduceTensionTimerRunning.writeValue(true);
-         Logger.info("Reduce Tension Begin");
-         }
-         });
-         reduceTensionTimer.schedule(250, new EventConsumer() {
-         public void eventFired() {
-         reduceTensionTimerRunning.writeValue(false);
-         Logger.info("Reduce Tension End");
-         reduceTensionTimer.stop();
-         }
-         });
-  
+
+        //run winch motor in reverse to reduce tension
+        final ExpirationTimer reduceTensionTimer = new ExpirationTimer();
+        final BooleanStatus reduceTensionTimerRunning = new BooleanStatus();
+        reduceTensionTimerRunning.writeValue(false);
+        reduceTensionTimer.schedule(1, new EventConsumer() {
+            public void eventFired() {
+                reduceTensionTimerRunning.writeValue(true);
+                Logger.info("Reduce Tension Begin");
+            }
+        });
+        reduceTensionTimer.schedule(250, new EventConsumer() {
+            public void eventFired() {
+                reduceTensionTimerRunning.writeValue(false);
+                Logger.info("Reduce Tension End");
+                reduceTensionTimer.stop();
+            }
+        });
+
         //state of the catapult
         //four score, etc. etc.
         //detentioning is technically a part of this
@@ -160,8 +160,8 @@ public class Shooter {
                         winchMotor.writeValue(0f);
                         Logger.info("manual drawback current stop rearm");
                     }
-                    } else if (reduceTensionTimerRunning.readValue() && shouldWinchDuringFire.readValue()) {
-                     winchMotor.writeValue(winchSpeed.readValue());
+                } else if (reduceTensionTimerRunning.readValue() && shouldWinchDuringFire.readValue()) {
+                    winchMotor.writeValue(winchSpeed.readValue());
                 } else if (detentioning.readValue()) {
                     winchMotor.writeValue(-winchSpeed.readValue());
                 } else {
