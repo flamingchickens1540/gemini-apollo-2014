@@ -91,21 +91,25 @@ public class RobotMain extends SimpleCore {
         EventSource fireWhen = test.testPublish("fire", Mixing.combine(fireAutonomousTrigger, fireButton));
         EventLogger.log(fireWhen, LogLevel.FINE, "Fire now!");
         EventSource updateShooterWhen = Mixing.combine(duringTeleop, duringAutonomous);
-        Shooter.createShooter(
-                startedAutonomous, startedTeleop, updateShooterWhen,
+        BooleanStatus canCollectorRun = new BooleanStatus();
+        BooleanInputPoll canArmMove = Shooter.createShooter(
+                startedAutonomous, startedTeleop, updateShooterWhen, constantPeriodic,
                 winchMotor,
                 winchSolenoid, rachetLoopRelease,
                 winchCurrent, ControlInterface.powerSlider(),
                 catapultNotCocked, armUpDown, detensioning,
-                rearmCatapult, fireWhen
+                rearmCatapult, fireWhen,
+                canCollectorRun
         );
         Shooter.createTuner(globalPeriodic, winchCurrent, rearmCatapult, catapultNotCocked);
 
         // [[[[ ARM CODE ]]]]
         Logger.info("Actuators get startedTeleop irrelevently!");
-        Actuators.createCollector(startedTeleop, duringTeleop, collectorMotor, armFloatSolenoid, rollersIn, rollersOut);
-        BooleanInputPoll canArmMove = Mixing.alwaysTrue; // the arm and the catapult no longer collide
+        if (IS_COMPETITION_ROBOT) {
+            canArmMove = Mixing.alwaysTrue; // the arm and the catapult no longer collide
+        }
         Actuators.createArm(startedTeleop, duringTeleop, armSolenoid, armUpDown, canArmMove);
+        Actuators.createCollector(startedTeleop, duringTeleop, collectorMotor, armFloatSolenoid, rollersIn, rollersOut, canCollectorRun);
 
         // [[[[ Phidget Display Code ]]]]
         ControlInterface.displayPressure(pressureSensor, pressureSwitch, globalPeriodic);

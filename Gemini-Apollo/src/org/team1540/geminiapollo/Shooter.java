@@ -6,6 +6,7 @@ import ccre.ctrl.ExpirationTimer;
 import ccre.ctrl.Mixing;
 import ccre.event.*;
 import ccre.holders.TuningContext;
+import ccre.log.LogLevel;
 import ccre.log.Logger;
 
 public class Shooter {
@@ -15,13 +16,14 @@ public class Shooter {
      -get rid of log
      */
 
-    public static void createShooter(
-            final EventSource beginAutonomous, final EventSource beginTeleop, final EventSource during,
+    public static BooleanInputPoll createShooter(
+            final EventSource beginAutonomous, final EventSource beginTeleop, final EventSource during, final EventSource constant,
             final FloatOutput winchMotor,
             final BooleanOutput winchSolenoid, final BooleanOutput rachetLoopRelease,
             final FloatInputPoll winchCurrent, final FloatInputPoll slider,
             final BooleanInputPoll catapultNotCocked, final BooleanInputPoll armDown, final BooleanInputPoll detentioning,
-            EventSource rearmCatapult, EventSource fireButton) {
+            EventSource rearmCatapult, EventSource fireButton,
+            BooleanOutput canCollectorRun) {
         rachetLoopRelease.writeValue(false); // We switched the polarity.
 
         //Network Variables
@@ -32,6 +34,7 @@ public class Shooter {
         final FloatStatus drawBack = tuner.getFloat("Draw Back", 6f);
         final FloatStatus currentMinAdjustor = tuner.getFloat("Minimum Current Adjustor", 0f);
         final FloatStatus currentMultiplierAdjustor = tuner.getFloat("Multiplier Current Adjustor", 5f);
+        final FloatStatus rearmTimeout = tuner.getFloat("Winch Rearm Timeout", 5f);
         final BooleanStatus shouldWinchDuringFire = new BooleanStatus(true);
         CluckGlobals.node.publish("Winch During Fire", shouldWinchDuringFire);
         final BooleanStatus useSlider = new BooleanStatus(true);
@@ -77,6 +80,8 @@ public class Shooter {
         //four score, etc. etc.
         //detentioning is technically a part of this
         final BooleanStatus winchDisengaged = new BooleanStatus(winchSolenoid);
+        CluckGlobals.node.publish("WINCHDISENGAGED", winchDisengaged);
+        winchDisengaged.addTarget(Mixing.invert(canCollectorRun));
         final BooleanStatus rearming = new BooleanStatus();
         final FloatInputPoll adjustedSlider = new FloatInputPoll() {
 
@@ -85,6 +90,24 @@ public class Shooter {
             }
         };
         CluckGlobals.node.publish("Adjusted Slider Value", Mixing.createDispatch(adjustedSlider, during));
+
+        //timeout on rearming
+        final FloatStatus resetRearm = new FloatStatus();
+        resetRearm.setWhen(0, Mixing.whenBooleanBecomes(rearming, false));
+        CluckGlobals.node.publish("Winch Rearm Timeout Status", (FloatInput) resetRearm);
+        Mixing.pumpWhen(Mixing.whenBooleanBecomes(rearming, true), rearmTimeout, resetRearm);
+        EventSource causeResetRearm = Mixing.filterEvent(Mixing.andBooleans(rearming, Mixing.floatIsAtMost(resetRearm, 0)), true, during);
+        EventLogger.log(causeResetRearm, LogLevel.INFO, "rearm timeout");
+        rearming.setFalseWhen(causeResetRearm);
+        constant.addListener(new EventConsumer() {
+            public void eventFired() {
+                float nv = resetRearm.readValue() - 0.01f;
+                if (nv < 0) {
+                    nv = 0;
+                }
+                resetRearm.writeValue(nv);
+            }
+        });
 
         //detentioning
         Mixing.whenBooleanBecomes(detentioning, true, during).addListener(new EventConsumer() {
@@ -169,6 +192,8 @@ public class Shooter {
                 }
             }
         });
+        
+        return Mixing.invert((BooleanInputPoll) rearming);
     }
 
     public static void createTuner(EventSource during, final FloatInputPoll sensor, EventSource rearmCatapult, final BooleanInputPoll catapultNotCocked) {
