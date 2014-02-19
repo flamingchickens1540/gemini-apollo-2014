@@ -89,7 +89,7 @@ public class RobotMain extends SimpleCore {
         EventSource fireWhen = test.testPublish("fire", Mixing.combine(fireAutonomousTrigger, fireButton));
         EventLogger.log(fireWhen, LogLevel.FINE, "Fire now!");
         EventSource updateShooterWhen = Mixing.combine(duringTeleop, duringAutonomous);
-        BooleanInputPoll canArmMove = Shooter.createShooter(
+        Shooter.createShooter(
                 startedAutonomous, startedTeleop, updateShooterWhen,
                 winchMotor,
                 winchSolenoid, rachetLoopRelease,
@@ -102,6 +102,7 @@ public class RobotMain extends SimpleCore {
         // [[[[ ARM CODE ]]]]
         Logger.info("Actuators get startedTeleop irrelevently!");
         Actuators.createCollector(startedTeleop, duringTeleop, collectorMotor, armFloatSolenoid, rollersIn, rollersOut);
+        BooleanInputPoll canArmMove = Mixing.alwaysTrue; // the arm and the catapult no longer collide
         Actuators.createArm(startedTeleop, duringTeleop, armSolenoid, armUpDown, canArmMove);
 
         // [[[[ Phidget Display Code ]]]]

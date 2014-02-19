@@ -15,7 +15,7 @@ public class Shooter {
      -get rid of log
      */
 
-    public static BooleanInputPoll createShooter(
+    public static void createShooter(
             final EventSource beginAutonomous, final EventSource beginTeleop, final EventSource during,
             final FloatOutput winchMotor,
             final BooleanOutput winchSolenoid, final BooleanOutput rachetLoopRelease,
@@ -54,27 +54,28 @@ public class Shooter {
                 engageTimer.stop();
             }
         });
-        /*not used currently
-         //run winch motor in reverse before firing
-         final ExpirationTimer fireTimer = new ExpirationTimer();
-         final BooleanStatus fireTimerRunning = new BooleanStatus();
-         fireTimerRunning.writeValue(false);
-         fireTimer.schedule(1, new EventConsumer() {
+        
+         //run winch motor in reverse to reduce tension
+         final ExpirationTimer reduceTensionTimer = new ExpirationTimer();
+         final BooleanStatus reduceTensionTimerRunning = new BooleanStatus();
+         reduceTensionTimerRunning.writeValue(false);
+         reduceTensionTimer.schedule(1, new EventConsumer() {
          public void eventFired() {
-         fireTimerRunning.writeValue(true);
-         Logger.info("During Fire Timer A");
+         reduceTensionTimerRunning.writeValue(true);
+         Logger.info("Reduce Tension Begin");
          }
          });
-         fireTimer.schedule(250, new EventConsumer() {
+         reduceTensionTimer.schedule(250, new EventConsumer() {
          public void eventFired() {
-         fireTimerRunning.writeValue(false);
-         Logger.info("During Fire Timer B");
-         fireTimer.stop();
+         reduceTensionTimerRunning.writeValue(false);
+         Logger.info("Reduce Tension End");
+         reduceTensionTimer.stop();
          }
          });
-         */
+  
         //state of the catapult
         //four score, etc. etc.
+        //detentioning is technically a part of this
         final BooleanStatus winchDisengaged = new BooleanStatus(winchSolenoid);
         final BooleanStatus rearming = new BooleanStatus();
         final FloatInputPoll adjustedSlider = new FloatInputPoll() {
@@ -83,11 +84,19 @@ public class Shooter {
                 return ((slider.readValue() + currentMinAdjustor.readValue()) * currentMultiplierAdjustor.readValue());
             }
         };
+        CluckGlobals.node.publish("Adjusted Slider Value", Mixing.createDispatch(adjustedSlider, during));
 
         //detentioning
         Mixing.whenBooleanBecomes(detentioning, true, during).addListener(new EventConsumer() {
             public void eventFired() {
+                rearming.writeValue(false);
+                reduceTensionTimer.start();
                 rachetLoopRelease.writeValue(true);
+            }
+        });
+        Mixing.whenBooleanBecomes(detentioning, false, during).addListener(new EventConsumer() {
+            public void eventFired() {
+                rachetLoopRelease.writeValue(false);
             }
         });
         //begin listeners
@@ -111,7 +120,6 @@ public class Shooter {
                     rearming.writeValue(false);
                 } else if (!winchDisengaged.readValue() && armDown.readValue()) {
                     Logger.info("fire");
-                    //fireTimer.start();
                     winchDisengaged.writeValue(true);
                     engageTimer.start();
                 } else {
@@ -152,8 +160,8 @@ public class Shooter {
                         winchMotor.writeValue(0f);
                         Logger.info("manual drawback current stop rearm");
                     }
-                    /*} else if (fireTimerRunning.readValue() && shouldWinchDuringFire.readValue()) {
-                     winchMotor.writeValue(1f);*/
+                    } else if (reduceTensionTimerRunning.readValue() && shouldWinchDuringFire.readValue()) {
+                     winchMotor.writeValue(winchSpeed.readValue());
                 } else if (detentioning.readValue()) {
                     winchMotor.writeValue(-winchSpeed.readValue());
                 } else {
@@ -161,8 +169,6 @@ public class Shooter {
                 }
             }
         });
-        //this is for Gregor, I think it is so he can't lift the arm when the catapult is rearming
-        return Mixing.invert((BooleanInputPoll) rearming);
     }
 
     public static void createTuner(EventSource during, final FloatInputPoll sensor, EventSource rearmCatapult, final BooleanInputPoll catapultNotCocked) {
