@@ -54,8 +54,9 @@ public class RobotMain extends SimpleCore {
         // ***** VISION TRACKING *****
         VisionTracking.setup(startedAutonomous);
         BooleanInputPoll isHotZone = VisionTracking.isHotZone();
+        
         // ***** COMPRESSOR *****
-        useCompressor(1, 1);
+        useCustomCompressor(Actuators.calcCompressorControl(constantPeriodic, makeDigitalInput(1)), 1);
 
         // ***** CONTROL INTERFACE *****
         BooleanInputPoll armUpDown = ControlInterface.getArmUpDown();
