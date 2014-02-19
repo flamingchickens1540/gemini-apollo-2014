@@ -10,7 +10,7 @@ import ccre.log.*;
 
 public class RobotMain extends SimpleCore {
 
-    public static boolean IS_COMPETITION_ROBOT = false;
+    public static boolean IS_COMPETITION_ROBOT = true;
 
     protected void createSimpleControl() {
         // ***** CLUCK *****

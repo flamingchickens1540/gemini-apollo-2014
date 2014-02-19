@@ -90,7 +90,7 @@ public class Shooter {
         Mixing.whenBooleanBecomes(detentioning, true, during).addListener(new EventConsumer() {
             public void eventFired() {
                 rearming.writeValue(false);
-                reduceTensionTimer.start();
+                reduceTensionTimer.startOrFeed();
                 rachetLoopRelease.writeValue(true);
             }
         });
