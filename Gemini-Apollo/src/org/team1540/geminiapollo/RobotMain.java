@@ -56,7 +56,8 @@ public class RobotMain extends SimpleCore {
         BooleanInputPoll isHotZone = VisionTracking.isHotZone();
 
         // ***** COMPRESSOR *****
-        useCustomCompressor(Actuators.calcCompressorControl(constantPeriodic, makeDigitalInput(1)), 1);
+        BooleanInputPoll pressureSwitch = makeDigitalInput(1);
+        useCustomCompressor(Actuators.calcCompressorControl(constantPeriodic, pressureSwitch), 1);
 
         // ***** CONTROL INTERFACE *****
         BooleanInputPoll armUpDown = ControlInterface.getArmUpDown();
@@ -107,7 +108,7 @@ public class RobotMain extends SimpleCore {
         Actuators.createArm(startedTeleop, duringTeleop, armSolenoid, armUpDown, canArmMove);
 
         // [[[[ Phidget Display Code ]]]]
-        ControlInterface.displayPressure(pressureSensor, globalPeriodic);
+        ControlInterface.displayPressure(pressureSensor, pressureSwitch, globalPeriodic);
         MOTD.createMOTD();
     }
 }
