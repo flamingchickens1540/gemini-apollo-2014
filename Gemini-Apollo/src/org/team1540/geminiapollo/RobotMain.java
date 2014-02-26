@@ -41,13 +41,17 @@ public class RobotMain extends SimpleCore {
 
         // ***** ANALOG INPUTS *****
         // TODO: Better selection of average bits
-        FloatInputPoll winchCurrent = makeAnalogInput(1, 8);
-        FloatInputPoll pressureSensor = makeAnalogInput(2, 8);
-        FloatInputPoll ultrasonicSensor = makeAnalogInput(3, 8);
-        CluckGlobals.node.publish("Winch Current", Mixing.createDispatch(pressureSensor, globalPeriodic));
+        final FloatInputPoll winchCurrent = makeAnalogInput(1, 8);
+        final FloatInputPoll pressureSensor = makeAnalogInput(2, 8);
+        final FloatInputPoll ultrasonicSensor = makeAnalogInput(3, 8);
+        CluckGlobals.node.publish("Winch Current", Mixing.createDispatch(winchCurrent, globalPeriodic));
         CluckGlobals.node.publish("Pressure Sensor", Mixing.createDispatch(pressureSensor, globalPeriodic));
-        CluckGlobals.node.publish("Ultrasonic Sensor", Mixing.createDispatch(pressureSensor, globalPeriodic));
-
+        CluckGlobals.node.publish("Ultrasonic Sensor", Mixing.createDispatch(ultrasonicSensor, globalPeriodic));
+        CluckGlobals.node.publish("Ultrasonic Sensor, centimenters", Mixing.createDispatch(new FloatInputPoll(){
+            public float readValue() {
+                return ultrasonicSensor.readValue()*(5.0f/1024);
+            }
+        },globalPeriodic));
         // ***** DIGITAL INPUTS *****
         BooleanInputPoll catapultNotCocked = makeDigitalInput(2);
 
@@ -106,6 +110,7 @@ public class RobotMain extends SimpleCore {
 
         // [[[[ Phidget Display Code ]]]]
         ControlInterface.displayPressure(pressureSensor, globalPeriodic);
-        MOTD.createMOTD();
+        ControlInterface.displayDistance(ultrasonicSensor, globalPeriodic);
+        //MOTD.createMOTD();
     }
 }

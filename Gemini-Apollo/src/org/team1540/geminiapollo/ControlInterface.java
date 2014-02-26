@@ -36,7 +36,15 @@ public class ControlInterface {
     public static BooleanInputPoll detensioning() {
         return PhidgetReader.getDigitalInput(7);
     }
-
+    
+    public static void displayDistance(final FloatInputPoll distance, EventSource update){
+        update.addListener(new EventConsumer(){
+            public void eventFired() {
+                PhidgetReader.phidgetLCD[0].println(distance.readValue()*(5.0f/1024));
+            }           
+        });
+    }
+    
     public static void displayPressure(final FloatInputPoll f, EventSource update) {
         final TuningContext tuner = new TuningContext(CluckGlobals.node, "PressureTuner");
         tuner.publishSavingEvent("Pressure");
