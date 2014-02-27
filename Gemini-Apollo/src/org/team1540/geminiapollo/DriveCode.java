@@ -23,28 +23,20 @@ public class DriveCode {
         final FloatStatus lbLeft = wheelTuner.getFloat("Low Left Backwards", 1f);
         final FloatStatus lfRight = wheelTuner.getFloat("Low Right Forwards", 1f);
         final FloatStatus lbRight = wheelTuner.getFloat("Low Right Backwards", 1f);
-
         //dead zone
         FloatFilter deadZone = Mixing.deadzone(.1f);
         final FloatInputPoll leftDriveAxisW = deadZone.wrap(leftDriveAxis);
         final FloatInputPoll rightDriveAxisW = deadZone.wrap(rightDriveAxis);
         final FloatInputPoll forwardDriveAxisW = deadZone.wrap(forwardDriveAxis);
-
         //begin
-        begin.addListener(new EventConsumer() {
-            public void eventFired() {
-                leftDrive.writeValue(0);
-                rightDrive.writeValue(0);
-            }
-        });
-
+        Mixing.setWhen(begin, leftDrive, 0);
+        Mixing.setWhen(begin, rightDrive, 0);
         //during
         during.addListener(new EventConsumer() {
             public void eventFired() {
                 //motor values
                 float leftDriveValue = leftDriveAxisW.readValue() + forwardDriveAxisW.readValue();
                 float rightDriveValue = rightDriveAxisW.readValue() + forwardDriveAxisW.readValue();
-
                 //adjust motor values
                 if (!notShifted.readValue()) {
                     leftDriveValue *= leftDriveValue > 0 ? hfLeft.readValue() : hbLeft.readValue();
@@ -53,7 +45,6 @@ public class DriveCode {
                     leftDriveValue *= leftDriveValue > 0 ? lfLeft.readValue() : lbLeft.readValue();
                     rightDriveValue *= rightDriveValue > 0 ? lfRight.readValue() : lbRight.readValue();
                 }
-
                 //write motor values
                 leftDrive.writeValue(leftDriveValue);
                 rightDrive.writeValue(rightDriveValue);
@@ -63,16 +54,9 @@ public class DriveCode {
 
     public static BooleanStatus createShifting(EventSource begin, EventSource during, BooleanOutput shiftSolenoid, EventSource shiftHighButton, EventSource shiftLowButton) {
         final BooleanStatus shifted = new BooleanStatus(shiftSolenoid);
-
-        //begin
-        shifted.setTrueWhen(begin);
-
-        //high
-        shifted.setTrueWhen(shiftHighButton);
-
-        //low
-        shifted.setFalseWhen(shiftLowButton);
-
+        shifted.setTrueWhen(begin); // begin
+        shifted.setTrueWhen(shiftHighButton); // high
+        shifted.setFalseWhen(shiftLowButton); // low
         return shifted;
     }
 }

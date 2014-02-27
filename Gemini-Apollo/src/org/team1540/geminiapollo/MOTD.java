@@ -7,10 +7,6 @@ import ccre.event.EventConsumer;
 import ccre.phidget.PhidgetReader;
 import java.util.Random;
 
-// I moved this into its own module because the code is more organized this way,
-// and I fixed it to not be constantly sending the message because it slows down
-// the network.
-// I cleaned up your code in a few other ways.
 public class MOTD {
 
     public static void createMOTD() {
