@@ -7,6 +7,7 @@ import ccre.ctrl.Mixing;
 import ccre.event.*;
 import ccre.log.LogLevel;
 import ccre.log.Logger;
+import java.awt.Color;
 import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -22,6 +23,20 @@ public class CVProcessor implements ImageOutput {
     private final BooleanStatus bout = new BooleanStatus();
     private final BooleanStatus waitingForAck = new BooleanStatus();
     private final Event notifyAck = new Event();
+    private float width = 640, height = 640;
+    public boolean showHistogram = false;
+    
+    public boolean getHistogram() {
+        return showHistogram;
+    }
+    
+    public void setHistogram(boolean b) {
+        showHistogram = b;
+    }
+    
+    public Color getActiveColor() {
+        return bout.readValue() ? Color.YELLOW : Color.RED;
+    }
 
     {
         if (CluckGlobals.node != null) {
@@ -40,12 +55,14 @@ public class CVProcessor implements ImageOutput {
         pointSettings.addElement("rectDR");
     }
 
-    public void putPoint(Point p) {
+    public void putPoint(float x, float y) {
         String c = (String) pointSettings.getSelectedItem();
         if ("rectUL".equals(c)) {
-            rectUL = p;
+            rectUL = new Point((int) (x * width), (int) (y * height));
+            Logger.info("RECT1: " + rectUL + " bc " + x + " " + width);
         } else if ("rectDR".equals(c)) {
-            rectDR = p;
+            rectDR = new Point((int) (x * width), (int) (y * height));
+            Logger.info("RECT2: " + rectDR + " bc " + x + " " + width);
         }
         pointSettings.setSelectedItem(pointSettings.getElementAt((pointSettings.getIndexOf(pointSettings.getSelectedItem()) + 1) % pointSettings.getSize()));
     }
@@ -58,6 +75,8 @@ public class CVProcessor implements ImageOutput {
 
     @Override
     public void write(BufferedImage newImage) {
+        this.width = newImage.getWidth();
+        this.height = newImage.getHeight();
         Mat fromImage = OpenCVLoader.getFromImage(newImage);
         Imgproc.GaussianBlur(fromImage, fromImage, new Size(9, 9), 0);
         boolean o = false;
@@ -78,12 +97,11 @@ public class CVProcessor implements ImageOutput {
             hist.convertTo(target, CvType.CV_8UC1);
             byte[] extracted = new byte[25];
             target.get(0, 0, extracted);
-            if ((extracted[16] & 255) < 128) {
+            o = (extracted[2 /* 16 */] & 255) < 128;
+            if (showHistogram) {
                 fromImage = target;
             } else {
-                o = true;
                 fromImage = OpenCVLoader.getFromImage(newImage);
-                //fromImage = mats.get((int) (System.currentTimeMillis() / 1000 % 4) % 3);
                 Core.rectangle(fromImage, new org.opencv.core.Point(rectUL.x, rectUL.y), new org.opencv.core.Point(rectDR.x, rectDR.y), new Scalar(1, 1, 1));
             }
         }

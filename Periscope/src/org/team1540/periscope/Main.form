@@ -19,6 +19,9 @@
           <Connection code="imagePane" type="code"/>
         </Property>
       </Properties>
+      <BindingProperties>
+        <BindingProperty name="histogram" source="btnHistogram" sourcePath="${selected}" target="cVProcessor1" targetPath="histogram" updateStrategy="0" immediately="false"/>
+      </BindingProperties>
     </Component>
     <Component class="org.team1540.periscope.CluckConnector" name="cluckConnector1">
       <BindingProperties>
@@ -52,7 +55,11 @@
               <Component id="tAddress" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="cSelector" min="-2" max="-2" attributes="0"/>
-              <EmptySpace pref="329" max="32767" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="btnHistogram" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="labInside" min="-2" max="-2" attributes="0"/>
+              <EmptySpace pref="214" max="32767" attributes="0"/>
               <Component id="txtCluckRemote" min="-2" max="-2" attributes="0"/>
           </Group>
           <Component id="imagePane" max="32767" attributes="0"/>
@@ -65,6 +72,8 @@
                   <Component id="tAddress" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="cSelector" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="txtCluckRemote" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="btnHistogram" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="labInside" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="imagePane" max="32767" attributes="0"/>
@@ -102,7 +111,7 @@
         </DimensionLayout>
         <DimensionLayout dim="1">
           <Group type="103" groupAlignment="0" attributes="0">
-              <EmptySpace min="0" pref="480" max="32767" attributes="0"/>
+              <EmptySpace min="0" pref="479" max="32767" attributes="0"/>
           </Group>
         </DimensionLayout>
       </Layout>
@@ -116,6 +125,19 @@
         <Property name="text" type="java.lang.String" value="10.15.40.2:443"/>
         <Property name="toolTipText" type="java.lang.String" value=""/>
       </Properties>
+    </Component>
+    <Component class="javax.swing.JToggleButton" name="btnHistogram">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Histogram"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="labInside">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Sight"/>
+      </Properties>
+      <BindingProperties>
+        <BindingProperty name="foreground" source="cVProcessor1" sourcePath="${activeColor}" target="labInside" targetPath="foreground" updateStrategy="0" immediately="false"/>
+      </BindingProperties>
     </Component>
   </SubComponents>
 </Form>

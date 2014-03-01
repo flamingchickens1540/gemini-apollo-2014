@@ -30,6 +30,8 @@ public class Main extends javax.swing.JFrame {
         cSelector = new javax.swing.JComboBox();
         imagePane = new org.team1540.periscope.ImagePanel();
         txtCluckRemote = new javax.swing.JTextField();
+        btnHistogram = new javax.swing.JToggleButton();
+        labInside = new javax.swing.JLabel();
 
         webcam1.setOutput(cVProcessor1);
         webcam1.setWebcamEnabled(false);
@@ -38,6 +40,9 @@ public class Main extends javax.swing.JFrame {
         bindingGroup.addBinding(binding);
 
         cVProcessor1.setTarget(imagePane);
+
+        binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, btnHistogram, org.jdesktop.beansbinding.ELProperty.create("${selected}"), cVProcessor1, org.jdesktop.beansbinding.BeanProperty.create("histogram"));
+        bindingGroup.addBinding(binding);
 
         binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, txtCluckRemote, org.jdesktop.beansbinding.ELProperty.create("${text}"), cluckConnector1, org.jdesktop.beansbinding.BeanProperty.create("address"));
         bindingGroup.addBinding(binding);
@@ -64,13 +69,20 @@ public class Main extends javax.swing.JFrame {
         );
         imagePaneLayout.setVerticalGroup(
             imagePaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 480, Short.MAX_VALUE)
+            .addGap(0, 479, Short.MAX_VALUE)
         );
 
         txtCluckRemote.setColumns(15);
         txtCluckRemote.setFont(new java.awt.Font("Monospaced", 0, 11)); // NOI18N
         txtCluckRemote.setText("10.15.40.2:443");
         txtCluckRemote.setToolTipText("");
+
+        btnHistogram.setText("Histogram");
+
+        labInside.setText("Sight");
+
+        binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, cVProcessor1, org.jdesktop.beansbinding.ELProperty.create("${activeColor}"), labInside, org.jdesktop.beansbinding.BeanProperty.create("foreground"));
+        bindingGroup.addBinding(binding);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -80,7 +92,11 @@ public class Main extends javax.swing.JFrame {
                 .addComponent(tAddress, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cSelector, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 329, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnHistogram)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(labInside)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 214, Short.MAX_VALUE)
                 .addComponent(txtCluckRemote, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
             .addComponent(imagePane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
@@ -90,7 +106,9 @@ public class Main extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(tAddress, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(cSelector, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(txtCluckRemote, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(txtCluckRemote, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnHistogram)
+                    .addComponent(labInside))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(imagePane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -103,9 +121,7 @@ public class Main extends javax.swing.JFrame {
     private void updatePoint(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_updatePoint
         Point pt = evt.getPoint();
         Dimension size = imagePane.getSize();
-        int pX = (int) (640 * pt.x / size.width);
-        int pY = (int) (480 * pt.y / size.height);
-        cVProcessor1.putPoint(new Point(pX, pY));
+        cVProcessor1.putPoint(((float) pt.x) / size.width, ((float) pt.y) / size.height);
     }//GEN-LAST:event_updatePoint
 
     public static void main(final String args[]) {
@@ -159,10 +175,12 @@ public class Main extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JToggleButton btnHistogram;
     private javax.swing.JComboBox cSelector;
     private org.team1540.periscope.CVProcessor cVProcessor1;
     private org.team1540.periscope.CluckConnector cluckConnector1;
     private org.team1540.periscope.ImagePanel imagePane;
+    private javax.swing.JLabel labInside;
     private javax.swing.JTextField tAddress;
     private javax.swing.JTextField txtCluckRemote;
     private org.team1540.periscope.Webcam webcam1;
