@@ -10,7 +10,7 @@ import ccre.log.*;
 
 public class RobotMain extends SimpleCore {
 
-    public static boolean IS_COMPETITION_ROBOT = true;
+    public static boolean IS_COMPETITION_ROBOT = false;
 
     protected void createSimpleControl() {
         // ***** CLUCK *****
@@ -35,13 +35,18 @@ public class RobotMain extends SimpleCore {
         BooleanOutput rachetLoopRelease = test.testPublish("sol-rachet-5", makeSolenoid(5));
         BooleanOutput armFloatSolenoid = test.testPublish("sol-float-6", makeSolenoid(6));
         // ***** INPUTS *****
-        FloatInputPoll winchCurrent = makeAnalogInput(1, 8);
-        FloatInputPoll pressureSensor = makeAnalogInput(2, 8);
-        FloatInputPoll ultrasonicSensor = makeAnalogInput(3, 8);
-        BooleanInputPoll catapultNotCocked = makeDigitalInput(2);
+        final FloatInputPoll winchCurrent = makeAnalogInput(1, 8);
+        final FloatInputPoll pressureSensor = makeAnalogInput(2, 8);
+        final FloatInputPoll ultrasonicSensor = makeAnalogInput(3, 8);
+        final BooleanInputPoll catapultNotCocked = makeDigitalInput(2);
         CluckGlobals.node.publish("Winch Current", Mixing.createDispatch(winchCurrent, globalPeriodic));
         CluckGlobals.node.publish("Pressure Sensor", Mixing.createDispatch(pressureSensor, globalPeriodic));
         CluckGlobals.node.publish("Ultrasonic Sensor", Mixing.createDispatch(ultrasonicSensor, globalPeriodic));
+        CluckGlobals.node.publish("Ultrasonic Sensor, centimenters", Mixing.createDispatch(new FloatInputPoll(){
+            public float readValue() {
+                return ultrasonicSensor.readValue()*(5.0f/1024);
+            }
+        },globalPeriodic));
         // ***** VISION TRACKING *****
         VisionTracking.setup(startedAutonomous);
         BooleanInputPoll isHotZone = VisionTracking.isHotZone();
@@ -92,7 +97,8 @@ public class RobotMain extends SimpleCore {
         Actuators.createArm(duringTeleop, armSolenoid, armUpDown, canArmMove);
         Actuators.createCollector(duringTeleop, collectorMotor, armFloatSolenoid, rollersIn, rollersOut, canCollectorRun);
         // [[[[ Phidget Display Code ]]]]
-        ControlInterface.displayPressure(pressureSensor, pressureSwitch, globalPeriodic);
-        MOTD.createMOTD();
+        ControlInterface.displayPressure(pressureSensor, globalPeriodic);
+        ControlInterface.displayDistance(ultrasonicSensor, globalPeriodic);
+        //MOTD.createMOTD();
     }
 }
