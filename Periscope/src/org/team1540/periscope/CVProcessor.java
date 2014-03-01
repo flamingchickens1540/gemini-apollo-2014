@@ -88,7 +88,7 @@ public class CVProcessor implements ImageOutput {
             fromImage.put(rectUL.y, rectUL.x, new byte[]{(byte) 255, (byte) 255, (byte) 255});
         } else {
             Imgproc.cvtColor(fromImage, fromImage, Imgproc.COLOR_BGR2HSV);
-            ArrayList<Mat> mats = new ArrayList();
+            ArrayList<Mat> mats = new ArrayList<Mat>();
             Core.split(new Mat(fromImage, new Rect(new org.opencv.core.Point(rectUL.x, rectUL.y), new org.opencv.core.Point(rectDR.x, rectDR.y))), mats);
             Mat hist = new Mat();
             Imgproc.calcHist(mats, new MatOfInt(0), new Mat(), hist, new MatOfInt(25), new MatOfFloat(0f, 256f));

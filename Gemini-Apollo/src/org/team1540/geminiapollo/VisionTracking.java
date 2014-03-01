@@ -8,12 +8,11 @@ import ccre.log.LogLevel;
 
 public class VisionTracking {
 
-    public static String prefix = "periscope/";
+    public static final String prefix = "periscope/";
 
     public static void setup(EventSource startAuto) {
         // Start vision tracking at the start of autonomous.
         startAuto.addListener(CluckGlobals.node.subscribeEC(prefix + "enable-vt-autonomous"));
-
         // Require an acknowledgement that the vision tracking is running.
         EventSource ack = CluckGlobals.node.subscribeES(prefix + "ack-vt-autonomous");
         EventLogger.log(ack, LogLevel.INFO, "Got ack!");

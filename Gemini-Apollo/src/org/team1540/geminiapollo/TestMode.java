@@ -6,7 +6,7 @@ import ccre.chan.*;
 
 public class TestMode {
 
-    public BooleanInputPoll inTest;
+    public final BooleanInputPoll inTest;
 
     public TestMode(BooleanInputPoll inTest) {
         this.inTest = inTest;
@@ -24,14 +24,12 @@ public class TestMode {
     }
 
     public BooleanInput testPublish(String s, BooleanInput b) {
-        s = testify(s);
-        CluckGlobals.node.publish(s, (BooleanInput) b);
+        CluckGlobals.node.publish(testify(s), (BooleanInput) b);
         return b;
     }
 
     public BooleanOutput testPublish(String s, final BooleanOutput b) {
-        s = testify(s);
-        CluckGlobals.node.publish(s, new BooleanOutput() {
+        CluckGlobals.node.publish(testify(s), new BooleanOutput() {
             public void writeValue(boolean bln) {
                 if (inTest.readValue()) {
                     b.writeValue(bln);
@@ -49,14 +47,12 @@ public class TestMode {
     }
 
     public FloatInput testPublish(String s, FloatInput b) {
-        s = testify(s);
-        CluckGlobals.node.publish(s, (FloatInput) b);
+        CluckGlobals.node.publish(testify(s), (FloatInput) b);
         return b;
     }
 
     public FloatOutput testPublish(String s, final FloatOutput b) {
-        s = testify(s);
-        CluckGlobals.node.publish(s, new FloatOutput() {
+        CluckGlobals.node.publish(testify(s), new FloatOutput() {
             public void writeValue(float bln) {
                 if (inTest.readValue()) {
                     b.writeValue(bln);
@@ -67,20 +63,17 @@ public class TestMode {
     }
 
     public BooleanInputProducer testPublish(String s, BooleanInputProducer b) {
-        s = testify(s);
-        CluckGlobals.node.publish(s, b);
+        CluckGlobals.node.publish(testify(s), b);
         return b;
     }
 
     public FloatInputProducer testPublish(String s, FloatInputProducer b) {
-        s = testify(s);
-        CluckGlobals.node.publish(s, b);
+        CluckGlobals.node.publish(testify(s), b);
         return b;
     }
 
     public EventConsumer testPublish(String s, final EventConsumer o) {
-        s = testify(s);
-        CluckGlobals.node.publish(s, new EventConsumer() {
+        CluckGlobals.node.publish(testify(s), new EventConsumer() {
             public void eventFired() {
                 if (inTest.readValue()) {
                     o.eventFired();
@@ -91,8 +84,7 @@ public class TestMode {
     }
 
     public EventSource testPublish(String s, final EventSource o) {
-        s = testify(s);
-        CluckGlobals.node.publish(s, o);
+        CluckGlobals.node.publish(testify(s), o);
         return o;
     }
 
