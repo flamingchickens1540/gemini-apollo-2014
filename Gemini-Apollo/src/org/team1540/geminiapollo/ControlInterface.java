@@ -64,6 +64,12 @@ public class ControlInterface {
             }
         });
     }
+    public static void showRearming(EventSource when,BooleanInputPoll isRearming){
+        Mixing.pumpWhen(when,Mixing.invert(isRearming),PhidgetReader.digitalOutputs[1]);
+    }
+    public static void showFiring(EventSource when,BooleanInput canFire){
+       Mixing.pumpWhen(when,Mixing.invert(canFire),PhidgetReader.digitalOutputs[0]);
+    }
 
     private static int normalize(float zero, float one, float value) {
         float range = one - zero;

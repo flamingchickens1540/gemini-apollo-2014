@@ -18,12 +18,11 @@ public class Shooter {
     public static BooleanInputPoll createShooter(
             final EventSource beginAutonomous, final EventSource beginTeleop, final EventSource during, final EventSource constant,
             final FloatOutput winchMotor,
-            final BooleanOutput winchSolenoid, final BooleanOutput rachetLoopRelease,
+            final BooleanOutput winchSolenoid,
             final FloatInputPoll winchCurrent, final FloatInputPoll slider,
             final BooleanInputPoll catapultNotCocked, final BooleanInputPoll armDown, final BooleanInputPoll detentioning,
-            EventSource rearmCatapult, EventSource fireButton, BooleanOutput canCollectorRun) {
+            EventSource rearmCatapult, EventSource fireButton, BooleanOutput canCollectorRun,final BooleanStatus winchDisengaged) {
         //Network Variables
-        CluckGlobals.node.publish("Rachet", rachetLoopRelease);
         TuningContext tuner = new TuningContext(CluckGlobals.node, "ShooterValues");
         tuner.publishSavingEvent("Shooter");
         final FloatStatus winchSpeed = tuner.getFloat("Winch Speed", 1f);
@@ -71,7 +70,6 @@ public class Shooter {
         //state of the catapult
         //four score, etc. etc.
         //detentioning is technically a part of this
-        final BooleanStatus winchDisengaged = new BooleanStatus(winchSolenoid);
         CluckGlobals.node.publish("WINCHDISENGAGED", winchDisengaged);
         winchDisengaged.addTarget(Mixing.invert(canCollectorRun));
         final BooleanStatus rearming = new BooleanStatus();
@@ -99,12 +97,6 @@ public class Shooter {
             public void eventFired() {
                 rearming.writeValue(false);
                 reduceTensionTimer.startOrFeed();
-                rachetLoopRelease.writeValue(true);
-            }
-        });
-        Mixing.whenBooleanBecomes(detentioning, false, during).addListener(new EventConsumer() {
-            public void eventFired() {
-                rachetLoopRelease.writeValue(false);
             }
         });
         //begin listeners
@@ -141,7 +133,6 @@ public class Shooter {
                 } else if (catapultNotCocked.readValue()) {
                     winchDisengaged.writeValue(false);
                     Logger.info("rearm");
-                    rachetLoopRelease.writeValue(false);
                     rearming.writeValue(true);
                 } else {
                     Logger.info("no rearm");

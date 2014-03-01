@@ -31,8 +31,10 @@ public class RobotMain extends SimpleCore {
         // ***** SOLENOIDS *****
         BooleanOutput shiftSolenoid = test.testPublish("sol-shift-1", makeSolenoid(1));
         BooleanOutput armSolenoid = test.testPublish("sol-arm-2", makeSolenoid(2));
-        BooleanOutput winchSolenoid = test.testPublish("sol-winch-3", makeSolenoid(3));
-        BooleanOutput rachetLoopRelease = test.testPublish("sol-rachet-5", makeSolenoid(5));
+        BooleanOutput winchSolenoidA = test.testPublish("sol-winch-3", makeSolenoid(3));
+        BooleanOutput winchSolenoidB = test.testPublish("sol-winch-5", makeSolenoid(5));
+        BooleanOutput winchSolenoid = test.testPublish("sol-winch-combo", Mixing.combine(winchSolenoidA,winchSolenoidB));
+        //BooleanOutput rachetLoopRelease = test.testPublish("sol-rachet-5", makeSolenoid(5));
         BooleanOutput armFloatSolenoid = test.testPublish("sol-float-6", makeSolenoid(6));
         // ***** INPUTS *****
         final FloatInputPoll winchCurrent = makeAnalogInput(1, 8);
@@ -81,24 +83,25 @@ public class RobotMain extends SimpleCore {
         EventLogger.log(fireWhen, LogLevel.FINE, "Fire now!");
         EventSource updateShooterWhen = Mixing.combine(duringTeleop, duringAutonomous);
         BooleanStatus canCollectorRun = new BooleanStatus();
-        BooleanInputPoll canArmMove = Shooter.createShooter(
+        BooleanStatus winchEngaged=new BooleanStatus(winchSolenoid);
+        BooleanInputPoll rearming = Shooter.createShooter(
                 startedAutonomous, startedTeleop, updateShooterWhen, constantPeriodic,
                 winchMotor,
-                winchSolenoid, rachetLoopRelease,
+                winchSolenoid,
                 winchCurrent, ControlInterface.powerSlider(),
                 catapultNotCocked, armUpDown, detensioning,
-                rearmCatapult, fireWhen, canCollectorRun
+                rearmCatapult, fireWhen, canCollectorRun,
+                winchEngaged
         );
         Shooter.createTuner(globalPeriodic, winchCurrent, rearmCatapult, catapultNotCocked);
         // [[[[ ARM CODE ]]]]
-        if (IS_COMPETITION_ROBOT) {
-            canArmMove = Mixing.alwaysTrue; // the arm and the catapult no longer collide
-        }
-        Actuators.createArm(duringTeleop, armSolenoid, armUpDown, canArmMove);
+        Actuators.createArm(duringTeleop, armSolenoid, armUpDown, IS_COMPETITION_ROBOT ? Mixing.alwaysTrue:rearming);
         Actuators.createCollector(duringTeleop, collectorMotor, armFloatSolenoid, rollersIn, rollersOut, canCollectorRun);
         // [[[[ Phidget Display Code ]]]]
         ControlInterface.displayPressure(pressureSensor, globalPeriodic);
         ControlInterface.displayDistance(ultrasonicSensor, globalPeriodic);
+        ControlInterface.showRearming(globalPeriodic, rearming);
+        ControlInterface.showFiring(globalPeriodic, winchEngaged);
         //MOTD.createMOTD();
     }
 }
