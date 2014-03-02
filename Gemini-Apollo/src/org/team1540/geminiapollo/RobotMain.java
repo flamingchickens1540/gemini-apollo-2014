@@ -79,7 +79,7 @@ public class RobotMain extends SimpleCore {
         BooleanStatus shiftBoolean = DriveCode.createShifting(startedTeleop, duringTeleop, shiftSolenoid, shiftHighButton, shiftLowButton);
         DriveCode.createDrive(startedTeleop, duringTeleop, leftDrive1, leftDrive2, rightDrive1, rightDrive2, leftDriveAxis, rightDriveAxis, forwardDriveAxis, IS_COMPETITION_ROBOT, shiftBoolean);
         // [[[[ SHOOTER CODE ]]]]
-        EventSource fireWhen = test.testPublish("fire", Mixing.combine(fireAutonomousTrigger, fireButton));
+        EventSource fireWhen = Mixing.combine(fireAutonomousTrigger, fireButton);
         EventLogger.log(fireWhen, LogLevel.FINE, "Fire now!");
         EventSource updateShooterWhen = Mixing.combine(duringTeleop, duringAutonomous);
         BooleanStatus canCollectorRun = new BooleanStatus();
