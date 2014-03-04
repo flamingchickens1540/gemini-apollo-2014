@@ -6,6 +6,7 @@ import ccre.log.Logger;
 import ccre.log.NetworkAutologger;
 import java.awt.Dimension;
 import java.awt.Point;
+import javax.swing.JOptionPane;
 
 public class Main extends javax.swing.JFrame {
 
@@ -32,6 +33,7 @@ public class Main extends javax.swing.JFrame {
         txtCluckRemote = new javax.swing.JTextField();
         btnHistogram = new javax.swing.JToggleButton();
         labInside = new javax.swing.JLabel();
+        btnConfigHistogram = new javax.swing.JButton();
 
         webcam1.setOutput(cVProcessor1);
         webcam1.setWebcamEnabled(false);
@@ -84,6 +86,13 @@ public class Main extends javax.swing.JFrame {
         binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, cVProcessor1, org.jdesktop.beansbinding.ELProperty.create("${activeColor}"), labInside, org.jdesktop.beansbinding.BeanProperty.create("foreground"));
         bindingGroup.addBinding(binding);
 
+        btnConfigHistogram.setText("Config");
+        btnConfigHistogram.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnConfigHistogramActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -96,7 +105,9 @@ public class Main extends javax.swing.JFrame {
                 .addComponent(btnHistogram)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(labInside)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 214, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnConfigHistogram)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 147, Short.MAX_VALUE)
                 .addComponent(txtCluckRemote, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
             .addComponent(imagePane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
@@ -108,7 +119,8 @@ public class Main extends javax.swing.JFrame {
                     .addComponent(cSelector, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(txtCluckRemote, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(btnHistogram)
-                    .addComponent(labInside))
+                    .addComponent(labInside)
+                    .addComponent(btnConfigHistogram))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(imagePane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -123,6 +135,10 @@ public class Main extends javax.swing.JFrame {
         Dimension size = imagePane.getSize();
         cVProcessor1.putPoint(((float) pt.x) / size.width, ((float) pt.y) / size.height);
     }//GEN-LAST:event_updatePoint
+
+    private void btnConfigHistogramActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConfigHistogramActionPerformed
+        cVProcessor1.setCurrentConfig(JOptionPane.showInputDialog("Enter histogram config: " + cVProcessor1.getCurrentConfig()));
+    }//GEN-LAST:event_btnConfigHistogramActionPerformed
 
     public static void main(final String args[]) {
         /* Set the Nimbus look and feel */
@@ -175,6 +191,7 @@ public class Main extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnConfigHistogram;
     private javax.swing.JToggleButton btnHistogram;
     private javax.swing.JComboBox cSelector;
     private org.team1540.periscope.CVProcessor cVProcessor1;

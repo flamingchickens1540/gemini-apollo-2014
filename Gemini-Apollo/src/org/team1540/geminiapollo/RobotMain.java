@@ -46,7 +46,7 @@ public class RobotMain extends SimpleCore {
         CluckGlobals.node.publish("Ultrasonic Sensor", Mixing.createDispatch(ultrasonicSensor, globalPeriodic));
         CluckGlobals.node.publish("Ultrasonic Sensor, centimenters", Mixing.createDispatch(new FloatInputPoll(){
             public float readValue() {
-                return ultrasonicSensor.readValue()*(5.0f/1024);
+                return ultrasonicSensor.readValue()*(1024/5f);
             }
         },globalPeriodic));
         // ***** VISION TRACKING *****

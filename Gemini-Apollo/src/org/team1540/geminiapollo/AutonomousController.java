@@ -61,26 +61,57 @@ public class AutonomousController extends InstinctModule {
         leftDrive.writeValue(0);
     }
 
+    private final FloatStatus hotcheckPreUltraDelay = tune.getFloat("autom-hotcheck-pru-delay", 0);
+    private final FloatStatus hotcheckUltraSpeed = tune.getFloat("autom-hotcheck-ult-speed", 0.5f);
+    private final FloatStatus hotcheckUltraMaxDelay = tune.getFloat("autom-hotcheck-ult-max-delay", 1);
+    private final FloatStatus hotcheckUltraEnd = tune.getFloat("autom-hotcheck-ult-end", 2f);
     private final FloatStatus hotcheckMaxDelay = tune.getFloat("autom-hotcheck-maxwait", 6);
     private final FloatStatus hotcheckPreDelay = tune.getFloat("autom-hotcheck-fire-wait", 0.5f);
     private final FloatStatus hotcheckMovement = tune.getFloat("autom-hotcheck-move-speed", 0.5f);
     private final FloatStatus hotcheckMoveDelay = tune.getFloat("autom-hotcheck-move-duration", 0);
 
     private void autoHotcheck() throws AutonomousModeOverException, InterruptedException {
-        FloatInputPoll cur = Utils.currentTimeSeconds;
-        float target = cur.readValue() + hotcheckMaxDelay.readValue(); // Wait six seconds at most.
-        BooleanInputPoll fatl = Mixing.floatIsAtLeast(cur, target);
-        int i = waitUntilOneOf(new BooleanInputPoll[]{isHotzone, fatl});
-        if (i != 0) {
-            Logger.warning("Cancelled wait for HotZone after " + hotcheckMaxDelay.readValue() + " seconds: " + cur.readValue() + " and " + target);
+        FloatInputPoll currentTime = Utils.currentTimeSeconds;
+        Logger.fine("Began Hotcheck");
+        {
+            float target = currentTime.readValue() + hotcheckMaxDelay.readValue(); // Wait six seconds at most.
+            BooleanInputPoll fatl = Mixing.floatIsAtLeast(currentTime, target);
+            int i = waitUntilOneOf(new BooleanInputPoll[]{isHotzone, fatl});
+            if (i != 0) {
+                Logger.warning("Cancelled wait for HotZone after " + hotcheckMaxDelay.readValue() + " seconds: " + currentTime.readValue() + " and " + target);
+            }
         }
+        Logger.fine("Found hotzone");
+        {
+            leftDrive.writeValue(hotcheckUltraSpeed.readValue());
+            rightDrive.writeValue(hotcheckUltraSpeed.readValue());
+            waitForTime((long) (1000L * hotcheckPreUltraDelay.readValue() + 0.5f));
+        }
+        Logger.fine("Ended pretime");
+        {
+            float timeoutAt = currentTime.readValue() + hotcheckUltraMaxDelay.readValue(); // Wait one second at most.
+            float lengthAt = hotcheckUltraEnd.readValue();
+            int i = waitUntilOneOf(new BooleanInputPoll[]{
+                Mixing.floatIsAtLeast(ultrasonicSensor, lengthAt),
+                Mixing.floatIsAtLeast(currentTime, timeoutAt)});
+            if (i != 0) {
+                Logger.warning("Cancelled wait for Ultrasonic after " + hotcheckUltraMaxDelay.readValue());
+            }
+            leftDrive.writeValue(0);
+            rightDrive.writeValue(0);
+        }
+        Logger.fine("Arrived");
         fireWhenEvent.produce();
-        waitForTime((long) (1000L * hotcheckPreDelay.readValue() + 0.5f));
-        leftDrive.writeValue(hotcheckMovement.readValue());
-        rightDrive.writeValue(hotcheckMovement.readValue());
-        waitForTime((long) (1000L * hotcheckMoveDelay.readValue() + 0.5f));
-        leftDrive.writeValue(0);
-        rightDrive.writeValue(0);
+        Logger.fine("Fired.");
+        {
+            waitForTime((long) (1000L * hotcheckPreDelay.readValue() + 0.5f));
+            Logger.fine("Wait over.");
+            leftDrive.writeValue(hotcheckMovement.readValue());
+            rightDrive.writeValue(hotcheckMovement.readValue());
+            waitForTime((long) (1000L * hotcheckMoveDelay.readValue() + 0.5f));
+            leftDrive.writeValue(0);
+            rightDrive.writeValue(0);
+        }
     }
 
     private final FloatStatus ultrasonicMovement = tune.getFloat("autom-ultrasonic-move-speed", 0.5f);

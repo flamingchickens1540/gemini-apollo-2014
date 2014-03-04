@@ -11,6 +11,7 @@ import java.awt.Color;
 import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Arrays;
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
 import org.opencv.core.*;
@@ -24,6 +25,8 @@ public class CVProcessor implements ImageOutput {
     private final BooleanStatus waitingForAck = new BooleanStatus();
     private final Event notifyAck = new Event();
     private float width = 640, height = 640;
+    private int scanCell = 2, scanThreshold = 128;
+    private short[] lastScan = null;
     public boolean showHistogram = false;
     
     public boolean getHistogram() {
@@ -97,7 +100,7 @@ public class CVProcessor implements ImageOutput {
             hist.convertTo(target, CvType.CV_8UC1);
             byte[] extracted = new byte[25];
             target.get(0, 0, extracted);
-            o = (extracted[2 /* 16 */] & 255) < 128;
+            o = (extracted[scanCell] & 255) < scanThreshold;
             if (showHistogram) {
                 fromImage = target;
             } else {
@@ -111,6 +114,27 @@ public class CVProcessor implements ImageOutput {
             waitingForAck.writeValue(false);
             notifyAck.produce();
             Logger.info("Sent ack!");
+        }
+    }
+
+    public String getCurrentConfig() {
+        return "[" + scanCell + "]/" + scanThreshold + "/" + Arrays.toString(lastScan) + "/" + ((lastScan != null && scanCell >= 0 && scanCell < lastScan.length) ? Integer.toString(lastScan[scanCell]) : "<invalid>");
+    }
+
+    public void setCurrentConfig(String data) {
+        if (data != null && !data.isEmpty()) {
+            String[] pts = data.split("/");
+            if (pts.length != 2) {
+                Logger.log(LogLevel.WARNING, "Bad input - wrong length");
+            } else {
+                try {
+                    scanCell = Integer.parseInt(pts[0]);
+                    scanThreshold = Integer.parseInt(pts[1]);
+                    Logger.info("Current config: " + scanCell + "/" + scanThreshold);
+                } catch (NumberFormatException ex) {
+                    Logger.log(LogLevel.WARNING, "Bad input", ex);
+                }
+            }
         }
     }
 }

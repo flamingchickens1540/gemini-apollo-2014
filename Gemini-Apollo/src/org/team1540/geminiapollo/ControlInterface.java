@@ -36,15 +36,23 @@ public class ControlInterface {
     public static BooleanInputPoll detensioning() {
         return PhidgetReader.getDigitalInput(7);
     }
-    
-    public static void displayDistance(final FloatInputPoll distance, EventSource update){
-        update.addListener(new EventConsumer(){
+
+    public static void displayDistance(final FloatInputPoll distance, EventSource update) {
+        update.addListener(new EventConsumer() {
+            float last = -1;
+            int ctr = 0;
+
             public void eventFired() {
-                PhidgetReader.phidgetLCD[0].println(distance.readValue()*(5.0f/1024));
-            }           
+                float value = distance.readValue() * (1024 / 5.0f);
+                if (value == last && (ctr++ % 100 != 0)) {
+                    return;
+                }
+                PhidgetReader.phidgetLCD[0].println(value);
+                last = value;
+            }
         });
     }
-    
+
     public static void displayPressure(final FloatInputPoll f, EventSource update) {
         final TuningContext tuner = new TuningContext(CluckGlobals.node, "PressureTuner");
         tuner.publishSavingEvent("Pressure");
@@ -64,11 +72,13 @@ public class ControlInterface {
             }
         });
     }
-    public static void showRearming(EventSource when,BooleanInputPoll isRearming){
-        Mixing.pumpWhen(when,Mixing.invert(isRearming),PhidgetReader.digitalOutputs[1]);
+
+    public static void showRearming(EventSource when, BooleanInputPoll isRearming) {
+        Mixing.pumpWhen(when, Mixing.invert(isRearming), new BooleanStatus(PhidgetReader.digitalOutputs[1]));
     }
-    public static void showFiring(EventSource when,BooleanInput canFire){
-       Mixing.pumpWhen(when,Mixing.invert(canFire),PhidgetReader.digitalOutputs[0]);
+
+    public static void showFiring(EventSource when, BooleanInput canFire) {
+        Mixing.pumpWhen(when, Mixing.invert(canFire), new BooleanStatus(PhidgetReader.digitalOutputs[0]));
     }
 
     private static int normalize(float zero, float one, float value) {

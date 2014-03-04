@@ -59,7 +59,9 @@
               <Component id="btnHistogram" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="labInside" min="-2" max="-2" attributes="0"/>
-              <EmptySpace pref="214" max="32767" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="btnConfigHistogram" min="-2" max="-2" attributes="0"/>
+              <EmptySpace pref="147" max="32767" attributes="0"/>
               <Component id="txtCluckRemote" min="-2" max="-2" attributes="0"/>
           </Group>
           <Component id="imagePane" max="32767" attributes="0"/>
@@ -74,6 +76,7 @@
                   <Component id="txtCluckRemote" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="btnHistogram" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="labInside" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="btnConfigHistogram" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="imagePane" max="32767" attributes="0"/>
@@ -138,6 +141,14 @@
       <BindingProperties>
         <BindingProperty name="foreground" source="cVProcessor1" sourcePath="${activeColor}" target="labInside" targetPath="foreground" updateStrategy="0" immediately="false"/>
       </BindingProperties>
+    </Component>
+    <Component class="javax.swing.JButton" name="btnConfigHistogram">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Config"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnConfigHistogramActionPerformed"/>
+      </Events>
     </Component>
   </SubComponents>
 </Form>
