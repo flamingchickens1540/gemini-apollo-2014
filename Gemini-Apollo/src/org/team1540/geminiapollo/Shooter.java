@@ -32,7 +32,7 @@ public class Shooter {
         final FloatStatus rearmTimeout = tuner.getFloat("Winch Rearm Timeout", 5f);
         final BooleanStatus shouldWinchDuringFire = new BooleanStatus(true);
         CluckGlobals.node.publish("Winch During Fire", shouldWinchDuringFire);
-        final BooleanStatus useSlider = new BooleanStatus(true);
+        final BooleanStatus useSlider = new BooleanStatus();
         CluckGlobals.node.publish("Use Slider Drawback Value", useSlider);
         CluckGlobals.node.publish("Slider Value", Mixing.createDispatch(slider, during));
         //engage safety after firing safety

@@ -43,7 +43,7 @@ public class ControlInterface {
             int ctr = 0;
 
             public void eventFired() {
-                float value = distance.readValue() * (1024 / 5.0f);
+                float value = distance.readValue();
                 if (value == last && (ctr++ % 100 != 0)) {
                     return;
                 }
@@ -53,22 +53,29 @@ public class ControlInterface {
         });
     }
 
-    public static void displayPressure(final FloatInputPoll f, EventSource update) {
+    public static void displayPressure(final FloatInputPoll f, EventSource update, final BooleanInputPoll cprSwitch) {
         final TuningContext tuner = new TuningContext(CluckGlobals.node, "PressureTuner");
         tuner.publishSavingEvent("Pressure");
         final FloatInputPoll zeroP = tuner.getFloat("LowPressure", 0.494f); // 0.5
         final FloatInputPoll oneP = tuner.getFloat("HighPressure", 2.746f); // 2.745
         update.addListener(new EventConsumer() {
             int prevValue = -1000;
+            boolean prevValueCpr = cprSwitch.readValue();
             int ctr = 0;
-
+ 
             public void eventFired() {
                 int c = normalize(zeroP.readValue(), oneP.readValue(), f.readValue());
-                if (c == prevValue && (ctr++ % 100 != 0)) {
+                boolean cpr = cprSwitch.readValue();
+                if (c == prevValue && (prevValueCpr == cpr) && (ctr++ % 100 != 0)) {
                     return;
                 }
                 prevValue = c;
-                PhidgetReader.phidgetLCD[1].println("Pressure: " + c / 10f + "%");
+                prevValueCpr = cpr;
+                String mstr = c <= -10 ? "????" : Integer.toString(c) + "%";
+                while (mstr.length() < 4) {
+                    mstr = " " + mstr;
+                }
+                PhidgetReader.phidgetLCD[1].println("Air: " + (cpr ? "<" : " ") + mstr + (cpr ? "> " : "  ") + (RobotMain.IS_COMPETITION_ROBOT ? "(APOLLO)" : "(GEMINI)"));
             }
         });
     }
