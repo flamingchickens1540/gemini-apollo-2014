@@ -10,7 +10,7 @@ import ccre.log.*;
 
 public class RobotMain extends SimpleCore {
 
-    public static boolean IS_COMPETITION_ROBOT = false;
+    public static boolean IS_COMPETITION_ROBOT = true;
 
     protected void createSimpleControl() {
         // ***** CLUCK *****
@@ -31,6 +31,7 @@ public class RobotMain extends SimpleCore {
         // ***** SOLENOIDS *****
         BooleanOutput shiftSolenoid = test.testPublish("sol-shift-1", makeSolenoid(1));
         BooleanOutput armSolenoid = test.testPublish("sol-arm-2", makeSolenoid(2));
+        Mixing.setWhen(robotDisabled, armSolenoid, false);
         BooleanOutput winchSolenoidA = test.testPublish("sol-winch-3", makeSolenoid(3));
         BooleanOutput winchSolenoidB = test.testPublish("sol-winch-5", makeSolenoid(5));
         BooleanOutput winchSolenoid = test.testPublish("sol-winch-combo", Mixing.combine(winchSolenoidA,winchSolenoidB));
@@ -44,11 +45,12 @@ public class RobotMain extends SimpleCore {
         CluckGlobals.node.publish("Winch Current", Mixing.createDispatch(winchCurrent, globalPeriodic));
         CluckGlobals.node.publish("Pressure Sensor", Mixing.createDispatch(pressureSensor, globalPeriodic));
         CluckGlobals.node.publish("Ultrasonic Sensor", Mixing.createDispatch(ultrasonicSensor, globalPeriodic));
-        CluckGlobals.node.publish("Ultrasonic Sensor, centimenters", Mixing.createDispatch(new FloatInputPoll(){
+        FloatInput distance = Mixing.createDispatch(new FloatInputPoll(){
             public float readValue() {
-                return ultrasonicSensor.readValue()*(1024/5f);
+                return ultrasonicSensor.readValue()*(1024/5f) - 4;
             }
-        },globalPeriodic));
+        },globalPeriodic);
+        CluckGlobals.node.publish("Ultrasonic Sensor, centimenters", distance);
         // ***** VISION TRACKING *****
         VisionTracking.setup(startedAutonomous);
         BooleanInputPoll isHotZone = VisionTracking.isHotZone();
@@ -73,7 +75,8 @@ public class RobotMain extends SimpleCore {
         controller.setup(this);
         controller.putDriveMotors(leftDrive1, leftDrive2, rightDrive1, rightDrive2);
         controller.putHotzone(isHotZone);
-        controller.putUltrasonic(ultrasonicSensor);
+        controller.putUltrasonic(distance);
+        controller.putArm(armSolenoid, collectorMotor);
         EventSource fireAutonomousTrigger = controller.getWhenToFire();
         // [[[[ DRIVE CODE ]]]]
         BooleanStatus shiftBoolean = DriveCode.createShifting(startedTeleop, duringTeleop, shiftSolenoid, shiftHighButton, shiftLowButton);
@@ -98,8 +101,8 @@ public class RobotMain extends SimpleCore {
         Actuators.createArm(duringTeleop, armSolenoid, armUpDown, IS_COMPETITION_ROBOT ? Mixing.alwaysTrue:rearming);
         Actuators.createCollector(duringTeleop, collectorMotor, armFloatSolenoid, rollersIn, rollersOut, canCollectorRun);
         // [[[[ Phidget Display Code ]]]]
-        ControlInterface.displayPressure(pressureSensor, globalPeriodic);
-        ControlInterface.displayDistance(ultrasonicSensor, globalPeriodic);
+        ControlInterface.displayPressure(pressureSensor, globalPeriodic, pressureSwitch);
+        ControlInterface.displayDistance(distance, globalPeriodic);
         ControlInterface.showRearming(globalPeriodic, rearming);
         ControlInterface.showFiring(globalPeriodic, winchEngaged);
         //MOTD.createMOTD();

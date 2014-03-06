@@ -17,7 +17,8 @@ public class AutonomousController extends InstinctModule {
     private final StorageSegment seg = StorageProvider.openStorage("autonomous");
     private final TuningContext tune = new TuningContext(CluckGlobals.node, seg).publishSavingEvent("Autonomous");
     // Provided channels
-    private FloatOutput leftDrive, rightDrive;
+    private FloatOutput leftDrive, rightDrive, collect;
+    private BooleanOutput arm;
     private BooleanInputPoll isHotzone;
     private FloatInputPoll ultrasonicSensor;
     // Tuned constants are below near the autonomous modes.
@@ -62,18 +63,24 @@ public class AutonomousController extends InstinctModule {
     }
 
     private final FloatStatus hotcheckPreUltraDelay = tune.getFloat("autom-hotcheck-pru-delay", 0);
-    private final FloatStatus hotcheckUltraSpeed = tune.getFloat("autom-hotcheck-ult-speed", 0.5f);
-    private final FloatStatus hotcheckUltraMaxDelay = tune.getFloat("autom-hotcheck-ult-max-delay", 1);
-    private final FloatStatus hotcheckUltraEnd = tune.getFloat("autom-hotcheck-ult-end", 2f);
-    private final FloatStatus hotcheckMaxDelay = tune.getFloat("autom-hotcheck-maxwait", 6);
+    private final FloatStatus hotcheckUltraSpeed = tune.getFloat("autom-hotcheck-ult-speed", -0.5f);
+    private final FloatStatus hotcheckUltraMaxDelay = tune.getFloat("autom-hotcheck-ult-max-delay", 2);
+    private final FloatStatus hotcheckUltraEnd = tune.getFloat("autom-hotcheck-ult-end", 400);
+    private final FloatStatus hotcheckMaxDelay = tune.getFloat("autom-hotcheck-maxwait", 0.5f);
     private final FloatStatus hotcheckPreDelay = tune.getFloat("autom-hotcheck-fire-wait", 0.5f);
-    private final FloatStatus hotcheckMovement = tune.getFloat("autom-hotcheck-move-speed", 0.5f);
+    private final FloatStatus hotcheckMovement = tune.getFloat("autom-hotcheck-move-speed", -0.5f);
     private final FloatStatus hotcheckMoveDelay = tune.getFloat("autom-hotcheck-move-duration", 0);
+    private final FloatStatus hotcheckCollector = tune.getFloat("autom-hotcheck-collector", 0.5f);
+    private final FloatStatus hotcheckPreFireDelay = tune.getFloat("autom-hotcheck-prefire-delay", 1);
 
     private void autoHotcheck() throws AutonomousModeOverException, InterruptedException {
         FloatInputPoll currentTime = Utils.currentTimeSeconds;
         Logger.fine("Began Hotcheck");
         {
+            //arm.writeValue(false);
+            arm.writeValue(true);
+            leftDrive.writeValue(0);
+            rightDrive.writeValue(0);
             float target = currentTime.readValue() + hotcheckMaxDelay.readValue(); // Wait six seconds at most.
             BooleanInputPoll fatl = Mixing.floatIsAtLeast(currentTime, target);
             int i = waitUntilOneOf(new BooleanInputPoll[]{isHotzone, fatl});
@@ -83,6 +90,7 @@ public class AutonomousController extends InstinctModule {
         }
         Logger.fine("Found hotzone");
         {
+            collect.writeValue(hotcheckCollector.readValue());
             leftDrive.writeValue(hotcheckUltraSpeed.readValue());
             rightDrive.writeValue(hotcheckUltraSpeed.readValue());
             waitForTime((long) (1000L * hotcheckPreUltraDelay.readValue() + 0.5f));
@@ -92,7 +100,7 @@ public class AutonomousController extends InstinctModule {
             float timeoutAt = currentTime.readValue() + hotcheckUltraMaxDelay.readValue(); // Wait one second at most.
             float lengthAt = hotcheckUltraEnd.readValue();
             int i = waitUntilOneOf(new BooleanInputPoll[]{
-                Mixing.floatIsAtLeast(ultrasonicSensor, lengthAt),
+                Mixing.floatIsAtMost(ultrasonicSensor, lengthAt),
                 Mixing.floatIsAtLeast(currentTime, timeoutAt)});
             if (i != 0) {
                 Logger.warning("Cancelled wait for Ultrasonic after " + hotcheckUltraMaxDelay.readValue());
@@ -101,6 +109,7 @@ public class AutonomousController extends InstinctModule {
             rightDrive.writeValue(0);
         }
         Logger.fine("Arrived");
+        waitForTime((long) (1000L * hotcheckPreFireDelay.readValue() + 0.5f));
         fireWhenEvent.produce();
         Logger.fine("Fired.");
         {
@@ -191,5 +200,10 @@ public class AutonomousController extends InstinctModule {
 
     public EventSource getWhenToFire() {
         return fireWhenEvent;
+    }
+
+    public void putArm(BooleanOutput armSolenoid, FloatOutput collector) {
+        arm = armSolenoid;
+        collect = collector;
     }
 }
