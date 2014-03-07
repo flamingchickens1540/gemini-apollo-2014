@@ -22,7 +22,7 @@ public class AutonomousController extends InstinctModule {
     private BooleanInputPoll isHotzone;
     private FloatInputPoll ultrasonicSensor;
     // Tuned constants are below near the autonomous modes.
-    private final StringHolder option = new StringHolder("none");
+    private final StringHolder option = new StringHolder("hotcheck");
     private final String[] options = {"none", "forward", "hotcheck", "ultrasonic"};
     private final CList optionList = CArrayUtils.asList(options);
     private final Event fireWhenEvent = new Event();
@@ -63,15 +63,15 @@ public class AutonomousController extends InstinctModule {
     }
 
     private final FloatStatus hotcheckPreUltraDelay = tune.getFloat("autom-hotcheck-pru-delay", 0);
-    private final FloatStatus hotcheckUltraSpeed = tune.getFloat("autom-hotcheck-ult-speed", -0.5f);
-    private final FloatStatus hotcheckUltraMaxDelay = tune.getFloat("autom-hotcheck-ult-max-delay", 2);
+    private final FloatStatus hotcheckUltraSpeed = tune.getFloat("autom-hotcheck-ult-speed", -0.8f);
+    private final FloatStatus hotcheckUltraMaxDelay = tune.getFloat("autom-hotcheck-ult-max-delay", 1.9f);
     private final FloatStatus hotcheckUltraEnd = tune.getFloat("autom-hotcheck-ult-end", 1.54f);
-    private final FloatStatus hotcheckMaxDelay = tune.getFloat("autom-hotcheck-maxwait", 0.5f);
+    private final FloatStatus hotcheckMaxDelay = tune.getFloat("autom-hotcheck-maxwait", 4);
     private final FloatStatus hotcheckPreDelay = tune.getFloat("autom-hotcheck-fire-wait", 0.5f);
     private final FloatStatus hotcheckMovement = tune.getFloat("autom-hotcheck-move-speed", -0.7f);
     private final FloatStatus hotcheckMoveDelay = tune.getFloat("autom-hotcheck-move-duration", 0);
     private final FloatStatus hotcheckCollector = tune.getFloat("autom-hotcheck-collector", 0.5f);
-    private final FloatStatus hotcheckPreFireDelay = tune.getFloat("autom-hotcheck-prefire-delay", 2);
+    private final FloatStatus hotcheckPreFireDelay = tune.getFloat("autom-hotcheck-prefire-delay", 1);
     private final FloatStatus hotcheckArmMoveTime = tune.getFloat("autom-hotcheck-armmove-time", 0.6f);
 
     private void autoHotcheck() throws AutonomousModeOverException, InterruptedException {
