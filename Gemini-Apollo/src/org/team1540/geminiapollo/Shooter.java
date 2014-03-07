@@ -20,8 +20,8 @@ public class Shooter {
             final FloatOutput winchMotor,
             final BooleanOutput winchSolenoid,
             final FloatInputPoll winchCurrent, final FloatInputPoll slider,
-            final BooleanInputPoll catapultNotCocked, final BooleanInputPoll armDown, final BooleanInputPoll detentioning,
-            EventSource rearmCatapult, EventSource fireButton, BooleanOutput canCollectorRun,final BooleanStatus winchDisengaged) {
+            final BooleanInputPoll catapultNotCocked, final BooleanInputPoll armDown,
+            final BooleanInput rearmCatapult, EventSource fireButton, BooleanOutput canCollectorRun,final BooleanStatus winchDisengaged) {
         //Network Variables
         TuningContext tuner = new TuningContext(CluckGlobals.node, "ShooterValues");
         tuner.publishSavingEvent("Shooter");
@@ -51,22 +51,6 @@ public class Shooter {
                 engageTimer.stop();
             }
         });
-        //run winch motor in reverse to reduce tension
-        final ExpirationTimer reduceTensionTimer = new ExpirationTimer();
-        final BooleanStatus reduceTensionTimerRunning = new BooleanStatus();
-        reduceTensionTimer.schedule(1, new EventConsumer() {
-            public void eventFired() {
-                reduceTensionTimerRunning.writeValue(true);
-                Logger.info("Reduce Tension Begin");
-            }
-        });
-        reduceTensionTimer.schedule(250, new EventConsumer() {
-            public void eventFired() {
-                reduceTensionTimerRunning.writeValue(false);
-                Logger.info("Reduce Tension End");
-                reduceTensionTimer.stop();
-            }
-        });
         //state of the catapult
         //four score, etc. etc.
         //detentioning is technically a part of this
@@ -90,13 +74,6 @@ public class Shooter {
         constant.addListener(new EventConsumer() {
             public void eventFired() {
                 resetRearm.writeValue(Math.max(0, resetRearm.readValue() - 0.01f));
-            }
-        });
-        //detentioning
-        Mixing.whenBooleanBecomes(detentioning, true, during).addListener(new EventConsumer() {
-            public void eventFired() {
-                rearming.writeValue(false);
-                reduceTensionTimer.startOrFeed();
             }
         });
         //begin listeners
@@ -125,7 +102,7 @@ public class Shooter {
                 }
             }
         });
-        rearmCatapult.addListener(new EventConsumer() {
+        Mixing.whenBooleanBecomes(rearmCatapult, true).addListener(new EventConsumer() {
             public void eventFired() {
                 if (rearming.readValue()) {
                     Logger.info("stop rearm");
@@ -157,10 +134,8 @@ public class Shooter {
                         winchMotor.writeValue(0f);
                         Logger.info("manual drawback current stop rearm");
                     }
-                } else if (reduceTensionTimerRunning.readValue() && shouldWinchDuringFire.readValue()) {
-                    winchMotor.writeValue(winchSpeed.readValue());
-                } else if (detentioning.readValue()) {
-                    winchMotor.writeValue(-winchSpeed.readValue());
+                } else if (rearmCatapult.readValue()) {
+                    winchMotor.writeValue(1f);
                 } else {
                     winchMotor.writeValue(0f);
                 }

@@ -9,8 +9,8 @@ import ccre.phidget.PhidgetReader;
 
 public class ControlInterface {
 
-    public static EventSource getRearmCatapult() {
-        return Mixing.whenBooleanBecomes(PhidgetReader.digitalInputs[0], true);
+    public static BooleanInput getRearmCatapult() {
+        return PhidgetReader.getDigitalInput(0);
     }
 
     public static EventSource getFireButton() {
@@ -33,7 +33,7 @@ public class ControlInterface {
         return PhidgetReader.getAnalogInput(0);
     }
 
-    public static BooleanInputPoll detensioning() {
+    public static BooleanInput detensioning() {
         return PhidgetReader.getDigitalInput(7);
     }
 
@@ -90,6 +90,6 @@ public class ControlInterface {
 
     private static int normalize(float zero, float one, float value) {
         float range = one - zero;
-        return (int) (1000 * (value - zero) / range);
+        return (int) (100 * (value - zero) / range);
     }
 }

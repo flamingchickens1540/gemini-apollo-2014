@@ -65,13 +65,14 @@ public class AutonomousController extends InstinctModule {
     private final FloatStatus hotcheckPreUltraDelay = tune.getFloat("autom-hotcheck-pru-delay", 0);
     private final FloatStatus hotcheckUltraSpeed = tune.getFloat("autom-hotcheck-ult-speed", -0.5f);
     private final FloatStatus hotcheckUltraMaxDelay = tune.getFloat("autom-hotcheck-ult-max-delay", 2);
-    private final FloatStatus hotcheckUltraEnd = tune.getFloat("autom-hotcheck-ult-end", 400);
+    private final FloatStatus hotcheckUltraEnd = tune.getFloat("autom-hotcheck-ult-end", 1.54f);
     private final FloatStatus hotcheckMaxDelay = tune.getFloat("autom-hotcheck-maxwait", 0.5f);
     private final FloatStatus hotcheckPreDelay = tune.getFloat("autom-hotcheck-fire-wait", 0.5f);
-    private final FloatStatus hotcheckMovement = tune.getFloat("autom-hotcheck-move-speed", -0.5f);
+    private final FloatStatus hotcheckMovement = tune.getFloat("autom-hotcheck-move-speed", -0.7f);
     private final FloatStatus hotcheckMoveDelay = tune.getFloat("autom-hotcheck-move-duration", 0);
     private final FloatStatus hotcheckCollector = tune.getFloat("autom-hotcheck-collector", 0.5f);
-    private final FloatStatus hotcheckPreFireDelay = tune.getFloat("autom-hotcheck-prefire-delay", 1);
+    private final FloatStatus hotcheckPreFireDelay = tune.getFloat("autom-hotcheck-prefire-delay", 2);
+    private final FloatStatus hotcheckArmMoveTime = tune.getFloat("autom-hotcheck-armmove-time", 0.6f);
 
     private void autoHotcheck() throws AutonomousModeOverException, InterruptedException {
         FloatInputPoll currentTime = Utils.currentTimeSeconds;
@@ -109,6 +110,12 @@ public class AutonomousController extends InstinctModule {
             rightDrive.writeValue(0);
         }
         Logger.fine("Arrived");
+        waitForTime((long) (1000L * hotcheckArmMoveTime.readValue() + 0.5f));
+        arm.writeValue(false);
+        Logger.fine("Up");
+        waitForTime((long) (1000L * hotcheckArmMoveTime.readValue() + 0.5f));
+        arm.writeValue(true);
+        Logger.fine("Down");
         waitForTime((long) (1000L * hotcheckPreFireDelay.readValue() + 0.5f));
         fireWhenEvent.produce();
         Logger.fine("Fired.");

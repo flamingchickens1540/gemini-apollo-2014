@@ -4,6 +4,7 @@ import ccre.chan.*;
 import ccre.cluck.CluckGlobals;
 import ccre.cluck.tcp.CluckTCPServer;
 import ccre.ctrl.Mixing;
+import ccre.ctrl.MultipleSourceBooleanController;
 import ccre.event.*;
 import ccre.igneous.SimpleCore;
 import ccre.log.*;
@@ -30,7 +31,9 @@ public class RobotMain extends SimpleCore {
         FloatOutput collectorMotor = test.testPublish("collectorMotor", makeTalonMotor(6, MOTOR_REVERSE, 0.1f));
         // ***** SOLENOIDS *****
         BooleanOutput shiftSolenoid = test.testPublish("sol-shift-1", makeSolenoid(1));
-        BooleanOutput armSolenoid = test.testPublish("sol-arm-2", makeSolenoid(2));
+        MultipleSourceBooleanController armSolenoidCtrl = new MultipleSourceBooleanController(true);
+        armSolenoidCtrl.addTarget(test.testPublish("sol-arm-2", makeSolenoid(2)));
+        BooleanStatus armSolenoid = new BooleanStatus(armSolenoidCtrl.getOutput(false));
         Mixing.setWhen(robotDisabled, armSolenoid, false);
         BooleanOutput winchSolenoidA = test.testPublish("sol-winch-3", makeSolenoid(3));
         BooleanOutput winchSolenoidB = test.testPublish("sol-winch-5", makeSolenoid(5));
@@ -45,6 +48,7 @@ public class RobotMain extends SimpleCore {
         CluckGlobals.node.publish("Winch Current", Mixing.createDispatch(winchCurrent, globalPeriodic));
         CluckGlobals.node.publish("Pressure Sensor", Mixing.createDispatch(pressureSensor, globalPeriodic));
         CluckGlobals.node.publish("Ultrasonic Sensor", Mixing.createDispatch(ultrasonicSensor, globalPeriodic));
+        CluckGlobals.node.publish("Catapult Not Cocked", Mixing.createDispatch(catapultNotCocked, globalPeriodic));
         FloatInput distance = Mixing.createDispatch(new FloatInputPoll(){
             public float readValue() {
                 return ultrasonicSensor.readValue()*(1024/5f) - 4;
@@ -61,8 +65,8 @@ public class RobotMain extends SimpleCore {
         BooleanInputPoll armUpDown = ControlInterface.getArmUpDown();
         BooleanInputPoll rollersIn = ControlInterface.rollerIn();
         BooleanInputPoll rollersOut = ControlInterface.rollerOut();
-        BooleanInputPoll detensioning = ControlInterface.detensioning();
-        EventSource rearmCatapult = ControlInterface.getRearmCatapult();
+        BooleanInput detensioning = ControlInterface.detensioning();
+        BooleanInput rearmCatapult = ControlInterface.getRearmCatapult();
         EventSource fireButton = ControlInterface.getFireButton();
         // ***** DRIVE JOYSTICK *****
         FloatInputPoll leftDriveAxis = Mixing.negate(joystick1.getAxisChannel(2));
@@ -70,6 +74,10 @@ public class RobotMain extends SimpleCore {
         FloatInputPoll rightDriveAxis = Mixing.negate(joystick1.getAxisChannel(5));
         EventSource shiftHighButton = joystick1.getButtonSource(1);
         EventSource shiftLowButton = joystick1.getButtonSource(3);
+        // [[[[ USER AUTOMATION CODE ]]]]
+        BooleanInputPoll overrideCollectorBackwards = UserAutomation.setupAuto(
+                Mixing.whenBooleanBecomes(detensioning, true),
+                Mixing.invert(armSolenoidCtrl.getOutput(true)));
         // [[[[ AUTONOMOUS CODE ]]]]
         AutonomousController controller = new AutonomousController();
         controller.setup(this);
@@ -92,14 +100,14 @@ public class RobotMain extends SimpleCore {
                 winchMotor,
                 winchSolenoid,
                 winchCurrent, ControlInterface.powerSlider(),
-                catapultNotCocked, armUpDown, detensioning,
+                catapultNotCocked, armUpDown,
                 rearmCatapult, fireWhen, canCollectorRun,
                 winchEngaged
         );
-        Shooter.createTuner(globalPeriodic, winchCurrent, rearmCatapult, catapultNotCocked);
+        Shooter.createTuner(globalPeriodic, winchCurrent, Mixing.whenBooleanBecomes(rearmCatapult, true), catapultNotCocked);
         // [[[[ ARM CODE ]]]]
         Actuators.createArm(duringTeleop, armSolenoid, armUpDown, IS_COMPETITION_ROBOT ? Mixing.alwaysTrue:rearming);
-        Actuators.createCollector(duringTeleop, collectorMotor, armFloatSolenoid, rollersIn, rollersOut, canCollectorRun);
+        Actuators.createCollector(duringTeleop, collectorMotor, armFloatSolenoid, Mixing.orBooleans(rollersIn, overrideCollectorBackwards), rollersOut, canCollectorRun);
         // [[[[ Phidget Display Code ]]]]
         ControlInterface.displayPressure(pressureSensor, globalPeriodic, pressureSwitch);
         ControlInterface.displayDistance(distance, globalPeriodic);
