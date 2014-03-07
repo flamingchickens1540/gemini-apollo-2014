@@ -10,8 +10,11 @@ import ccre.log.Logger;
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import javax.imageio.ImageIO;
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
 import org.opencv.core.*;
@@ -28,6 +31,7 @@ public class CVProcessor implements ImageOutput {
     private int scanCell = 2, scanThreshold = 128;
     private short[] lastScan = null;
     public boolean showHistogram = false;
+    private long takingUntil = 0, lastTook = 0;
     
     public boolean getHistogram() {
         return showHistogram;
@@ -78,6 +82,15 @@ public class CVProcessor implements ImageOutput {
 
     @Override
     public void write(BufferedImage newImage) {
+        long now = System.currentTimeMillis();
+        if (takingUntil > now && lastTook + 500 < now) {
+            try {
+                ImageIO.write(newImage, "PNG", new File("Photo-" + System.currentTimeMillis()));
+            } catch (IOException ex) {
+                Logger.log(LogLevel.WARNING, "Could not write PNG", ex);
+            }
+            lastTook = now;
+        }
         this.width = newImage.getWidth();
         this.height = newImage.getHeight();
         Mat fromImage = OpenCVLoader.getFromImage(newImage);
@@ -111,6 +124,7 @@ public class CVProcessor implements ImageOutput {
         bout.writeValue(o);
         out.write(OpenCVLoader.getFromMat(fromImage));
         if (waitingForAck.readValue()) {
+            takingUntil = System.currentTimeMillis() + 12000;
             waitingForAck.writeValue(false);
             notifyAck.produce();
             Logger.info("Sent ack!");
