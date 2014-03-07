@@ -2,6 +2,7 @@ package org.team1540.geminiapollo;
 
 import ccre.chan.*;
 import ccre.cluck.CluckGlobals;
+import ccre.ctrl.IDispatchJoystick;
 import ccre.ctrl.Mixing;
 import ccre.event.*;
 import ccre.holders.TuningContext;
@@ -9,24 +10,49 @@ import ccre.phidget.PhidgetReader;
 
 public class ControlInterface {
 
-    public static BooleanInput getRearmCatapult() {
-        return PhidgetReader.getDigitalInput(0);
+    public static IDispatchJoystick joystick;
+
+    private static class Xor implements BooleanInputPoll {
+
+        private final BooleanInputPoll a, b;
+
+        private Xor(BooleanInputPoll a, BooleanInputPoll b) {
+            this.a = a;
+            this.b = b;
+        }
+
+        public boolean readValue() {
+            return a.readValue() ^ b.readValue();
+        }
+    }
+
+    public static BooleanInput getRearmCatapult(EventSource update) {
+        BooleanInputPoll a = PhidgetReader.getDigitalInput(0);
+        BooleanInputPoll b = joystick.getButtonChannel(1);
+        return Mixing.createDispatch(new Xor(a, b), update);
     }
 
     public static EventSource getFireButton() {
-        return Mixing.whenBooleanBecomes(PhidgetReader.digitalInputs[1], true);
+        return Mixing.combine(Mixing.whenBooleanBecomes(PhidgetReader.digitalInputs[1], true), joystick.getButtonSource(2));
     }
 
     public static BooleanInputPoll getArmUpDown() {
-        return PhidgetReader.getDigitalInput(2);
+        BooleanInputPoll a = PhidgetReader.getDigitalInput(2);
+        BooleanStatus setHigh = new BooleanStatus(), setLow = new BooleanStatus();
+        EventSource highBtn = joystick.getButtonSource(5), lowBtn = joystick.getButtonSource(6);
+        setHigh.toggleWhen(highBtn);
+        setLow.setFalseWhen(highBtn);
+        setLow.toggleWhen(lowBtn);
+        setHigh.setFalseWhen(lowBtn);
+        return Mixing.orBooleans(setLow, Mixing.andBooleans(Mixing.invert((BooleanInputPoll) setHigh), a));
     }
 
     public static BooleanInputPoll rollerIn() {
-        return PhidgetReader.getDigitalInput(3);
+        return Mixing.orBooleans(PhidgetReader.getDigitalInput(3), Mixing.floatIsAtLeast(joystick.getAxisChannel(2), 0.2f));
     }
 
     public static BooleanInputPoll rollerOut() {
-        return PhidgetReader.getDigitalInput(4);
+        return Mixing.orBooleans(PhidgetReader.getDigitalInput(4), Mixing.floatIsAtMost(joystick.getAxisChannel(2), -0.2f));
     }
 
     public static FloatInputPoll powerSlider() {
@@ -62,7 +88,7 @@ public class ControlInterface {
             int prevValue = -1000;
             boolean prevValueCpr = cprSwitch.readValue();
             int ctr = 0;
- 
+
             public void eventFired() {
                 int c = normalize(zeroP.readValue(), oneP.readValue(), f.readValue());
                 boolean cpr = cprSwitch.readValue();

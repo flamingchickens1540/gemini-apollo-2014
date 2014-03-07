@@ -14,6 +14,7 @@ public class RobotMain extends SimpleCore {
     public static boolean IS_COMPETITION_ROBOT = true;
 
     protected void createSimpleControl() {
+        ControlInterface.joystick = joystick2;
         // ***** CLUCK *****
         new CluckTCPServer(CluckGlobals.node, 443).start();
         new CluckTCPServer(CluckGlobals.node, 1180).start();
@@ -66,7 +67,7 @@ public class RobotMain extends SimpleCore {
         BooleanInputPoll rollersIn = ControlInterface.rollerIn();
         BooleanInputPoll rollersOut = ControlInterface.rollerOut();
         BooleanInput detensioning = ControlInterface.detensioning();
-        BooleanInput rearmCatapult = ControlInterface.getRearmCatapult();
+        BooleanInput rearmCatapult = ControlInterface.getRearmCatapult(globalPeriodic);
         EventSource fireButton = ControlInterface.getFireButton();
         // ***** DRIVE JOYSTICK *****
         FloatInputPoll leftDriveAxis = Mixing.negate(joystick1.getAxisChannel(2));
