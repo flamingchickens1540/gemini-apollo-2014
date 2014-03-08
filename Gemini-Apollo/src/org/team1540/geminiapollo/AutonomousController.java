@@ -64,7 +64,7 @@ public class AutonomousController extends InstinctModule {
 
     private final FloatStatus hotcheckPreUltraDelay = tune.getFloat("autom-hotcheck-pru-delay", 0);
     private final FloatStatus hotcheckUltraSpeed = tune.getFloat("autom-hotcheck-ult-speed", -0.8f);
-    private final FloatStatus hotcheckUltraMaxDelay = tune.getFloat("autom-hotcheck-ult-max-delay", 1.9f);
+    private final FloatStatus hotcheckUltraMaxDelay = tune.getFloat("autom-hotcheck-ult-max-delay", 1.5f);
     private final FloatStatus hotcheckUltraEnd = tune.getFloat("autom-hotcheck-ult-end", 1.54f);
     private final FloatStatus hotcheckMaxDelay = tune.getFloat("autom-hotcheck-maxwait", 4);
     private final FloatStatus hotcheckPreDelay = tune.getFloat("autom-hotcheck-fire-wait", 0.5f);
