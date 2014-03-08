@@ -52,10 +52,11 @@ public class DriveCode {
         });
     }
 
-    public static BooleanStatus createShifting(EventSource begin, EventSource during, BooleanOutput shiftSolenoid, EventSource shiftHighButton, EventSource shiftLowButton) {
+    public static BooleanStatus createShifting(EventSource begin, EventSource beginAuto, EventSource during, BooleanOutput shiftSolenoid, EventSource shiftHighButton, EventSource shiftLowButton) {
         final BooleanStatus shifted = new BooleanStatus(shiftSolenoid);
         shifted.setTrueWhen(begin); // begin
-        shifted.setTrueWhen(shiftHighButton); // high
+        shifted.setTrueWhen(beginAuto);
+        shifted.setTrueWhen(shiftHighButton); // high - THESE ARE WRONG
         shifted.setFalseWhen(shiftLowButton); // low
         return shifted;
     }

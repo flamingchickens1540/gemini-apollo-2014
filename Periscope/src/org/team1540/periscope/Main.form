@@ -138,9 +138,6 @@
       <Properties>
         <Property name="text" type="java.lang.String" value="Sight"/>
       </Properties>
-      <BindingProperties>
-        <BindingProperty name="foreground" source="cVProcessor1" sourcePath="${activeColor}" target="labInside" targetPath="foreground" updateStrategy="0" immediately="false"/>
-      </BindingProperties>
     </Component>
     <Component class="javax.swing.JButton" name="btnConfigHistogram">
       <Properties>

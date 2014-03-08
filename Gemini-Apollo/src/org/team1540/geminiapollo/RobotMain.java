@@ -88,7 +88,7 @@ public class RobotMain extends SimpleCore {
         controller.putArm(armSolenoid, collectorMotor);
         EventSource fireAutonomousTrigger = controller.getWhenToFire();
         // [[[[ DRIVE CODE ]]]]
-        BooleanStatus shiftBoolean = DriveCode.createShifting(startedTeleop, duringTeleop, shiftSolenoid, shiftHighButton, shiftLowButton);
+        BooleanStatus shiftBoolean = DriveCode.createShifting(startedTeleop, startedAutonomous, duringTeleop, shiftSolenoid, shiftHighButton, shiftLowButton);
         DriveCode.createDrive(startedTeleop, duringTeleop, leftDrive1, leftDrive2, rightDrive1, rightDrive2, leftDriveAxis, rightDriveAxis, forwardDriveAxis, IS_COMPETITION_ROBOT, shiftBoolean);
         // [[[[ SHOOTER CODE ]]]]
         EventSource fireWhen = Mixing.combine(fireAutonomousTrigger, fireButton);
@@ -98,6 +98,7 @@ public class RobotMain extends SimpleCore {
         BooleanStatus winchEngaged=new BooleanStatus(winchSolenoid);
         BooleanInputPoll rearming = Shooter.createShooter(
                 startedAutonomous, startedTeleop, updateShooterWhen, constantPeriodic,
+                getIsAutonomous(),
                 winchMotor,
                 winchSolenoid,
                 winchCurrent, ControlInterface.powerSlider(),

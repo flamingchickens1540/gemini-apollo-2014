@@ -18,6 +18,8 @@
  */
 package org.team1540.periscope;
 
+import ccre.log.LogLevel;
+import ccre.log.Logger;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -69,7 +71,11 @@ public class WebcamReader {
                 throw new IOException("content length out of range: " + contentLength);
             }
             BufferedImage readImage = readImage(contentLength);
-            output.write(readImage);
+            try {
+                output.write(readImage);
+            } catch (Throwable thr) {
+                Logger.log(LogLevel.WARNING, "Could not handle image", thr);
+            }
         }
     }
 

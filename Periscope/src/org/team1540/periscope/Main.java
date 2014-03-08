@@ -1,10 +1,13 @@
 package org.team1540.periscope;
 
+import ccre.chan.BooleanOutput;
 import ccre.cluck.CluckGlobals;
 import ccre.log.LogLevel;
 import ccre.log.Logger;
 import ccre.log.NetworkAutologger;
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.EventQueue;
 import java.awt.Point;
 import javax.swing.JOptionPane;
 
@@ -12,6 +15,17 @@ public class Main extends javax.swing.JFrame {
 
     public Main() {
         initComponents();
+        cVProcessor1.bout.addTarget(new BooleanOutput() {
+            @Override
+            public void writeValue(final boolean value) {
+                EventQueue.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        labInside.setForeground(value ? Color.yellow : Color.red);
+                    }
+                });
+            }
+        });
     }
 
     /**
@@ -82,9 +96,6 @@ public class Main extends javax.swing.JFrame {
         btnHistogram.setText("Histogram");
 
         labInside.setText("Sight");
-
-        binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, cVProcessor1, org.jdesktop.beansbinding.ELProperty.create("${activeColor}"), labInside, org.jdesktop.beansbinding.BeanProperty.create("foreground"));
-        bindingGroup.addBinding(binding);
 
         btnConfigHistogram.setText("Config");
         btnConfigHistogram.addActionListener(new java.awt.event.ActionListener() {
@@ -168,6 +179,7 @@ public class Main extends javax.swing.JFrame {
         java.awt.EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
+                CluckConnector.isEnabled = true;
                 CluckGlobals.ensureInitializedCore();
                 NetworkAutologger.register();
                 Main m = new Main();

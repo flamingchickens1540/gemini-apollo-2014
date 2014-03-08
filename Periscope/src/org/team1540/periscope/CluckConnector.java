@@ -3,6 +3,8 @@ package org.team1540.periscope;
 import ccre.cluck.CluckGlobals;
 
 public class CluckConnector {
+    public static boolean isEnabled = false;
+    
     private String address;
     
     public String getAddress() {
@@ -11,6 +13,9 @@ public class CluckConnector {
     
     public void setAddress(String address) {
         this.address = address;
+        if (!isEnabled) {
+            return;
+        }
         if (address == null) {
             if (CluckGlobals.cli != null) {
                 CluckGlobals.cli.setRemote("1.2.3.4");

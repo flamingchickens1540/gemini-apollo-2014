@@ -11,9 +11,13 @@ import java.awt.Color;
 import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.logging.Level;
+import java.util.zip.GZIPOutputStream;
 import javax.imageio.ImageIO;
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
@@ -24,25 +28,27 @@ public class CVProcessor implements ImageOutput {
 
     private final DefaultComboBoxModel<String> pointSettings = new DefaultComboBoxModel<String>();
     private ImageOutput out;
-    private final BooleanStatus bout = new BooleanStatus();
+    public final BooleanStatus bout = new BooleanStatus();
     private final BooleanStatus waitingForAck = new BooleanStatus();
     private final Event notifyAck = new Event();
     private float width = 640, height = 640;
-    private int scanCell = 2, scanThreshold = 128;
+    private int scanCell = 1, scanThreshold = 220;
     private short[] lastScan = null;
     public boolean showHistogram = false;
     private long takingUntil = 0, lastTook = 0;
-    
+
     public boolean getHistogram() {
         return showHistogram;
     }
-    
+
     public void setHistogram(boolean b) {
         showHistogram = b;
     }
-    
+
     public Color getActiveColor() {
-        return bout.readValue() ? Color.YELLOW : Color.RED;
+        boolean v = bout.readValue();
+        System.out.println(v);
+        return v ? Color.YELLOW : Color.RED;
     }
 
     {
@@ -80,16 +86,37 @@ public class CVProcessor implements ImageOutput {
         this.out = out;
     }
 
+    private static final BufferedImage capOn = new BufferedImage(320, 240, BufferedImage.TYPE_3BYTE_BGR), capOff = new BufferedImage(320, 240, BufferedImage.TYPE_3BYTE_BGR);
+
+    static {
+        try {
+            capOn.createGraphics().drawImage(ImageIO.read(new File("capture-on.png")), 0, 0, null);
+            capOff.createGraphics().drawImage(ImageIO.read(new File("capture-off.png")), 0, 0, null);
+        } catch (IOException ex) {
+            Logger.log(LogLevel.WARNING, "Failed load", ex);
+        }
+    }
+
     @Override
     public void write(BufferedImage newImage) {
-        long now = System.currentTimeMillis();
-        if (takingUntil > now && lastTook + 500 < now) {
-            try {
-                ImageIO.write(newImage, "PNG", new File("Photo-" + System.currentTimeMillis()));
-            } catch (IOException ex) {
-                Logger.log(LogLevel.WARNING, "Could not write PNG", ex);
+        if (true) {
+            long now = System.currentTimeMillis();
+            if ((takingUntil > now || true) && lastTook + 2000 < now) {
+                try {
+                    OutputStream outs = new FileOutputStream("lapse/Photo-" + System.currentTimeMillis());
+                    try {
+                        ImageIO.write(newImage, "PNG", outs);
+                    } finally {
+                        outs.close();
+                    }
+                } catch (IOException ex) {
+                    Logger.log(LogLevel.WARNING, "Could not write PNG", ex);
+                }
+                lastTook = now;
             }
-            lastTook = now;
+        }
+        if (false) {
+            newImage = (System.currentTimeMillis() / 2000) % 2 == 0 ? capOff : capOn;
         }
         this.width = newImage.getWidth();
         this.height = newImage.getHeight();
@@ -113,6 +140,10 @@ public class CVProcessor implements ImageOutput {
             hist.convertTo(target, CvType.CV_8UC1);
             byte[] extracted = new byte[25];
             target.get(0, 0, extracted);
+            lastScan = new short[25];
+            for (int i = 0; i < 25; i++) {
+                lastScan[i] = (short) (extracted[i] & 255);
+            }
             o = (extracted[scanCell] & 255) < scanThreshold;
             if (showHistogram) {
                 fromImage = target;
@@ -121,7 +152,7 @@ public class CVProcessor implements ImageOutput {
                 Core.rectangle(fromImage, new org.opencv.core.Point(rectUL.x, rectUL.y), new org.opencv.core.Point(rectDR.x, rectDR.y), new Scalar(1, 1, 1));
             }
         }
-        bout.writeValue(o);
+        bout.writeValue(!o);
         out.write(OpenCVLoader.getFromMat(fromImage));
         if (waitingForAck.readValue()) {
             takingUntil = System.currentTimeMillis() + 12000;

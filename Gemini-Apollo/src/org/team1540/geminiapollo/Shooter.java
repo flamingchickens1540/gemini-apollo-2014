@@ -15,13 +15,15 @@ public class Shooter {
      -have a better stop for arming the catapult when arm is up (winchcurrent?)
      -get rid of log
      */
+
     public static BooleanInputPoll createShooter(
             final EventSource beginAutonomous, final EventSource beginTeleop, final EventSource during, final EventSource constant,
+            final BooleanInputPoll isautonomous,
             final FloatOutput winchMotor,
             final BooleanOutput winchSolenoid,
             final FloatInputPoll winchCurrent, final FloatInputPoll slider,
             final BooleanInputPoll catapultNotCocked, final BooleanInputPoll armDown,
-            final BooleanInput rearmCatapult, EventSource fireButton, BooleanOutput canCollectorRun,final BooleanStatus winchDisengaged) {
+            final BooleanInput rearmCatapult, EventSource fireButton, BooleanOutput canCollectorRun, final BooleanStatus winchDisengaged) {
         //Network Variables
         TuningContext tuner = new TuningContext(CluckGlobals.node, "ShooterValues");
         tuner.publishSavingEvent("Shooter");
@@ -87,18 +89,26 @@ public class Shooter {
                 }
             }
         });
+        final EventConsumer realFire = new EventConsumer() {
+            public void eventFired() {
+                Logger.info("fire");
+                winchDisengaged.writeValue(true);
+                engageTimer.start();
+            }
+        };
+        CluckGlobals.node.publish("Force Fire", realFire);
         //Buttons
         fireButton.addListener(new EventConsumer() {
             public void eventFired() {
                 if (rearming.readValue()) {
-                    Logger.info("fire- stop rearm");
+                    Logger.info("fire button: stop rearm");
                     rearming.writeValue(false);
-                } else if (!winchDisengaged.readValue() && armDown.readValue()) {
-                    Logger.info("fire");
-                    winchDisengaged.writeValue(true);
-                    engageTimer.start();
+                } else if (winchDisengaged.readValue()) {
+                    Logger.info("no fire: run the winch!");
+                } else if (armDown.readValue() || isautonomous.readValue()) {
+                    realFire.eventFired();
                 } else {
-                    Logger.info("no fire");
+                    Logger.info("no fire: lower the arm!");
                 }
             }
         });
