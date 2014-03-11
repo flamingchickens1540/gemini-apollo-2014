@@ -16,8 +16,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.zip.GZIPOutputStream;
 import javax.imageio.ImageIO;
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
@@ -99,7 +97,7 @@ public class CVProcessor implements ImageOutput {
 
     @Override
     public void write(BufferedImage newImage) {
-        if (true) {
+        if (false) {
             long now = System.currentTimeMillis();
             if ((takingUntil > now || true) && lastTook + 2000 < now) {
                 try {
