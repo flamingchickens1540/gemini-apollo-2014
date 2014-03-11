@@ -101,7 +101,7 @@ public class RobotMain extends SimpleCore {
                 getIsAutonomous(),
                 winchMotor,
                 winchSolenoid,
-                winchCurrent, ControlInterface.powerSlider(),
+                winchCurrent,
                 catapultNotCocked, armUpDown,
                 rearmCatapult, fireWhen, canCollectorRun,
                 winchEngaged
@@ -109,7 +109,7 @@ public class RobotMain extends SimpleCore {
         Shooter.createTuner(globalPeriodic, winchCurrent, Mixing.whenBooleanBecomes(rearmCatapult, true), catapultNotCocked);
         // [[[[ ARM CODE ]]]]
         Actuators.createArm(duringTeleop, armSolenoid, armUpDown, IS_COMPETITION_ROBOT ? Mixing.alwaysTrue:rearming);
-        Actuators.createCollector(duringTeleop, collectorMotor, armFloatSolenoid, Mixing.orBooleans(rollersIn, overrideCollectorBackwards), rollersOut, canCollectorRun);
+        Actuators.createCollector(duringTeleop, collectorMotor,ControlInterface.collectorSpeed(), armFloatSolenoid, Mixing.orBooleans(rollersIn, overrideCollectorBackwards), rollersOut, canCollectorRun);
         // [[[[ Phidget Display Code ]]]]
         ControlInterface.displayPressure(pressureSensor, globalPeriodic, pressureSwitch);
         ControlInterface.displayDistance(distance, globalPeriodic);

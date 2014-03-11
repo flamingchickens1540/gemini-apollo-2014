@@ -21,7 +21,7 @@ public class Shooter {
             final BooleanInputPoll isautonomous,
             final FloatOutput winchMotor,
             final BooleanOutput winchSolenoid,
-            final FloatInputPoll winchCurrent, final FloatInputPoll slider,
+            final FloatInputPoll winchCurrent,
             final BooleanInputPoll catapultNotCocked, final BooleanInputPoll armDown,
             final BooleanInput rearmCatapult, EventSource fireButton, BooleanOutput canCollectorRun, final BooleanStatus winchDisengaged) {
         //Network Variables
@@ -36,7 +36,7 @@ public class Shooter {
         CluckGlobals.node.publish("Winch During Fire", shouldWinchDuringFire);
         final BooleanStatus useSlider = new BooleanStatus();
         CluckGlobals.node.publish("Use Slider Drawback Value", useSlider);
-        CluckGlobals.node.publish("Slider Value", Mixing.createDispatch(slider, during));
+        //CluckGlobals.node.publish("Slider Value", Mixing.createDispatch(slider, during));
         //engage safety after firing safety
         final ExpirationTimer engageTimer = new ExpirationTimer();
         final BooleanStatus canEngage = new BooleanStatus(true);
@@ -61,7 +61,7 @@ public class Shooter {
         final BooleanStatus rearming = new BooleanStatus();
         final FloatInputPoll adjustedSlider = new FloatInputPoll() {
             public float readValue() {
-                return ((slider.readValue() + currentMinAdjustor.readValue()) * currentMultiplierAdjustor.readValue());
+                return ((Mixing.always(1f).readValue() + currentMinAdjustor.readValue()) * currentMultiplierAdjustor.readValue());
             }
         };
         CluckGlobals.node.publish("Adjusted Slider Value", Mixing.createDispatch(adjustedSlider, during));

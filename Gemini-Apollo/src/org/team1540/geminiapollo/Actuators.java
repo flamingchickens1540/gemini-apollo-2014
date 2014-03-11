@@ -7,7 +7,7 @@ import ccre.event.*;
 
 public class Actuators {
 
-    public static void createCollector(EventSource during, FloatOutput collectorMotor, BooleanOutput armFloatSolenoid,
+    public static void createCollector(EventSource during, FloatOutput collectorMotor,FloatInputPoll speed, BooleanOutput armFloatSolenoid,
             final BooleanInputPoll rollersIn, final BooleanInputPoll rollersOut, BooleanInputPoll canCollectorRun) {
         Mixing.pumpWhen(during, Mixing.select(canCollectorRun, Mixing.always(0f), Mixing.quadSelect(rollersIn, rollersOut, 0f, -1f, 1f, 1f)), collectorMotor);
         Mixing.pumpWhen(during, Mixing.orBooleans(rollersIn, rollersOut), armFloatSolenoid);
