@@ -3,6 +3,7 @@ package org.team1540.geminiapollo;
 import ccre.chan.*;
 import ccre.cluck.CluckGlobals;
 import ccre.cluck.tcp.CluckTCPServer;
+import ccre.ctrl.IDispatchJoystick;
 import ccre.ctrl.Mixing;
 import ccre.ctrl.MultipleSourceBooleanController;
 import ccre.event.*;
@@ -57,8 +58,8 @@ public class RobotMain extends SimpleCore {
         },globalPeriodic);
         CluckGlobals.node.publish("Ultrasonic Sensor, centimenters", distance);
         // ***** VISION TRACKING *****
-        VisionTracking.setup(startedAutonomous);
-        BooleanInputPoll isHotZone = VisionTracking.isHotZone();
+        //VisionTracking.setup(startedAutonomous);
+        //BooleanInputPoll isHotZone = VisionTracking.isHotZone();
         // ***** COMPRESSOR *****
         BooleanInputPoll pressureSwitch = makeDigitalInput(1);
         useCustomCompressor(Actuators.calcCompressorControl(constantPeriodic, pressureSwitch), 1);
@@ -75,6 +76,11 @@ public class RobotMain extends SimpleCore {
         FloatInputPoll rightDriveAxis = Mixing.negate(joystick1.getAxisChannel(5));
         EventSource shiftHighButton = joystick1.getButtonSource(1);
         EventSource shiftLowButton = joystick1.getButtonSource(3);
+        // ***** KINECT CODE *****
+        BooleanInputPoll fireAuto = KinectControl.main(
+                makeDispatchJoystick(5, globalPeriodic),
+                makeDispatchJoystick(6, globalPeriodic),
+                globalPeriodic);
         // [[[[ USER AUTOMATION CODE ]]]]
         BooleanInputPoll overrideCollectorBackwards = UserAutomation.setupAuto(
                 Mixing.whenBooleanBecomes(detensioning, true),
@@ -83,7 +89,7 @@ public class RobotMain extends SimpleCore {
         AutonomousController controller = new AutonomousController();
         controller.setup(this);
         controller.putDriveMotors(leftDrive1, leftDrive2, rightDrive1, rightDrive2);
-        controller.putHotzone(isHotZone);
+        controller.putHotzone(fireAuto);
         controller.putUltrasonic(distance);
         controller.putArm(armSolenoid, collectorMotor);
         EventSource fireAutonomousTrigger = controller.getWhenToFire();
