@@ -11,9 +11,10 @@ import ccre.phidget.PhidgetReader;
 public class ControlInterface {
 
     public static IDispatchJoystick joystick;
+    public static BooleanStatus armStatus = new BooleanStatus(false);
 
     public static BooleanInput getRearmCatapult(EventSource update) {
-        BooleanInputPoll a = PhidgetReader.getDigitalInput(0);
+        BooleanInputPoll a = PhidgetReader.getDigitalInput(2);
         BooleanInputPoll b = joystick.getButtonChannel(1);
         return Mixing.createDispatch(Mixing.xorBooleans(a, b), update);
     }
@@ -23,14 +24,11 @@ public class ControlInterface {
     }
 
     public static BooleanInputPoll getArmUpDown() {
-        BooleanInputPoll a = PhidgetReader.getDigitalInput(2);
-        BooleanStatus setHigh = new BooleanStatus(), setLow = new BooleanStatus();
-        EventSource highBtn = joystick.getButtonSource(5), lowBtn = joystick.getButtonSource(6);
-        setHigh.toggleWhen(highBtn);
-        setLow.setFalseWhen(highBtn);
-        setLow.toggleWhen(lowBtn);
-        setHigh.setFalseWhen(lowBtn);
-        return Mixing.orBooleans(setLow, Mixing.andBooleans(Mixing.invert((BooleanInputPoll) setHigh), a));
+        armStatus.setFalseWhen(joystick.getButtonSource(5));
+        armStatus.setTrueWhen(joystick.getButtonSource(6));
+        armStatus.setFalseWhen(Mixing.whenBooleanBecomes(PhidgetReader.getDigitalInput(0), true));
+        armStatus.setTrueWhen(Mixing.whenBooleanBecomes(PhidgetReader.getDigitalInput(7), true));
+        return armStatus;
     }
 
     public static BooleanInputPoll rollerIn() {
@@ -45,6 +43,44 @@ public class ControlInterface {
         return PhidgetReader.getDigitalInput(7);
     }
 
+    public static void displayDistance(final FloatInputPoll distance, EventSource update) {
+        update.addListener(new EventConsumer() {
+            float last = -1;
+            int ctr = 0;
+
+            public void eventFired() {
+                float value = distance.readValue();
+                if (value == last && (ctr++ % 100 != 0)) {
+                    return;
+                }
+                PhidgetReader.phidgetLCD[0].println(value);
+                last = value;
+            }
+        });
+    }
+
+    public static FloatInputPoll collectorSpeed() {
+        final TuningContext tuner = new TuningContext(CluckGlobals.node, "PowerSliderTuner");
+        CluckGlobals.node.publish("Slider Power", PhidgetReader.getAnalogInput(4));
+        return new FloatInputPoll() {
+            public float readValue() {
+                return ControlInterface.normalize(tuner.getFloat("Min", 0f).readValue(), tuner.getFloat("Max", 1f).readValue(), PhidgetReader.getAnalogInput(4).readValue());
+            }
+        };
+    }
+
+    public static void showSwitch(EventSource when) {
+        Mixing.pumpEvent(armStatus, PhidgetReader.digitalOutputs[2]);
+    }
+
+    public static void showRearming(EventSource when, BooleanInputPoll isRearming) {
+        //Mixing.pumpWhen(when, Mixing.invert(isRearming), new BooleanStatus(PhidgetReader.digitalOutputs[1]));
+    }
+
+    public static void showFiring(EventSource when, BooleanInput canFire) {
+        Mixing.pumpWhen(when, Mixing.invert(canFire), new BooleanStatus(PhidgetReader.digitalOutputs[0]));
+    }
+
     public static void displayPressure(final FloatInputPoll f, EventSource update, final BooleanInputPoll cprSwitch) {
         final TuningContext tuner = new TuningContext(CluckGlobals.node, "PressureTuner");
         tuner.publishSavingEvent("Pressure");
@@ -56,7 +92,7 @@ public class ControlInterface {
             int ctr = 0;
 
             public void eventFired() {
-                int c = normalize(zeroP.readValue(), oneP.readValue(), f.readValue());
+                int c = (int) normalize(zeroP.readValue(), oneP.readValue(), f.readValue());
                 boolean cpr = cprSwitch.readValue();
                 if (c == prevValue && (prevValueCpr == cpr) && (ctr++ % 100 != 0)) {
                     return;
@@ -72,15 +108,7 @@ public class ControlInterface {
         });
     }
 
-    public static void showRearming(EventSource when, BooleanInputPoll isRearming) {
-        Mixing.pumpWhen(when, Mixing.invert(isRearming), new BooleanStatus(PhidgetReader.digitalOutputs[1]));
-    }
-
-    public static void showFiring(EventSource when, BooleanInput canFire) {
-        Mixing.pumpWhen(when, Mixing.invert(canFire), new BooleanStatus(PhidgetReader.digitalOutputs[0]));
-    }
-
-    private static int normalize(float zero, float one, float value) {
+    private static float normalize(float zero, float one, float value) {
         float range = one - zero;
         return (int) (100 * (value - zero) / range);
     }

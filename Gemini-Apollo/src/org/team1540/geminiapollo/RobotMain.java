@@ -7,7 +7,6 @@ import ccre.ctrl.Mixing;
 import ccre.ctrl.MultipleSourceBooleanController;
 import ccre.event.*;
 import ccre.igneous.SimpleCore;
-import ccre.log.*;
 
 public class RobotMain extends SimpleCore {
 
@@ -100,7 +99,8 @@ public class RobotMain extends SimpleCore {
         Shooter.createTuner(globalPeriodic, winchCurrent, Mixing.whenBooleanBecomes(rearmButton, true), catapultNotCocked);
         // [[[[ ARM CODE ]]]]
         Actuators.createArm(duringTeleop, armSolenoid, armUpDown, IS_COMPETITION_ROBOT ? Mixing.alwaysTrue : rearming);
-        Actuators.createCollector(duringTeleop, collectorMotor, armFloatSolenoid, Mixing.orBooleans(rollersIn, overrideCollectorBackwards), rollersOut, canCollectorRun);
+        Actuators.createCollector(duringTeleop, collectorMotor, ControlInterface.collectorSpeed(),
+                armFloatSolenoid, Mixing.orBooleans(rollersIn, overrideCollectorBackwards), rollersOut, canCollectorRun);
         // [[[[ Phidget Display Code ]]]]
         ControlInterface.displayPressure(pressureSensor, globalPeriodic, pressureSwitch);
         ControlInterface.showRearming(globalPeriodic, rearming);
