@@ -11,7 +11,7 @@ import ccre.phidget.PhidgetReader;
 public class ControlInterface {
 
     public static IDispatchJoystick joystick;
-    public static BooleanStatus armStatus = new BooleanStatus(false);
+    public static BooleanStatus armStatus = new BooleanStatus();
 
     public static BooleanInput getRearmCatapult(EventSource update) {
         BooleanInputPoll a = PhidgetReader.getDigitalInput(2);
