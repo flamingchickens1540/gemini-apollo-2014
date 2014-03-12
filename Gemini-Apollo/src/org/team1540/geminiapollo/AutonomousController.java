@@ -19,24 +19,23 @@ public class AutonomousController extends InstinctModule {
     // Provided channels
     private FloatOutput leftDrive, rightDrive, collect;
     private BooleanOutput arm;
-    private BooleanInputPoll isHotzone;
-    private FloatInputPoll ultrasonicSensor;
+    private BooleanInputPoll kinectTrigger;
     // Tuned constants are below near the autonomous modes.
     private final StringHolder option = new StringHolder("hotcheck");
-    private final String[] options = {"none", "forward", "hotcheck", "ultrasonic"};
+    private final String[] options = {"none", "forward", "hotcheck", "double"};
     private final CList optionList = CArrayUtils.asList(options);
-    private final Event fireWhenEvent = new Event();
+    private final Event fireWhenEvent = new Event(), rearmWhenEvent = new Event(), notifyRearm = new Event();
 
     protected void autonomousMain() throws AutonomousModeOverException, InterruptedException {
         String cur = option.get();
-        if (cur.equals("none")) {
+        if ("none".equals(cur)) {
             autoNone();
-        } else if (cur.equals("forward")) {
+        } else if ("forward".equals(cur)) {
             autoForward();
-        } else if (cur.equals("hotcheck")) {
+        } else if ("hotcheck".equals(cur)) {
             autoHotcheck();
-        } else if (cur.equals("ultrasonic")) {
-            autoUltrasonic();
+        } else if ("double".equals(cur)) {
+            autoDouble();
         } else {
             Logger.severe("Nonexistent autonomous mode: " + option.get());
         }
@@ -46,7 +45,6 @@ public class AutonomousController extends InstinctModule {
     private void autoNone() throws AutonomousModeOverException, InterruptedException {
         rightDrive.writeValue(0);
         leftDrive.writeValue(0);
-        // Really. Just do nothing.
     }
 
     private final FloatStatus forwardMovement = tune.getFloat("autom-forward-speed", 0.5f);
@@ -62,11 +60,9 @@ public class AutonomousController extends InstinctModule {
         leftDrive.writeValue(0);
     }
 
-    private final FloatStatus hotcheckPreUltraDelay = tune.getFloat("autom-hotcheck-pru-delay", 0);
-    private final FloatStatus hotcheckUltraSpeed = tune.getFloat("autom-hotcheck-ult-speed", -0.8f);
-    private final FloatStatus hotcheckUltraMaxDelay = tune.getFloat("autom-hotcheck-ult-max-delay", 1.5f);
-    private final FloatStatus hotcheckUltraEnd = tune.getFloat("autom-hotcheck-ult-end", 1.54f);
-    private final FloatStatus hotcheckMaxDelay = tune.getFloat("autom-hotcheck-maxwait", 4);
+    private final FloatStatus hotcheckBeforeMove = tune.getFloat("autom-hotcheck-before-move", 0);
+    private final FloatStatus hotcheckMoveSpeed = tune.getFloat("autom-hotcheck-move-speed", -0.8f);
+    private final FloatStatus hotcheckMoveLength = tune.getFloat("autom-hotcheck-move-length", 4);
     private final FloatStatus hotcheckPreDelay = tune.getFloat("autom-hotcheck-fire-wait", 0.5f);
     private final FloatStatus hotcheckMovement = tune.getFloat("autom-hotcheck-move-speed", -0.7f);
     private final FloatStatus hotcheckMoveDelay = tune.getFloat("autom-hotcheck-move-duration", 0);
@@ -78,70 +74,79 @@ public class AutonomousController extends InstinctModule {
         FloatInputPoll currentTime = Utils.currentTimeSeconds;
         Logger.fine("Began Hotcheck");
         {
-            //arm.writeValue(false);
             arm.writeValue(true);
             leftDrive.writeValue(0);
             rightDrive.writeValue(0);
-            float target = currentTime.readValue() + hotcheckMaxDelay.readValue(); // Wait six seconds at most.
+            float target = currentTime.readValue() + hotcheckMoveLength.readValue();
             BooleanInputPoll fatl = Mixing.floatIsAtLeast(currentTime, target);
-            int i = waitUntilOneOf(new BooleanInputPoll[]{isHotzone, fatl});
+            int i = waitUntilOneOf(new BooleanInputPoll[]{kinectTrigger, fatl});
             if (i != 0) {
-                Logger.warning("Cancelled wait for HotZone after " + hotcheckMaxDelay.readValue() + " seconds: " + currentTime.readValue() + " and " + target);
+                Logger.warning("Cancelled wait for HotZone after " + hotcheckMoveLength.readValue() + " seconds: " + currentTime.readValue() + " and " + target);
             }
         }
         Logger.fine("Found hotzone");
         {
             collect.writeValue(hotcheckCollector.readValue());
-            leftDrive.writeValue(hotcheckUltraSpeed.readValue());
-            rightDrive.writeValue(hotcheckUltraSpeed.readValue());
-            waitForTime((long) (1000L * hotcheckPreUltraDelay.readValue() + 0.5f));
+            leftDrive.writeValue(hotcheckMoveSpeed.readValue());
+            rightDrive.writeValue(hotcheckMoveSpeed.readValue());
+            waitForTime(hotcheckBeforeMove);
         }
         Logger.fine("Ended pretime");
         {
-            float timeoutAt = currentTime.readValue() + hotcheckUltraMaxDelay.readValue(); // Wait one second at most.
-            float lengthAt = hotcheckUltraEnd.readValue();
-            int i = waitUntilOneOf(new BooleanInputPoll[]{
-                Mixing.floatIsAtMost(ultrasonicSensor, lengthAt),
-                Mixing.floatIsAtLeast(currentTime, timeoutAt)});
-            if (i != 0) {
-                Logger.warning("Cancelled wait for Ultrasonic after " + hotcheckUltraMaxDelay.readValue());
-            }
             leftDrive.writeValue(0);
             rightDrive.writeValue(0);
         }
         Logger.fine("Arrived");
-        waitForTime((long) (1000L * hotcheckArmMoveTime.readValue() + 0.5f));
+        waitForTime(hotcheckArmMoveTime);
         arm.writeValue(false);
         Logger.fine("Up");
-        waitForTime((long) (1000L * hotcheckArmMoveTime.readValue() + 0.5f));
+        waitForTime(hotcheckArmMoveTime);
         arm.writeValue(true);
         Logger.fine("Down");
-        waitForTime((long) (1000L * hotcheckPreFireDelay.readValue() + 0.5f));
+        waitForTime(hotcheckPreFireDelay);
         fireWhenEvent.produce();
         Logger.fine("Fired.");
         {
-            waitForTime((long) (1000L * hotcheckPreDelay.readValue() + 0.5f));
+            waitForTime(hotcheckPreDelay);
             Logger.fine("Wait over.");
             leftDrive.writeValue(hotcheckMovement.readValue());
             rightDrive.writeValue(hotcheckMovement.readValue());
-            waitForTime((long) (1000L * hotcheckMoveDelay.readValue() + 0.5f));
+            waitForTime(hotcheckMoveDelay);
             leftDrive.writeValue(0);
             rightDrive.writeValue(0);
         }
     }
 
-    private final FloatStatus ultrasonicMovement = tune.getFloat("autom-ultrasonic-move-speed", 0.5f);
-    private final FloatStatus ultrasonicTarget = tune.getFloat("autom-ultrasonic-target", 3);
+    private final FloatStatus doubleArmMoveTime = tune.getFloat("autom-double-armmove-time", 0.6f);
+    private final FloatStatus doubleFireTime = tune.getFloat("autom-double-fire-time", 1.1f);
+    private final FloatStatus doubleCollectTime = tune.getFloat("autom-double-collect-time", 1.1f);
 
-    private void autoUltrasonic() throws AutonomousModeOverException, InterruptedException {
-        leftDrive.writeValue(ultrasonicMovement.readValue());
-        rightDrive.writeValue(ultrasonicMovement.readValue());
-        waitUntilAtMost(ultrasonicSensor, ultrasonicTarget.readValue());
-        leftDrive.writeValue(0);
-        rightDrive.writeValue(0);
+    private void autoDouble() throws InterruptedException, AutonomousModeOverException {
+        Logger.fine("Began double mode!");
+        arm.writeValue(true);
+        waitForTime(doubleArmMoveTime);
+        Logger.fine("Arm moved - firing!");
+        fireWhenEvent.produce();
+        waitForTime(doubleFireTime);
+        rearmWhenEvent.produce();
+        Logger.fine("Rearming...");
+        waitForEvent(notifyRearm);
+        Logger.fine("Rearmed!");
+        collect.writeValue(1f);
+        waitForTime(doubleCollectTime);
+        collect.writeValue(0);
+        Logger.fine("Collected - firing!");
+        fireWhenEvent.produce();
+        waitForTime(doubleFireTime);
+        arm.writeValue(false);
+        Logger.fine("Double completed.");
     }
 
     // *** Framework ***
+    private void waitForTime(FloatInputPoll fin) throws InterruptedException, AutonomousModeOverException {
+        waitForTime((long) (1000L * fin.readValue() + 0.5f));
+    }
+
     private void sayCurrent() {
         Logger.info("Autonomous mode is currently set to: " + option.get());
     }
@@ -170,17 +175,12 @@ public class AutonomousController extends InstinctModule {
             public void eventFired() {
                 StringBuffer sb = new StringBuffer("TITLE Select Autonomous Mode\n");
                 for (int i = 0; i < options.length; i++) {
-                    String option = options[i];
-                    sb.append("BUTTON ").append(option).append('\n');
+                    sb.append("BUTTON ").append(options[i]).append('\n');
                 }
                 openDialog.invoke(sb.toString().getBytes(), new ByteArrayOutputStream() {
                     public void close() {
                         String str = new String(this.toByteArray());
-                        if (str.length() == 0) {
-                            return;
-                        }
-                        int index = optionList.indexOf(str);
-                        if (index != -1) {
+                        if (str.length() > 0 && optionList.indexOf(str) != -1) {
                             option.set(str);
                             sayCurrent();
                         }
@@ -197,20 +197,24 @@ public class AutonomousController extends InstinctModule {
         this.rightDrive = Mixing.combine(rightDrive1, rightDrive2);
     }
 
-    public void putHotzone(BooleanInputPoll isHotzone) {
-        this.isHotzone = isHotzone;
-    }
-
-    public void putUltrasonic(FloatInputPoll ultrasonic) {
-        ultrasonicSensor = ultrasonic;
+    public void putKinectTrigger(BooleanInputPoll kinectTrigger) {
+        this.kinectTrigger = kinectTrigger;
     }
 
     public EventSource getWhenToFire() {
         return fireWhenEvent;
     }
 
+    public EventSource getWhenToRearm() {
+        return rearmWhenEvent;
+    }
+
     public void putArm(BooleanOutput armSolenoid, FloatOutput collector) {
         arm = armSolenoid;
         collect = collector;
+    }
+
+    public EventConsumer getNotifyRearmFinished() {
+        return notifyRearm;
     }
 }

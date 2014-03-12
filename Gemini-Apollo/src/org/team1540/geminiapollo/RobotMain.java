@@ -3,7 +3,6 @@ package org.team1540.geminiapollo;
 import ccre.chan.*;
 import ccre.cluck.CluckGlobals;
 import ccre.cluck.tcp.CluckTCPServer;
-import ccre.ctrl.IDispatchJoystick;
 import ccre.ctrl.Mixing;
 import ccre.ctrl.MultipleSourceBooleanController;
 import ccre.event.*;
@@ -12,7 +11,7 @@ import ccre.log.*;
 
 public class RobotMain extends SimpleCore {
 
-    public static boolean IS_COMPETITION_ROBOT = true;
+    public static boolean IS_COMPETITION_ROBOT = false;
 
     protected void createSimpleControl() {
         ControlInterface.joystick = joystick2;
@@ -39,27 +38,16 @@ public class RobotMain extends SimpleCore {
         Mixing.setWhen(robotDisabled, armSolenoid, false);
         BooleanOutput winchSolenoidA = test.testPublish("sol-winch-3", makeSolenoid(3));
         BooleanOutput winchSolenoidB = test.testPublish("sol-winch-5", makeSolenoid(5));
-        BooleanOutput winchSolenoid = test.testPublish("sol-winch-combo", Mixing.combine(winchSolenoidA,winchSolenoidB));
+        BooleanOutput winchSolenoid = test.testPublish("sol-winch-combo", Mixing.combine(winchSolenoidA, winchSolenoidB));
         //BooleanOutput rachetLoopRelease = test.testPublish("sol-rachet-5", makeSolenoid(5));
         BooleanOutput armFloatSolenoid = test.testPublish("sol-float-6", makeSolenoid(6));
         // ***** INPUTS *****
         final FloatInputPoll winchCurrent = makeAnalogInput(1, 8);
         final FloatInputPoll pressureSensor = makeAnalogInput(2, 8);
-        final FloatInputPoll ultrasonicSensor = makeAnalogInput(3, 8);
         final BooleanInputPoll catapultNotCocked = makeDigitalInput(2);
         CluckGlobals.node.publish("Winch Current", Mixing.createDispatch(winchCurrent, globalPeriodic));
         CluckGlobals.node.publish("Pressure Sensor", Mixing.createDispatch(pressureSensor, globalPeriodic));
-        CluckGlobals.node.publish("Ultrasonic Sensor", Mixing.createDispatch(ultrasonicSensor, globalPeriodic));
         CluckGlobals.node.publish("Catapult Not Cocked", Mixing.createDispatch(catapultNotCocked, globalPeriodic));
-        FloatInput distance = Mixing.createDispatch(new FloatInputPoll(){
-            public float readValue() {
-                return ultrasonicSensor.readValue()*(1024/5f) - 4;
-            }
-        },globalPeriodic);
-        CluckGlobals.node.publish("Ultrasonic Sensor, centimenters", distance);
-        // ***** VISION TRACKING *****
-        //VisionTracking.setup(startedAutonomous);
-        //BooleanInputPoll isHotZone = VisionTracking.isHotZone();
         // ***** COMPRESSOR *****
         BooleanInputPoll pressureSwitch = makeDigitalInput(1);
         useCustomCompressor(Actuators.calcCompressorControl(constantPeriodic, pressureSwitch), 1);
@@ -68,7 +56,7 @@ public class RobotMain extends SimpleCore {
         BooleanInputPoll rollersIn = ControlInterface.rollerIn();
         BooleanInputPoll rollersOut = ControlInterface.rollerOut();
         BooleanInput detensioning = ControlInterface.detensioning();
-        BooleanInput rearmCatapult = ControlInterface.getRearmCatapult(globalPeriodic);
+        BooleanInput rearmButton = ControlInterface.getRearmCatapult(globalPeriodic);
         EventSource fireButton = ControlInterface.getFireButton();
         // ***** DRIVE JOYSTICK *****
         FloatInputPoll leftDriveAxis = Mixing.negate(joystick1.getAxisChannel(2));
@@ -78,9 +66,7 @@ public class RobotMain extends SimpleCore {
         EventSource shiftLowButton = joystick1.getButtonSource(3);
         // ***** KINECT CODE *****
         BooleanInputPoll fireAuto = KinectControl.main(
-                makeDispatchJoystick(5, globalPeriodic),
-                makeDispatchJoystick(6, globalPeriodic),
-                globalPeriodic);
+                makeDispatchJoystick(5, globalPeriodic), makeDispatchJoystick(6, globalPeriodic), globalPeriodic);
         // [[[[ USER AUTOMATION CODE ]]]]
         BooleanInputPoll overrideCollectorBackwards = UserAutomation.setupAuto(
                 Mixing.whenBooleanBecomes(detensioning, true),
@@ -89,36 +75,34 @@ public class RobotMain extends SimpleCore {
         AutonomousController controller = new AutonomousController();
         controller.setup(this);
         controller.putDriveMotors(leftDrive1, leftDrive2, rightDrive1, rightDrive2);
-        controller.putHotzone(fireAuto);
-        controller.putUltrasonic(distance);
+        controller.putKinectTrigger(fireAuto);
         controller.putArm(armSolenoid, collectorMotor);
-        EventSource fireAutonomousTrigger = controller.getWhenToFire();
+        EventSource fireAutonomousTrigger = controller.getWhenToFire(), rearmAutonomousTrigger = controller.getWhenToRearm();
+        EventConsumer notifyRearmFinished = controller.getNotifyRearmFinished();
         // [[[[ DRIVE CODE ]]]]
         BooleanStatus shiftBoolean = DriveCode.createShifting(startedTeleop, startedAutonomous, duringTeleop, shiftSolenoid, shiftHighButton, shiftLowButton);
         DriveCode.createDrive(startedTeleop, duringTeleop, leftDrive1, leftDrive2, rightDrive1, rightDrive2, leftDriveAxis, rightDriveAxis, forwardDriveAxis, IS_COMPETITION_ROBOT, shiftBoolean);
         // [[[[ SHOOTER CODE ]]]]
         EventSource fireWhen = Mixing.combine(fireAutonomousTrigger, fireButton);
-        EventLogger.log(fireWhen, LogLevel.FINE, "Fire now!");
         EventSource updateShooterWhen = Mixing.combine(duringTeleop, duringAutonomous);
         BooleanStatus canCollectorRun = new BooleanStatus();
-        BooleanStatus winchEngaged=new BooleanStatus(winchSolenoid);
+        BooleanStatus winchEngaged = new BooleanStatus(winchSolenoid);
         BooleanInputPoll rearming = Shooter.createShooter(
                 startedAutonomous, startedTeleop, updateShooterWhen, constantPeriodic,
                 getIsAutonomous(),
                 winchMotor,
                 winchSolenoid,
-                winchCurrent, ControlInterface.powerSlider(),
+                winchCurrent,
                 catapultNotCocked, armUpDown,
-                rearmCatapult, fireWhen, canCollectorRun,
-                winchEngaged
+                rearmButton, rearmAutonomousTrigger, fireWhen, canCollectorRun,
+                winchEngaged, notifyRearmFinished
         );
-        Shooter.createTuner(globalPeriodic, winchCurrent, Mixing.whenBooleanBecomes(rearmCatapult, true), catapultNotCocked);
+        Shooter.createTuner(globalPeriodic, winchCurrent, Mixing.whenBooleanBecomes(rearmButton, true), catapultNotCocked);
         // [[[[ ARM CODE ]]]]
-        Actuators.createArm(duringTeleop, armSolenoid, armUpDown, IS_COMPETITION_ROBOT ? Mixing.alwaysTrue:rearming);
+        Actuators.createArm(duringTeleop, armSolenoid, armUpDown, IS_COMPETITION_ROBOT ? Mixing.alwaysTrue : rearming);
         Actuators.createCollector(duringTeleop, collectorMotor, armFloatSolenoid, Mixing.orBooleans(rollersIn, overrideCollectorBackwards), rollersOut, canCollectorRun);
         // [[[[ Phidget Display Code ]]]]
         ControlInterface.displayPressure(pressureSensor, globalPeriodic, pressureSwitch);
-        ControlInterface.displayDistance(distance, globalPeriodic);
         ControlInterface.showRearming(globalPeriodic, rearming);
         ControlInterface.showFiring(globalPeriodic, winchEngaged);
         //MOTD.createMOTD();

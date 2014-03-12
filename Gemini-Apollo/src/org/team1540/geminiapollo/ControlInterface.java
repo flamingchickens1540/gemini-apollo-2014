@@ -12,24 +12,10 @@ public class ControlInterface {
 
     public static IDispatchJoystick joystick;
 
-    private static class Xor implements BooleanInputPoll {
-
-        private final BooleanInputPoll a, b;
-
-        private Xor(BooleanInputPoll a, BooleanInputPoll b) {
-            this.a = a;
-            this.b = b;
-        }
-
-        public boolean readValue() {
-            return a.readValue() ^ b.readValue();
-        }
-    }
-
     public static BooleanInput getRearmCatapult(EventSource update) {
         BooleanInputPoll a = PhidgetReader.getDigitalInput(0);
         BooleanInputPoll b = joystick.getButtonChannel(1);
-        return Mixing.createDispatch(new Xor(a, b), update);
+        return Mixing.createDispatch(Mixing.xorBooleans(a, b), update);
     }
 
     public static EventSource getFireButton() {
@@ -55,28 +41,8 @@ public class ControlInterface {
         return Mixing.orBooleans(PhidgetReader.getDigitalInput(4), Mixing.floatIsAtMost(joystick.getAxisChannel(2), -0.2f));
     }
 
-    public static FloatInputPoll powerSlider() {
-        return PhidgetReader.getAnalogInput(0);
-    }
-
     public static BooleanInput detensioning() {
         return PhidgetReader.getDigitalInput(7);
-    }
-
-    public static void displayDistance(final FloatInputPoll distance, EventSource update) {
-        update.addListener(new EventConsumer() {
-            float last = -1;
-            int ctr = 0;
-
-            public void eventFired() {
-                float value = distance.readValue();
-                if (value == last && (ctr++ % 100 != 0)) {
-                    return;
-                }
-                PhidgetReader.phidgetLCD[0].println(value);
-                last = value;
-            }
-        });
     }
 
     public static void displayPressure(final FloatInputPoll f, EventSource update, final BooleanInputPoll cprSwitch) {
@@ -117,5 +83,12 @@ public class ControlInterface {
     private static int normalize(float zero, float one, float value) {
         float range = one - zero;
         return (int) (100 * (value - zero) / range);
+    }
+
+    private static int errno = 0;
+
+    public static void displayError(String message) {
+        errno = (errno + 1) % 10;
+        PhidgetReader.phidgetLCD[0].print(errno + ' ' + message + '\n');
     }
 }

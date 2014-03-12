@@ -10,145 +10,116 @@ import ccre.log.LogLevel;
 import ccre.log.Logger;
 
 public class Shooter {
-    /* TODO LIST:
-     -implement better stopping when winchcurrent reaches (almost reaches) set value
-     -have a better stop for arming the catapult when arm is up (winchcurrent?)
-     -get rid of log
-     */
 
     public static BooleanInputPoll createShooter(
             final EventSource beginAutonomous, final EventSource beginTeleop, final EventSource during, final EventSource constant,
             final BooleanInputPoll isautonomous,
             final FloatOutput winchMotor,
             final BooleanOutput winchSolenoid,
-            final FloatInputPoll winchCurrent, final FloatInputPoll slider,
+            final FloatInputPoll winchCurrent,
             final BooleanInputPoll catapultNotCocked, final BooleanInputPoll armDown,
-            final BooleanInput rearmCatapult, EventSource fireButton, BooleanOutput canCollectorRun, final BooleanStatus winchDisengaged) {
+            final BooleanInput rearmCatapult, final EventSource rearmAutonomousTrigger, EventSource fireButton, BooleanOutput canCollectorRun,
+            final BooleanStatus winchDisengaged, final EventConsumer finishedRearm) {
         //Network Variables
         TuningContext tuner = new TuningContext(CluckGlobals.node, "ShooterValues");
         tuner.publishSavingEvent("Shooter");
         final FloatStatus winchSpeed = tuner.getFloat("Winch Speed", 1f);
         final FloatStatus drawBack = tuner.getFloat("Draw Back", 6f);
-        final FloatStatus currentMinAdjustor = tuner.getFloat("Minimum Current Adjustor", 0f);
-        final FloatStatus currentMultiplierAdjustor = tuner.getFloat("Multiplier Current Adjustor", 5f);
         final FloatStatus rearmTimeout = tuner.getFloat("Winch Rearm Timeout", 5f);
-        final BooleanStatus shouldWinchDuringFire = new BooleanStatus(true);
-        CluckGlobals.node.publish("Winch During Fire", shouldWinchDuringFire);
-        final BooleanStatus useSlider = new BooleanStatus();
-        CluckGlobals.node.publish("Use Slider Drawback Value", useSlider);
-        CluckGlobals.node.publish("Slider Value", Mixing.createDispatch(slider, during));
         //engage safety after firing safety
         final ExpirationTimer engageTimer = new ExpirationTimer();
-        final BooleanStatus canEngage = new BooleanStatus(true);
-        engageTimer.schedule(1, new EventConsumer() {
-            public void eventFired() {
-                Logger.info("After Fire Timer A");
-                canEngage.writeValue(false);
-            }
-        });
+        final BooleanStatus cannotEngage = new BooleanStatus(engageTimer.getRunningControl());
         engageTimer.schedule(1000, new EventConsumer() {
             public void eventFired() {
-                Logger.info("After Fire Timer B");
-                canEngage.writeValue(true);
-                engageTimer.stop();
+                Logger.info("Fire complete.");
+                cannotEngage.writeValue(false);
             }
         });
         //state of the catapult
         //four score, etc. etc.
         //detentioning is technically a part of this
-        CluckGlobals.node.publish("WINCHDISENGAGED", winchDisengaged);
+        CluckGlobals.node.publish("Winch Disengaged", winchDisengaged);
         winchDisengaged.addTarget(Mixing.invert(canCollectorRun));
         final BooleanStatus rearming = new BooleanStatus();
-        final FloatInputPoll adjustedSlider = new FloatInputPoll() {
-            public float readValue() {
-                return ((slider.readValue() + currentMinAdjustor.readValue()) * currentMultiplierAdjustor.readValue());
-            }
-        };
-        CluckGlobals.node.publish("Adjusted Slider Value", Mixing.createDispatch(adjustedSlider, during));
         //timeout on rearming
         final FloatStatus resetRearm = new FloatStatus();
         resetRearm.setWhen(0, Mixing.whenBooleanBecomes(rearming, false));
         CluckGlobals.node.publish("Winch Rearm Timeout Status", (FloatInput) resetRearm);
-        Mixing.pumpWhen(Mixing.whenBooleanBecomes(rearming, true), rearmTimeout, resetRearm);
-        EventSource causeResetRearm = Mixing.filterEvent(Mixing.andBooleans(rearming, Mixing.floatIsAtMost(resetRearm, 0)), true, during);
-        EventLogger.log(causeResetRearm, LogLevel.INFO, "rearm timeout");
-        rearming.setFalseWhen(causeResetRearm);
         constant.addListener(new EventConsumer() {
             public void eventFired() {
-                resetRearm.writeValue(Math.max(0, resetRearm.readValue() - 0.01f));
+                float val = resetRearm.readValue();
+                if (val > 0) {
+                    val -= 0.01f;
+                    if (val <= 0 && rearming.readValue()) {
+                        Logger.info("Rearm Timeout");
+                        rearming.writeValue(false);
+                    }
+                    resetRearm.writeValue(val);
+                } else if (rearming.readValue()) {
+                    resetRearm.writeValue(rearmTimeout.readValue());
+                }
             }
         });
         //begin listeners
         rearming.setFalseWhen(beginAutonomous);
         winchDisengaged.setFalseWhen(beginAutonomous);
         rearming.setFalseWhen(beginTeleop);
-        beginTeleop.addListener(new EventConsumer() {
-            public void eventFired() {
-                if (canEngage.readValue()) {
-                    winchDisengaged.writeValue(false);
-                }
-            }
-        });
+        winchDisengaged.setFalseWhen(beginTeleop);
+        //Buttons
         final EventConsumer realFire = new EventConsumer() {
             public void eventFired() {
                 Logger.info("fire");
                 winchDisengaged.writeValue(true);
-                engageTimer.start();
+                cannotEngage.writeValue(true);
             }
         };
         CluckGlobals.node.publish("Force Fire", realFire);
-        //Buttons
         fireButton.addListener(new EventConsumer() {
             public void eventFired() {
                 if (rearming.readValue()) {
                     Logger.info("fire button: stop rearm");
                     rearming.writeValue(false);
+                    ControlInterface.displayError("Cancelled rearm.");
                 } else if (winchDisengaged.readValue()) {
                     Logger.info("no fire: run the winch!");
+                    ControlInterface.displayError("Winch not armed.");
                 } else if (armDown.readValue() || isautonomous.readValue()) {
                     realFire.eventFired();
                 } else {
                     Logger.info("no fire: lower the arm!");
+                    ControlInterface.displayError("Arm isn't down.");
                 }
             }
         });
-        Mixing.whenBooleanBecomes(rearmCatapult, true).addListener(new EventConsumer() {
+        EventConsumer doRearm = new EventConsumer() {
             public void eventFired() {
                 if (rearming.readValue()) {
                     Logger.info("stop rearm");
                     rearming.writeValue(false);
+                    ControlInterface.displayError("Cancelled rearm.");
                 } else if (catapultNotCocked.readValue()) {
                     winchDisengaged.writeValue(false);
                     Logger.info("rearm");
                     rearming.writeValue(true);
                 } else {
                     Logger.info("no rearm");
+                    ControlInterface.displayError("Already at limit.");
                 }
             }
-        });
+        };
+        rearmAutonomousTrigger.addListener(doRearm);
+        Mixing.whenBooleanBecomes(rearmCatapult, true).addListener(doRearm);
         //during listener
         during.addListener(new EventConsumer() {
             public void eventFired() {
-                if (rearming.readValue()) {
-                    winchMotor.writeValue(winchSpeed.readValue());
-                    if (!catapultNotCocked.readValue()) {
-                        rearming.writeValue(false);
-                        winchMotor.writeValue(0f);
-                        Logger.info("limit switch stop rearm");
-                    } else if (useSlider.readValue() && winchCurrent.readValue() >= adjustedSlider.readValue()) {
-                        rearming.writeValue(false);
-                        winchMotor.writeValue(0f);
-                        Logger.info("slider drawback current stop rearm");
-                    } else if (!useSlider.readValue() && winchCurrent.readValue() >= drawBack.readValue()) {
-                        rearming.writeValue(false);
-                        winchMotor.writeValue(0f);
-                        Logger.info("manual drawback current stop rearm");
-                    }
-                } else if (rearmCatapult.readValue()) {
-                    winchMotor.writeValue(1f);
-                } else {
+                if (rearming.readValue() && (!catapultNotCocked.readValue() || winchCurrent.readValue() >= drawBack.readValue())) {
+                    rearming.writeValue(false);
                     winchMotor.writeValue(0f);
+                    Logger.info(catapultNotCocked.readValue() ? "drawback current stop rearm" : "limit switch stop rearm");
+                    finishedRearm.eventFired();
+                    return;
                 }
+                winchMotor.writeValue((rearming.readValue() || rearmCatapult.readValue()) ? winchSpeed.readValue() : 0);
             }
         });
         return Mixing.invert((BooleanInputPoll) rearming);

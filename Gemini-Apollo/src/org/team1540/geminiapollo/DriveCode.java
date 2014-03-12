@@ -55,8 +55,8 @@ public class DriveCode {
     public static BooleanStatus createShifting(EventSource begin, EventSource beginAuto, EventSource during, BooleanOutput shiftSolenoid, EventSource shiftHighButton, EventSource shiftLowButton) {
         final BooleanStatus shifted = new BooleanStatus(shiftSolenoid);
         shifted.setTrueWhen(begin); // begin
-        shifted.setTrueWhen(beginAuto);
-        shifted.setTrueWhen(shiftHighButton); // high - THESE ARE WRONG
+        shifted.setFalseWhen(beginAuto);
+        shifted.setTrueWhen(shiftHighButton); // high - APOLLO WILL BE CHANGED SO THAT THESE ARE CORRECT
         shifted.setFalseWhen(shiftLowButton); // low
         return shifted;
     }
