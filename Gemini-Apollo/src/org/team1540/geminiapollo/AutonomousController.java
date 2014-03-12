@@ -61,7 +61,7 @@ public class AutonomousController extends InstinctModule {
     }
 
     private final FloatStatus hotcheckBeforeMove = tune.getFloat("autom-hotcheck-before-move", 0);
-    private final FloatStatus hotcheckMoveSpeed = tune.getFloat("autom-hotcheck-move-speed", -0.8f);
+    private final FloatStatus hotcheckMoveSpeed = tune.getFloat("autom-hotcheck-premove-speed", -0.8f);
     private final FloatStatus hotcheckMoveLength = tune.getFloat("autom-hotcheck-move-length", 4);
     private final FloatStatus hotcheckPreDelay = tune.getFloat("autom-hotcheck-fire-wait", 0.5f);
     private final FloatStatus hotcheckMovement = tune.getFloat("autom-hotcheck-move-speed", -0.7f);

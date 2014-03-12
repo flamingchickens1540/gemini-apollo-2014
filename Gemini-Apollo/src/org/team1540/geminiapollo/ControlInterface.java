@@ -39,10 +39,6 @@ public class ControlInterface {
         return Mixing.orBooleans(PhidgetReader.getDigitalInput(4), Mixing.floatIsAtMost(joystick.getAxisChannel(2), -0.2f));
     }
 
-    public static BooleanInput detensioning() {
-        return PhidgetReader.getDigitalInput(7);
-    }
-
     public static void displayDistance(final FloatInputPoll distance, EventSource update) {
         update.addListener(new EventConsumer() {
             float last = -1;

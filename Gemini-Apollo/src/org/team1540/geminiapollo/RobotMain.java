@@ -54,7 +54,6 @@ public class RobotMain extends SimpleCore {
         BooleanInputPoll armUpDown = ControlInterface.getArmUpDown();
         BooleanInputPoll rollersIn = ControlInterface.rollerIn();
         BooleanInputPoll rollersOut = ControlInterface.rollerOut();
-        BooleanInput detensioning = ControlInterface.detensioning();
         BooleanInput rearmButton = ControlInterface.getRearmCatapult(globalPeriodic);
         EventSource fireButton = ControlInterface.getFireButton();
         // ***** DRIVE JOYSTICK *****
@@ -66,10 +65,6 @@ public class RobotMain extends SimpleCore {
         // ***** KINECT CODE *****
         BooleanInputPoll fireAuto = KinectControl.main(
                 makeDispatchJoystick(5, globalPeriodic), makeDispatchJoystick(6, globalPeriodic), globalPeriodic);
-        // [[[[ USER AUTOMATION CODE ]]]]
-        BooleanInputPoll overrideCollectorBackwards = UserAutomation.setupAuto(
-                Mixing.whenBooleanBecomes(detensioning, true),
-                Mixing.invert(armSolenoidCtrl.getOutput(true)));
         // [[[[ AUTONOMOUS CODE ]]]]
         AutonomousController controller = new AutonomousController();
         controller.setup(this);
@@ -100,7 +95,7 @@ public class RobotMain extends SimpleCore {
         // [[[[ ARM CODE ]]]]
         Actuators.createArm(duringTeleop, armSolenoid, armUpDown, IS_COMPETITION_ROBOT ? Mixing.alwaysTrue : rearming);
         Actuators.createCollector(duringTeleop, collectorMotor, ControlInterface.collectorSpeed(),
-                armFloatSolenoid, Mixing.orBooleans(rollersIn, overrideCollectorBackwards), rollersOut, canCollectorRun);
+                armFloatSolenoid, rollersIn, rollersOut, canCollectorRun);
         // [[[[ Phidget Display Code ]]]]
         ControlInterface.displayPressure(pressureSensor, globalPeriodic, pressureSwitch);
         ControlInterface.showRearming(globalPeriodic, rearming);
