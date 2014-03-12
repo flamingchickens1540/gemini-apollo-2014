@@ -11,7 +11,7 @@ import ccre.phidget.PhidgetReader;
 public class ControlInterface {
 
     public static IDispatchJoystick joystick;
-    public static BooleanStatus armStatus=new BooleanStatus(false);
+    public static BooleanStatus armStatus = new BooleanStatus(false);
 
     private static class Xor implements BooleanInputPoll {
 
@@ -40,8 +40,8 @@ public class ControlInterface {
     public static BooleanInputPoll getArmUpDown() {
         armStatus.setFalseWhen(joystick.getButtonSource(5));
         armStatus.setTrueWhen(joystick.getButtonSource(6));
-        armStatus.setFalseWhen(Mixing.whenBooleanBecomes(PhidgetReader.getDigitalInput(0),true));
-        armStatus.setTrueWhen(Mixing.whenBooleanBecomes(PhidgetReader.getDigitalInput(7),true));
+        armStatus.setFalseWhen(Mixing.whenBooleanBecomes(PhidgetReader.getDigitalInput(0), true));
+        armStatus.setTrueWhen(Mixing.whenBooleanBecomes(PhidgetReader.getDigitalInput(7), true));
         return armStatus;
     }
 
@@ -52,7 +52,7 @@ public class ControlInterface {
     public static BooleanInputPoll rollerOut() {
         return Mixing.orBooleans(PhidgetReader.getDigitalInput(4), Mixing.floatIsAtMost(joystick.getAxisChannel(2), -0.2f));
     }
-    
+
     public static BooleanInput detensioning() {
         return PhidgetReader.getDigitalInput(7);
     }
@@ -72,20 +72,22 @@ public class ControlInterface {
             }
         });
     }
-    public static FloatInputPoll collectorSpeed(){
-        final TuningContext tuner=new TuningContext(CluckGlobals.node, "PowerSliderTuner");
-        final FloatInput min=tuner.getFloat("Min", 0f);
-        final FloatInput max=tuner.getFloat("Max", 1f);
-        return new FloatInputPoll(){
+
+    public static FloatInputPoll collectorSpeed() {
+        final TuningContext tuner = new TuningContext(CluckGlobals.node, "PowerSliderTuner");
+        final FloatInput min = tuner.getFloat("Min", 0f);
+        final FloatInput max = tuner.getFloat("Max", 1f);
+        return new FloatInputPoll() {
             public float readValue() {
-                return ControlInterface.normalize(min.readValue(),max.readValue(),PhidgetReader.getAnalogInput(4).readValue());
+                return ControlInterface.normalize(min.readValue(), max.readValue(), PhidgetReader.getAnalogInput(4).readValue());
             }
         };
     }
-    public static void showSwitch(EventSource when){
+
+    public static void showSwitch(EventSource when) {
         Mixing.pumpEvent(armStatus, PhidgetReader.digitalOutputs[2]);
     }
-    
+
     public static void showRearming(EventSource when, BooleanInputPoll isRearming) {
         //Mixing.pumpWhen(when, Mixing.invert(isRearming), new BooleanStatus(PhidgetReader.digitalOutputs[1]));
     }
@@ -93,7 +95,7 @@ public class ControlInterface {
     public static void showFiring(EventSource when, BooleanInput canFire) {
         Mixing.pumpWhen(when, Mixing.invert(canFire), new BooleanStatus(PhidgetReader.digitalOutputs[0]));
     }
-    
+
     public static void displayPressure(final FloatInputPoll f, EventSource update, final BooleanInputPoll cprSwitch) {
         final TuningContext tuner = new TuningContext(CluckGlobals.node, "PressureTuner");
         tuner.publishSavingEvent("Pressure");

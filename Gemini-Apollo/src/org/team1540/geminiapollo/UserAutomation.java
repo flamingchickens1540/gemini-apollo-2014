@@ -5,6 +5,7 @@ import ccre.ctrl.ExpirationTimer;
 import ccre.event.*;
 
 public class UserAutomation {
+
     public static BooleanInputPoll setupAuto(EventSource doResetBall, BooleanOutput runArm) {
         ExpirationTimer timer = new ExpirationTimer();
         timer.startWhen(doResetBall);

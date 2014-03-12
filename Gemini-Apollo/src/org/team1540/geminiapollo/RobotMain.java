@@ -39,7 +39,7 @@ public class RobotMain extends SimpleCore {
         Mixing.setWhen(robotDisabled, armSolenoid, false);
         BooleanOutput winchSolenoidA = test.testPublish("sol-winch-3", makeSolenoid(3));
         BooleanOutput winchSolenoidB = test.testPublish("sol-winch-5", makeSolenoid(5));
-        BooleanOutput winchSolenoid = test.testPublish("sol-winch-combo", Mixing.combine(winchSolenoidA,winchSolenoidB));
+        BooleanOutput winchSolenoid = test.testPublish("sol-winch-combo", Mixing.combine(winchSolenoidA, winchSolenoidB));
         //BooleanOutput rachetLoopRelease = test.testPublish("sol-rachet-5", makeSolenoid(5));
         BooleanOutput armFloatSolenoid = test.testPublish("sol-float-6", makeSolenoid(6));
         // ***** INPUTS *****
@@ -51,11 +51,11 @@ public class RobotMain extends SimpleCore {
         CluckGlobals.node.publish("Pressure Sensor", Mixing.createDispatch(pressureSensor, globalPeriodic));
         CluckGlobals.node.publish("Ultrasonic Sensor", Mixing.createDispatch(ultrasonicSensor, globalPeriodic));
         CluckGlobals.node.publish("Catapult Not Cocked", Mixing.createDispatch(catapultNotCocked, globalPeriodic));
-        FloatInput distance = Mixing.createDispatch(new FloatInputPoll(){
+        FloatInput distance = Mixing.createDispatch(new FloatInputPoll() {
             public float readValue() {
-                return ultrasonicSensor.readValue()*(1024/5f) - 4;
+                return ultrasonicSensor.readValue() * (1024 / 5f) - 4;
             }
-        },globalPeriodic);
+        }, globalPeriodic);
         CluckGlobals.node.publish("Ultrasonic Sensor, centimenters", distance);
         // ***** VISION TRACKING *****
         //VisionTracking.setup(startedAutonomous);
@@ -101,7 +101,7 @@ public class RobotMain extends SimpleCore {
         EventLogger.log(fireWhen, LogLevel.FINE, "Fire now!");
         EventSource updateShooterWhen = Mixing.combine(duringTeleop, duringAutonomous);
         BooleanStatus canCollectorRun = new BooleanStatus();
-        BooleanStatus winchEngaged=new BooleanStatus(winchSolenoid);
+        BooleanStatus winchEngaged = new BooleanStatus(winchSolenoid);
         BooleanInputPoll rearming = Shooter.createShooter(
                 startedAutonomous, startedTeleop, updateShooterWhen, constantPeriodic,
                 getIsAutonomous(),
@@ -114,8 +114,8 @@ public class RobotMain extends SimpleCore {
         );
         Shooter.createTuner(globalPeriodic, winchCurrent, Mixing.whenBooleanBecomes(rearmCatapult, true), catapultNotCocked);
         // [[[[ ARM CODE ]]]]
-        Actuators.createArm(duringTeleop, armSolenoid, armUpDown, IS_COMPETITION_ROBOT ? Mixing.alwaysTrue:rearming);
-        Actuators.createCollector(duringTeleop, collectorMotor,ControlInterface.collectorSpeed(), armFloatSolenoid, Mixing.orBooleans(rollersIn, overrideCollectorBackwards), rollersOut, canCollectorRun);
+        Actuators.createArm(duringTeleop, armSolenoid, armUpDown, IS_COMPETITION_ROBOT ? Mixing.alwaysTrue : rearming);
+        Actuators.createCollector(duringTeleop, collectorMotor, ControlInterface.collectorSpeed(), armFloatSolenoid, Mixing.orBooleans(rollersIn, overrideCollectorBackwards), rollersOut, canCollectorRun);
         // [[[[ Phidget Display Code ]]]]
         ControlInterface.displayPressure(pressureSensor, globalPeriodic, pressureSwitch);
         ControlInterface.displayDistance(distance, globalPeriodic);
