@@ -11,35 +11,40 @@ import ccre.igneous.SimpleCore;
 public class RobotMain extends SimpleCore {
 
     public static boolean IS_COMPETITION_ROBOT = false;
+    private TestMode testing;
+    private ControlInterface ctrlif;
 
-    protected void createSimpleControl() {
-        ControlInterface.joystick = joystick2;
-        // ***** CLUCK *****
+    private void setupCluck() {
         new CluckTCPServer(CluckGlobals.node, 443).start();
         new CluckTCPServer(CluckGlobals.node, 1180).start();
         new CluckTCPServer(CluckGlobals.node, 1540).start();
         new CluckTCPServer(CluckGlobals.node, 1735).start();
-        TestMode test = new TestMode(getIsTest());
+    }
+
+    protected void createSimpleControl() {
+        ctrlif = new ControlInterface(joystick2);
+        setupCluck();
+        testing = new TestMode(getIsTest());
         // ***** MOTORS *****
-        FloatOutput leftDrive1 = test.testPublish("leftDrive1", makeTalonMotor(1, MOTOR_FORWARD, 0.1f));
-        FloatOutput leftDrive2 = test.testPublish("leftDrive2", makeTalonMotor(2, MOTOR_FORWARD, 0.1f));
-        test.testPublish("leftDrive", Mixing.combine(leftDrive1, leftDrive2));
-        FloatOutput rightDrive1 = test.testPublish("rightDrive1", makeTalonMotor(3, MOTOR_REVERSE, 0.1f));
-        FloatOutput rightDrive2 = test.testPublish("rightDrive2", makeTalonMotor(4, MOTOR_REVERSE, 0.1f));
-        test.testPublish("rightDrive", Mixing.combine(rightDrive1, rightDrive2));
-        FloatOutput winchMotor = test.testPublish("winch", makeTalonMotor(5, MOTOR_REVERSE, 0.1f));
-        FloatOutput collectorMotor = test.testPublish("collectorMotor", makeTalonMotor(6, MOTOR_REVERSE, 0.1f));
+        FloatOutput leftDrive1 = testing.testPublish("leftDrive1", makeTalonMotor(1, MOTOR_FORWARD, 0.1f));
+        FloatOutput leftDrive2 = testing.testPublish("leftDrive2", makeTalonMotor(2, MOTOR_FORWARD, 0.1f));
+        testing.testPublish("leftDrive", Mixing.combine(leftDrive1, leftDrive2));
+        FloatOutput rightDrive1 = testing.testPublish("rightDrive1", makeTalonMotor(3, MOTOR_REVERSE, 0.1f));
+        FloatOutput rightDrive2 = testing.testPublish("rightDrive2", makeTalonMotor(4, MOTOR_REVERSE, 0.1f));
+        testing.testPublish("rightDrive", Mixing.combine(rightDrive1, rightDrive2));
+        FloatOutput winchMotor = testing.testPublish("winch", makeTalonMotor(5, MOTOR_REVERSE, 0.1f));
+        FloatOutput collectorMotor = testing.testPublish("collectorMotor", makeTalonMotor(6, MOTOR_REVERSE, 0.1f));
         // ***** SOLENOIDS *****
-        BooleanOutput shiftSolenoid = test.testPublish("sol-shift-1", makeSolenoid(1));
+        BooleanOutput shiftSolenoid = testing.testPublish("sol-shift-1", makeSolenoid(1));
         MultipleSourceBooleanController armSolenoidCtrl = new MultipleSourceBooleanController(true);
-        armSolenoidCtrl.addTarget(test.testPublish("sol-arm-2", makeSolenoid(2)));
+        armSolenoidCtrl.addTarget(testing.testPublish("sol-arm-2", makeSolenoid(2)));
         BooleanStatus armSolenoid = new BooleanStatus(armSolenoidCtrl.getOutput(false));
         Mixing.setWhen(robotDisabled, armSolenoid, false);
-        BooleanOutput winchSolenoidA = test.testPublish("sol-winch-3", makeSolenoid(3));
-        BooleanOutput winchSolenoidB = test.testPublish("sol-winch-5", makeSolenoid(5));
-        BooleanOutput winchSolenoid = test.testPublish("sol-winch-combo", Mixing.combine(winchSolenoidA, winchSolenoidB));
+        BooleanOutput winchSolenoidA = testing.testPublish("sol-winch-3", makeSolenoid(3));
+        BooleanOutput winchSolenoidB = testing.testPublish("sol-winch-5", makeSolenoid(5));
+        BooleanOutput winchSolenoid = testing.testPublish("sol-winch-combo", Mixing.combine(winchSolenoidA, winchSolenoidB));
         //BooleanOutput rachetLoopRelease = test.testPublish("sol-rachet-5", makeSolenoid(5));
-        BooleanOutput armFloatSolenoid = test.testPublish("sol-float-6", makeSolenoid(6));
+        BooleanOutput armFloatSolenoid = testing.testPublish("sol-float-6", makeSolenoid(6));
         // ***** INPUTS *****
         final FloatInputPoll winchCurrent = makeAnalogInput(1, 8);
         final FloatInputPoll pressureSensor = makeAnalogInput(2, 8);
@@ -51,7 +56,7 @@ public class RobotMain extends SimpleCore {
         BooleanInputPoll pressureSwitch = makeDigitalInput(1);
         useCustomCompressor(Actuators.calcCompressorControl(constantPeriodic, pressureSwitch), 1);
         // ***** CONTROL INTERFACE *****
-        BooleanInputPoll armUpDown = ControlInterface.getArmUpDown();
+        BooleanInput armUpDown = ControlInterface.getArmUpDown();
         BooleanInputPoll rollersIn = ControlInterface.rollerIn();
         BooleanInputPoll rollersOut = ControlInterface.rollerOut();
         BooleanInput detensioning = ControlInterface.detensioning();
@@ -103,8 +108,8 @@ public class RobotMain extends SimpleCore {
                 armFloatSolenoid, Mixing.orBooleans(rollersIn, overrideCollectorBackwards), rollersOut, canCollectorRun);
         // [[[[ Phidget Display Code ]]]]
         ControlInterface.displayPressure(pressureSensor, globalPeriodic, pressureSwitch);
-        ControlInterface.showRearming(globalPeriodic, rearming);
         ControlInterface.showFiring(globalPeriodic, winchEngaged);
+        ControlInterface.showArm(armUpDown);
         //MOTD.createMOTD();
     }
 }

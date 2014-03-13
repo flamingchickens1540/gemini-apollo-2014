@@ -10,20 +10,24 @@ import ccre.phidget.PhidgetReader;
 
 public class ControlInterface {
 
-    public static IDispatchJoystick joystick;
-    public static BooleanStatus armStatus = new BooleanStatus();
+    private final IDispatchJoystick joystick;
 
-    public static BooleanInput getRearmCatapult(EventSource update) {
+    public ControlInterface(IDispatchJoystick joystick) {
+        this.joystick = joystick;
+    }
+
+    public BooleanInput getRearmCatapult(EventSource update) {
         BooleanInputPoll a = PhidgetReader.getDigitalInput(2);
         BooleanInputPoll b = joystick.getButtonChannel(1);
         return Mixing.createDispatch(Mixing.xorBooleans(a, b), update);
     }
 
-    public static EventSource getFireButton() {
+    public EventSource getFireButton() {
         return Mixing.combine(Mixing.whenBooleanBecomes(PhidgetReader.digitalInputs[1], true), joystick.getButtonSource(2));
     }
 
-    public static BooleanInputPoll getArmUpDown() {
+    public BooleanInput getArmUpDown() {
+        BooleanStatus armStatus = new BooleanStatus();
         armStatus.setFalseWhen(joystick.getButtonSource(5));
         armStatus.setTrueWhen(joystick.getButtonSource(6));
         armStatus.setFalseWhen(Mixing.whenBooleanBecomes(PhidgetReader.getDigitalInput(0), true));
@@ -31,11 +35,11 @@ public class ControlInterface {
         return armStatus;
     }
 
-    public static BooleanInputPoll rollerIn() {
+    public BooleanInputPoll rollerIn() {
         return Mixing.orBooleans(PhidgetReader.getDigitalInput(3), Mixing.floatIsAtLeast(joystick.getAxisChannel(2), 0.2f));
     }
 
-    public static BooleanInputPoll rollerOut() {
+    public BooleanInputPoll rollerOut() {
         return Mixing.orBooleans(PhidgetReader.getDigitalInput(4), Mixing.floatIsAtMost(joystick.getAxisChannel(2), -0.2f));
     }
 
@@ -70,16 +74,12 @@ public class ControlInterface {
         };
     }
 
-    public static void showSwitch(EventSource when) {
-        Mixing.pumpEvent(armStatus, PhidgetReader.digitalOutputs[2]);
-    }
-
-    public static void showRearming(EventSource when, BooleanInputPoll isRearming) {
-        //Mixing.pumpWhen(when, Mixing.invert(isRearming), new BooleanStatus(PhidgetReader.digitalOutputs[1]));
+    public static void showArm(BooleanInput arm) {
+        arm.addTarget(PhidgetReader.digitalOutputs[2]);
     }
 
     public static void showFiring(EventSource when, BooleanInput canFire) {
-        Mixing.pumpWhen(when, Mixing.invert(canFire), new BooleanStatus(PhidgetReader.digitalOutputs[0]));
+        Mixing.invert(canFire).addTarget(PhidgetReader.digitalOutputs[0]);
     }
 
     public static void displayPressure(final FloatInputPoll f, EventSource update, final BooleanInputPoll cprSwitch) {
