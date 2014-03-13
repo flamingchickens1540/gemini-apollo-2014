@@ -43,10 +43,6 @@ public class ControlInterface {
         return Mixing.orBooleans(PhidgetReader.getDigitalInput(4), Mixing.floatIsAtMost(joystick.getAxisChannel(2), -0.2f));
     }
 
-    public static BooleanInput detensioning() {
-        return PhidgetReader.getDigitalInput(7);
-    }
-
     public static void displayDistance(final FloatInputPoll distance, EventSource update) {
         update.addListener(new EventConsumer() {
             float last = -1;
@@ -67,9 +63,10 @@ public class ControlInterface {
         final TuningContext tuner = new TuningContext(CluckGlobals.node, "PowerSliderTuner");
         final FloatInput min = tuner.getFloat("Min", 0f);
         final FloatInput max = tuner.getFloat("Max", 1f);
+        final FloatInput ai = PhidgetReader.getAnalogInput(4);
         return new FloatInputPoll() {
             public float readValue() {
-                return ControlInterface.normalize(min.readValue(), max.readValue(), PhidgetReader.getAnalogInput(4).readValue());
+                return ControlInterface.normalize(min.readValue(), max.readValue(), ai.readValue());
             }
         };
     }
@@ -93,7 +90,7 @@ public class ControlInterface {
             int ctr = 0;
 
             public void eventFired() {
-                int c = (int) normalize(zeroP.readValue(), oneP.readValue(), f.readValue());
+                int c = (int) (100 * normalize(zeroP.readValue(), oneP.readValue(), f.readValue()));
                 boolean cpr = cprSwitch.readValue();
                 if (c == prevValue && (prevValueCpr == cpr) && (ctr++ % 100 != 0)) {
                     return;
@@ -111,13 +108,13 @@ public class ControlInterface {
 
     private static float normalize(float zero, float one, float value) {
         float range = one - zero;
-        return (int) (100 * (value - zero) / range);
+        return ((value - zero) / range);
     }
 
     private static int errno = 0;
 
     public static void displayError(String message) {
         errno = (errno + 1) % 10;
-        PhidgetReader.phidgetLCD[0].print(errno + ' ' + message + '\n');
+        PhidgetReader.phidgetLCD[0].print(errno + " " + message + '\n');
     }
 }
