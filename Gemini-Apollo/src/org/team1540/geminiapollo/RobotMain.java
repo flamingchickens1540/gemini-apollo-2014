@@ -40,10 +40,10 @@ public class RobotMain extends SimpleCore {
         armSolenoidCtrl.addTarget(testing.testPublish("sol-arm-2", makeSolenoid(2)));
         BooleanStatus armSolenoid = new BooleanStatus(armSolenoidCtrl.getOutput(false));
         Mixing.setWhen(robotDisabled, armSolenoid, false);
-        BooleanOutput winchSolenoidA = testing.testPublish("sol-winch-3", makeSolenoid(3));
-        BooleanOutput winchSolenoidB = testing.testPublish("sol-winch-5", makeSolenoid(5));
-        BooleanOutput winchSolenoid = testing.testPublish("sol-winch-combo", Mixing.combine(winchSolenoidA, winchSolenoidB));
-        BooleanOutput armFloatSolenoid = testing.testPublish("sol-float-6", makeSolenoid(6));
+        BooleanOutput winchSolenoid = testing.testPublish("sol-winch-3", makeSolenoid(3));
+        BooleanOutput openFingers = testing.testPublish("sol-open-5", makeSolenoid(5));
+        BooleanOutput armFloat = testing.testPublish("sol-float-6", makeSolenoid(6));
+        BooleanOutput armFloatSolenoid = Mixing.combine(openFingers, armFloat);
         // ***** INPUTS *****
         final FloatInputPoll winchCurrent = makeAnalogInput(1, 8);
         final BooleanInputPoll catapultNotCocked = makeDigitalInput(2);
