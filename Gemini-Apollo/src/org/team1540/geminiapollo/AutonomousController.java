@@ -151,7 +151,7 @@ public class AutonomousController extends InstinctModule {
         Logger.info("Autonomous mode is currently set to: " + option.get());
     }
 
-    public void setup(InstinctRegistrar reg) {
+    public AutonomousController(InstinctRegistrar reg) {
         seg.attachStringHolder("autonomous-mode", option);
         CluckGlobals.node.publish("autom-next", new EventConsumer() {
             public void eventFired() {
@@ -192,9 +192,9 @@ public class AutonomousController extends InstinctModule {
         register(reg);
     }
 
-    public void putDriveMotors(FloatOutput leftDrive1, FloatOutput leftDrive2, FloatOutput rightDrive1, FloatOutput rightDrive2) {
-        this.leftDrive = Mixing.combine(leftDrive1, leftDrive2);
-        this.rightDrive = Mixing.combine(rightDrive1, rightDrive2);
+    public void putDriveMotors(FloatOutput leftDrive, FloatOutput rightDrive) {
+        this.leftDrive = leftDrive;
+        this.rightDrive = rightDrive;
     }
 
     public void putKinectTrigger(BooleanInputPoll kinectTrigger) {

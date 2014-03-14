@@ -3,6 +3,7 @@ package org.team1540.geminiapollo;
 import ccre.cluck.CluckGlobals;
 import ccre.event.*;
 import ccre.chan.*;
+import ccre.ctrl.Mixing;
 
 public class TestMode {
 
@@ -88,4 +89,12 @@ public class TestMode {
         return o;
     }
 
+    public void addDriveMotors(FloatOutput leftDrive1, FloatOutput leftDrive2, FloatOutput leftDrive, FloatOutput rightDrive1, FloatOutput rightDrive2, FloatOutput rightDrive) {
+        testPublish("leftDrive1", leftDrive1);
+        testPublish("leftDrive2", leftDrive2);
+        testPublish("rightDrive1", rightDrive1);
+        testPublish("rightDrive2", rightDrive2);
+        testPublish("leftDrive", leftDrive);
+        testPublish("rightDrive", rightDrive);
+    }
 }

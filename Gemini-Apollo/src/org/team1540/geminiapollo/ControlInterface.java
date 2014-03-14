@@ -10,40 +10,42 @@ import ccre.phidget.PhidgetReader;
 
 public class ControlInterface {
 
-    private final IDispatchJoystick joystick;
+    private final IDispatchJoystick joystick1, joystick2;
+    private static FloatFilter driveDeadzone = Mixing.deadzone(.1f);
 
-    public ControlInterface(IDispatchJoystick joystick) {
-        this.joystick = joystick;
+    public ControlInterface(IDispatchJoystick joystick1, IDispatchJoystick joystick2) {
+        this.joystick1 = joystick1;
+        this.joystick2 = joystick2;
     }
 
     public BooleanInput getRearmCatapult(EventSource update) {
         BooleanInputPoll a = PhidgetReader.getDigitalInput(2);
-        BooleanInputPoll b = joystick.getButtonChannel(1);
+        BooleanInputPoll b = joystick2.getButtonChannel(1);
         return Mixing.createDispatch(Mixing.xorBooleans(a, b), update);
     }
 
     public EventSource getFireButton() {
-        return Mixing.combine(Mixing.whenBooleanBecomes(PhidgetReader.digitalInputs[1], true), joystick.getButtonSource(2));
+        return Mixing.combine(Mixing.whenBooleanBecomes(PhidgetReader.digitalInputs[1], true), joystick2.getButtonSource(2));
     }
 
-    public BooleanInput getArmUpDown() {
-        BooleanStatus armStatus = new BooleanStatus();
-        armStatus.setFalseWhen(joystick.getButtonSource(5));
-        armStatus.setTrueWhen(joystick.getButtonSource(6));
-        armStatus.setFalseWhen(Mixing.whenBooleanBecomes(PhidgetReader.getDigitalInput(0), true));
-        armStatus.setTrueWhen(Mixing.whenBooleanBecomes(PhidgetReader.getDigitalInput(7), true));
-        return armStatus;
+    public BooleanInput getArmShouldBeDown() {
+        BooleanStatus armIsDown = new BooleanStatus();
+        armIsDown.setFalseWhen(joystick2.getButtonSource(5));
+        armIsDown.setTrueWhen(joystick2.getButtonSource(6));
+        armIsDown.setFalseWhen(Mixing.whenBooleanBecomes(PhidgetReader.getDigitalInput(0), true));
+        armIsDown.setTrueWhen(Mixing.whenBooleanBecomes(PhidgetReader.getDigitalInput(7), true));
+        return armIsDown;
     }
 
     public BooleanInputPoll rollerIn() {
-        return Mixing.orBooleans(PhidgetReader.getDigitalInput(3), Mixing.floatIsAtLeast(joystick.getAxisChannel(2), 0.2f));
+        return Mixing.orBooleans(PhidgetReader.getDigitalInput(3), Mixing.floatIsAtLeast(joystick2.getAxisChannel(2), 0.2f));
     }
 
     public BooleanInputPoll rollerOut() {
-        return Mixing.orBooleans(PhidgetReader.getDigitalInput(4), Mixing.floatIsAtMost(joystick.getAxisChannel(2), -0.2f));
+        return Mixing.orBooleans(PhidgetReader.getDigitalInput(4), Mixing.floatIsAtMost(joystick2.getAxisChannel(2), -0.2f));
     }
 
-    public static void displayDistance(final FloatInputPoll distance, EventSource update) {
+    public void displayDistance(final FloatInputPoll distance, EventSource update) {
         update.addListener(new EventConsumer() {
             float last = -1;
             int ctr = 0;
@@ -59,27 +61,27 @@ public class ControlInterface {
         });
     }
 
-    public static FloatInputPoll collectorSpeed() {
+    public FloatInputPoll collectorSpeed() {
         final TuningContext tuner = new TuningContext(CluckGlobals.node, "PowerSliderTuner");
         final FloatInput min = tuner.getFloat("Min", 0f);
         final FloatInput max = tuner.getFloat("Max", 1f);
         final FloatInput ai = PhidgetReader.getAnalogInput(4);
         return new FloatInputPoll() {
             public float readValue() {
-                return ControlInterface.normalize(min.readValue(), max.readValue(), ai.readValue());
+                return normalize(min.readValue(), max.readValue(), ai.readValue());
             }
         };
     }
 
-    public static void showArm(BooleanInput arm) {
+    public void showArm(BooleanInput arm) {
         arm.addTarget(PhidgetReader.digitalOutputs[2]);
     }
 
-    public static void showFiring(EventSource when, BooleanInput canFire) {
+    public void showFiring(EventSource when, BooleanInput canFire) {
         Mixing.invert(canFire).addTarget(PhidgetReader.digitalOutputs[0]);
     }
 
-    public static void displayPressure(final FloatInputPoll f, EventSource update, final BooleanInputPoll cprSwitch) {
+    public void displayPressure(final FloatInputPoll f, EventSource update, final BooleanInputPoll cprSwitch) {
         final TuningContext tuner = new TuningContext(CluckGlobals.node, "PressureTuner");
         tuner.publishSavingEvent("Pressure");
         final FloatInputPoll zeroP = tuner.getFloat("LowPressure", 0.494f); // 0.5
@@ -106,7 +108,7 @@ public class ControlInterface {
         });
     }
 
-    private static float normalize(float zero, float one, float value) {
+    private float normalize(float zero, float one, float value) {
         float range = one - zero;
         return ((value - zero) / range);
     }
@@ -116,5 +118,25 @@ public class ControlInterface {
     public static void displayError(String message) {
         errno = (errno + 1) % 10;
         PhidgetReader.phidgetLCD[0].print(errno + " " + message + '\n');
+    }
+
+    public FloatInputPoll getLeftDriveAxis() {
+        return driveDeadzone.wrap(Mixing.negate(joystick1.getAxisChannel(2)));
+    }
+
+    public FloatInputPoll getRightDriveAxis() {
+        return driveDeadzone.wrap(Mixing.negate(joystick1.getAxisChannel(5)));
+    }
+
+    public FloatInputPoll getForwardDriveAxis() {
+        return driveDeadzone.wrap(Mixing.negate(joystick1.getAxisChannel(3)));
+    }
+
+    public EventSource getShiftHighButton() {
+        return joystick1.getButtonSource(1);
+    }
+
+    public EventSource getShiftLowButton() {
+        return joystick1.getButtonSource(3);
     }
 }
