@@ -21,7 +21,7 @@ public class Shooter {
     private EventConsumer lowerArm, guardedFire;
 
     private final FloatInput winchSpeed = tuner.getFloat("Winch Speed", 1f);
-    private final FloatInput drawBack = tuner.getFloat("Draw Back", 2.5f);
+    private final FloatInput drawBack = tuner.getFloat("Draw Back", 2.6f);
     private final FloatInput rearmTimeout = tuner.getFloat("Winch Rearm Timeout", 5f);
 
     public Shooter(EventSource resetModule, EventSource globalPeriodic, EventSource constantPeriodic, final BooleanInputPoll isArmNotInTheWay) {
@@ -39,8 +39,8 @@ public class Shooter {
         if (this.guardedFire == null || enc == null) {
             throw new NullPointerException();
         }
-        fireAfterLower.schedule(1000, this.guardedFire);
-        fireAfterLower.schedule(1100, fireAfterLower.getStopEvent());
+        fireAfterLower.schedule(1500, this.guardedFire);
+        fireAfterLower.schedule(1600, fireAfterLower.getStopEvent());
         lowerArm = fireAfterLower.getStartEvent();
     }
 
