@@ -15,6 +15,11 @@ public class Actuators {
 
     public void createCollector(FloatOutput collectorMotor, FloatInputPoll speed, BooleanOutput armFloatSolenoid,
             final BooleanInputPoll rollersIn, final BooleanInputPoll rollersOut, BooleanInputPoll disableCollector) {
+        during.addListener(Mixing.filterEvent(disableCollector, true, Mixing.filterEvent(rollersIn, true, new EventConsumer() {
+            public void eventFired() {
+                ErrorMessages.displayError(2, "Collect: not winch!", 200);
+            }
+        })));
         Mixing.pumpWhen(during, Mixing.quadSelect(rollersIn, rollersOut,
                 Mixing.always(0f), Mixing.negate(speed),
                 Mixing.select(disableCollector, speed, Mixing.always(0)), speed),

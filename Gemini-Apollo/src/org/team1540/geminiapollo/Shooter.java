@@ -98,16 +98,17 @@ public class Shooter {
                 if (rearming.readValue()) {
                     Logger.info("fire button: stop rearm");
                     rearming.writeValue(false);
-                    ErrorMessages.displayError("Cancelled rearm.");
+                    ErrorMessages.displayError(5, "Cancelled rearm.", 1000);
                 } else if (winchDisengaged.readValue()) {
                     Logger.info("no fire: run the winch!");
-                    ErrorMessages.displayError("Winch not armed.");
+                    ErrorMessages.displayError(3, "Winch not armed.", 2000);
                 } else if (isArmInTheWay.readValue()) {
                     Logger.info("no fire: autolowering the arm.");
-                    ErrorMessages.displayError("Autolowering arm.");
+                    ErrorMessages.displayError(4, "Autolowering arm.", 1000);
                     autolowerArm();
                 } else {
                     realFire.eventFired();
+                    ErrorMessages.displayError(1, "Firing", 500);
                 }
             }
         });
@@ -116,16 +117,17 @@ public class Shooter {
                 if (rearming.readValue()) {
                     Logger.info("stop rearm");
                     rearming.writeValue(false);
-                    ErrorMessages.displayError("Cancelled rearm.");
+                    ErrorMessages.displayError(5, "Cancelled rearm.", 1000);
                 } else if (catapultCocked.readValue()) {
                     Logger.info("no rearm");
-                    ErrorMessages.displayError("Already at limit.");
+                    ErrorMessages.displayError(6, "Already at limit.", 1000);
                 } else if (isArmInTheWay.readValue()) {
                     Logger.info("no rearm: lower the arm!");
-                    ErrorMessages.displayError("Arm isn't down.");
+                    ErrorMessages.displayError(4, "Arm isn't down.", 500);
                 } else {
                     winchDisengaged.writeValue(false);
                     Logger.info("rearm");
+                    ErrorMessages.displayError(1, "Started rearming.", 500);
                     rearming.writeValue(true);
                 }
             }
@@ -135,6 +137,11 @@ public class Shooter {
                 if (rearming.readValue() && (catapultCocked.readValue() || winchPastThreshold.readValue())) {
                     rearming.writeValue(false);
                     Logger.info(catapultCocked.readValue() ? "limit switch stop rearm" : "drawback current stop rearm");
+                    if (catapultCocked.readValue()) {
+                        ErrorMessages.displayError(4, "Hit Limit Switch!", 2000);
+                    } else {
+                        ErrorMessages.displayError(2, "Hit current limit.", 1000);
+                    }
                     finishedRearm.eventFired();
                 }
             }
