@@ -1,8 +1,9 @@
 Phidget=phidget.*
 TestMode=robot/test_.*
-Autonomous=robot/(autom-.*|Save Tuning for Autonomous)
+Autonomous=robot/(autom-.*|Save Tuning for Autonomous|stick-.*)
 Driving=robot/((High|Low) (Left|Right) .*|Save Tuning for Drive Tuning)
-Shooter=robot/(Rachet|Winch|Draw|Save Tuning for Shooter|Slider|Use Slider|Multiplier Current|Minimum Current).*
+Shooter=robot/(Winch|Draw|Save Tuning for Shooter|Force Fire|Catapult).*
 Pressure=robot/.*(Pressure|Compressor).*
 Camera=robot/periscope/.*
-Debug=(robot/)?auto-.*|robot/post-bootlogs|display-dialog|forced-remote-address
+Debug=(robot/)?auto-.*|robot/post-bootlogs|display-dialog|forced-remote-address|robot/reflection-console
+Collector=robot/Slider (Min|Max).(input|output)
