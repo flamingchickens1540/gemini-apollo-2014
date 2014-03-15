@@ -1,6 +1,7 @@
 package org.team1540.geminiapollo;
 
 import ccre.chan.*;
+import ccre.cluck.CluckGlobals;
 import ccre.ctrl.Mixing;
 import ccre.event.*;
 

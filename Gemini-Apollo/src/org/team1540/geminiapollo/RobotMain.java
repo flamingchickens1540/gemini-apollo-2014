@@ -4,8 +4,8 @@ import ccre.chan.*;
 import ccre.cluck.CluckGlobals;
 import ccre.cluck.tcp.CluckTCPServer;
 import ccre.ctrl.Mixing;
-import ccre.ctrl.MultipleSourceBooleanController;
 import ccre.event.*;
+import ccre.holders.TuningContext;
 import ccre.igneous.SimpleCore;
 
 public class RobotMain extends SimpleCore {
@@ -36,14 +36,12 @@ public class RobotMain extends SimpleCore {
         FloatOutput collectorMotor = testing.testPublish("collectorMotor", makeTalonMotor(6, MOTOR_REVERSE, 0.1f));
         // ***** SOLENOIDS *****
         BooleanOutput shiftSolenoid = testing.testPublish("sol-shift-1", makeSolenoid(1));
-        MultipleSourceBooleanController armSolenoidCtrl = new MultipleSourceBooleanController(true);
-        armSolenoidCtrl.addTarget(testing.testPublish("sol-arm-2", makeSolenoid(2)));
-        BooleanStatus armSolenoid = new BooleanStatus(armSolenoidCtrl.getOutput(false));
+        BooleanStatus armSolenoid = new BooleanStatus(testing.testPublish("sol-arm-2", makeSolenoid(2)));
         Mixing.setWhen(robotDisabled, armSolenoid, false);
         BooleanOutput winchSolenoid = testing.testPublish("sol-winch-3", makeSolenoid(3));
         BooleanOutput openFingers = testing.testPublish("sol-open-5", makeSolenoid(5));
         BooleanOutput armFloat = testing.testPublish("sol-float-6", makeSolenoid(6));
-        BooleanOutput armFloatSolenoid = Mixing.combine(openFingers, armFloat);
+        BooleanOutput collectionSolenoids = Mixing.combine(openFingers, armFloat);
         // ***** INPUTS *****
         final FloatInputPoll winchCurrent = makeAnalogInput(1, 8);
         final BooleanInputPoll catapultNotCocked = makeDigitalInput(2);
@@ -52,13 +50,11 @@ public class RobotMain extends SimpleCore {
         // ***** CONTROL INTERFACE *****
         BooleanInput armShouldBeDown = ui.getArmShouldBeDown();
         BooleanInput rearmButton = ui.getRearmCatapult(globalPeriodic);
-        // ***** KINECT CODE *****
-        BooleanInputPoll fireAuto = KinectControl.main(
-                makeDispatchJoystick(5, globalPeriodic), makeDispatchJoystick(6, globalPeriodic), globalPeriodic);
         // [[[[ AUTONOMOUS CODE ]]]]
         AutonomousController instinct = new AutonomousController(this);
         instinct.putDriveMotors(leftDrive, rightDrive);
-        instinct.putKinectTrigger(fireAuto);
+        instinct.putKinectTrigger(KinectControl.main(globalPeriodic,
+                makeDispatchJoystick(5, globalPeriodic), makeDispatchJoystick(6, globalPeriodic)));
         instinct.putArm(armSolenoid, collectorMotor);
         EventSource fireAutonomousTrigger = instinct.getWhenToFire(), rearmAutonomousTrigger = instinct.getWhenToRearm();
         EventConsumer notifyRearmFinished = instinct.getNotifyRearmFinished();
@@ -72,6 +68,7 @@ public class RobotMain extends SimpleCore {
         Shooter shooter = new Shooter(robotDisabled, globalPeriodic, constantPeriodic);
         EventSource rearmEvent = Mixing.whenBooleanBecomes(rearmButton, true);
         shooter.setupWinch(winchMotor, winchSolenoid, winchCurrent, rearmButton);
+        shooter.setupRearmTimeout();
         shooter.handleShooterButtons(
                 Mixing.invert(catapultNotCocked), Mixing.orBooleans(armShouldBeDown, getIsAutonomous()),
                 Mixing.combine(rearmAutonomousTrigger, rearmEvent), fireWhen,
@@ -81,7 +78,7 @@ public class RobotMain extends SimpleCore {
         // [[[[ ARM CODE ]]]]
         Actuators act = new Actuators(duringTeleop);
         act.createArm(armSolenoid, armShouldBeDown, IS_COMPETITION_ROBOT ? Mixing.alwaysFalse : shooter.rearming);
-        act.createCollector(collectorMotor, ui.collectorSpeed(), armFloatSolenoid, ui.rollerIn(), ui.rollerOut(), shooter.winchDisengaged);
+        act.createCollector(collectorMotor, ui.collectorSpeed(), collectionSolenoids, ui.rollerIn(), ui.rollerOut(), shooter.winchDisengaged);
         // [[[[ Phidget Display Code ]]]]
         ui.showFiring(globalPeriodic, shooter.winchDisengaged);
         ui.showArm(armShouldBeDown);
@@ -94,7 +91,16 @@ public class RobotMain extends SimpleCore {
         CluckGlobals.node.publish("Compressor Override", override);
         CluckGlobals.node.publish("Compressor Sensor", Mixing.createDispatch(pressureSwitch, globalPeriodic));
         CluckGlobals.node.publish("Pressure Sensor", Mixing.createDispatch(pressureSensor, globalPeriodic));
-        ui.displayPressure(pressureSensor, globalPeriodic, pressureSwitch);
+        final TuningContext tuner = new TuningContext(CluckGlobals.node, "PressureTuner");
+        tuner.publishSavingEvent("Pressure");
+        final FloatInputPoll zeroP = tuner.getFloat("LowPressure", 0.494f); // 0.5
+        final FloatInputPoll oneP = tuner.getFloat("HighPressure", 2.746f); // 2.745
+        final FloatInputPoll percentPressure = new FloatInputPoll() {
+            public float readValue() {
+                return 100 * ControlInterface.normalize(zeroP.readValue(), oneP.readValue(), pressureSensor.readValue());
+            }
+        };
+        ui.displayPressure(percentPressure, globalPeriodic, pressureSwitch);
         constantPeriodic.addListener(new EventConsumer() {
             public void eventFired() {
                 float value = override.readValue();
@@ -106,7 +112,7 @@ public class RobotMain extends SimpleCore {
         useCustomCompressor(new BooleanInputPoll() {
             public boolean readValue() {
                 float value = override.readValue();
-                return value < 0 || (pressureSwitch.readValue() && value == 0);
+                return value < 0 || (pressureSwitch.readValue() && value == 0) || percentPressure.readValue() > 105;
             }
         }, 1);
     }

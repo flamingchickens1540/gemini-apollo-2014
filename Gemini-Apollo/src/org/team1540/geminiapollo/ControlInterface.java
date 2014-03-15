@@ -11,7 +11,7 @@ import ccre.phidget.PhidgetReader;
 public class ControlInterface {
 
     private final IDispatchJoystick joystick1, joystick2;
-    private static FloatFilter driveDeadzone = Mixing.deadzone(.1f);
+    private static final FloatFilter driveDeadzone = Mixing.deadzone(.1f);
 
     public ControlInterface(IDispatchJoystick joystick1, IDispatchJoystick joystick2) {
         this.joystick1 = joystick1;
@@ -32,8 +32,8 @@ public class ControlInterface {
         BooleanStatus armIsDown = new BooleanStatus();
         armIsDown.setFalseWhen(joystick2.getButtonSource(5));
         armIsDown.setTrueWhen(joystick2.getButtonSource(6));
-        armIsDown.setFalseWhen(Mixing.whenBooleanBecomes(PhidgetReader.getDigitalInput(0), true));
-        armIsDown.setTrueWhen(Mixing.whenBooleanBecomes(PhidgetReader.getDigitalInput(7), true));
+        armIsDown.setFalseWhen(Mixing.whenBooleanBecomes(PhidgetReader.getDigitalInput(7), true));
+        armIsDown.setTrueWhen(Mixing.whenBooleanBecomes(PhidgetReader.getDigitalInput(0), true));
         return armIsDown;
     }
 
@@ -63,8 +63,8 @@ public class ControlInterface {
 
     public FloatInputPoll collectorSpeed() {
         final TuningContext tuner = new TuningContext(CluckGlobals.node, "PowerSliderTuner");
-        final FloatInput min = tuner.getFloat("Min", 0f);
-        final FloatInput max = tuner.getFloat("Max", 1f);
+        final FloatInput min = tuner.getFloat("Slider Min", 0f);
+        final FloatInput max = tuner.getFloat("Slider Max", 1f);
         final FloatInput ai = PhidgetReader.getAnalogInput(4);
         return new FloatInputPoll() {
             public float readValue() {
@@ -81,18 +81,14 @@ public class ControlInterface {
         Mixing.invert(canFire).addTarget(PhidgetReader.digitalOutputs[0]);
     }
 
-    public void displayPressure(final FloatInputPoll f, EventSource update, final BooleanInputPoll cprSwitch) {
-        final TuningContext tuner = new TuningContext(CluckGlobals.node, "PressureTuner");
-        tuner.publishSavingEvent("Pressure");
-        final FloatInputPoll zeroP = tuner.getFloat("LowPressure", 0.494f); // 0.5
-        final FloatInputPoll oneP = tuner.getFloat("HighPressure", 2.746f); // 2.745
+    public void displayPressure(final FloatInputPoll level, EventSource update, final BooleanInputPoll cprSwitch) {
         update.addListener(new EventConsumer() {
             int prevValue = -1000;
             boolean prevValueCpr = cprSwitch.readValue();
             int ctr = 0;
 
             public void eventFired() {
-                int c = (int) (100 * normalize(zeroP.readValue(), oneP.readValue(), f.readValue()));
+                int c = (int) level.readValue();
                 boolean cpr = cprSwitch.readValue();
                 if (c == prevValue && (prevValueCpr == cpr) && (ctr++ % 100 != 0)) {
                     return;
@@ -108,7 +104,7 @@ public class ControlInterface {
         });
     }
 
-    private float normalize(float zero, float one, float value) {
+    public static float normalize(float zero, float one, float value) {
         float range = one - zero;
         return ((value - zero) / range);
     }

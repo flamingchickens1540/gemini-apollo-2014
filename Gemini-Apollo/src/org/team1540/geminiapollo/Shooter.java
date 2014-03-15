@@ -42,7 +42,7 @@ public class Shooter {
         MultipleSourceBooleanController runWinch = new MultipleSourceBooleanController(MultipleSourceBooleanController.OR);
         runWinch.addInput(rearming);
         runWinch.addInput(forceRearm);
-        runWinch.addTarget(Mixing.select(winchMotor, winchSpeed, Mixing.always(0)));
+        runWinch.addTarget(Mixing.select(winchMotor, Mixing.always(0), winchSpeed));
     }
 
     public void setupRearmTimeout() {

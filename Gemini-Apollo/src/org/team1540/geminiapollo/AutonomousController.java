@@ -17,14 +17,14 @@ public class AutonomousController extends InstinctModule {
     private final StorageSegment seg = StorageProvider.openStorage("autonomous");
     private final TuningContext tune = new TuningContext(CluckGlobals.node, seg).publishSavingEvent("Autonomous");
     // Provided channels
-    private FloatOutput leftDrive, rightDrive, collect;
+    private FloatOutput bothDrive, collect;
     private BooleanOutput arm;
     private BooleanInputPoll kinectTrigger;
+    private final Event fireWhenEvent = new Event(), rearmWhenEvent = new Event(), notifyRearm = new Event();
     // Tuned constants are below near the autonomous modes.
     private final StringHolder option = new StringHolder("hotcheck");
     private final String[] options = {"none", "forward", "hotcheck", "double"};
     private final CList optionList = CArrayUtils.asList(options);
-    private final Event fireWhenEvent = new Event(), rearmWhenEvent = new Event(), notifyRearm = new Event();
 
     protected void autonomousMain() throws AutonomousModeOverException, InterruptedException {
         String cur = option.get();
@@ -43,78 +43,62 @@ public class AutonomousController extends InstinctModule {
 
     // *** Modes ***
     private void autoNone() throws AutonomousModeOverException, InterruptedException {
-        rightDrive.writeValue(0);
-        leftDrive.writeValue(0);
+        bothDrive.writeValue(0);
     }
 
     private final FloatStatus forwardMovement = tune.getFloat("autom-forward-speed", 0.5f);
     private final FloatStatus forwardDelay = tune.getFloat("autom-forward-delay", 0.5f);
 
     private void autoForward() throws AutonomousModeOverException, InterruptedException {
-        float speed = forwardMovement.readValue(); // [0, 1]
-        float delay = forwardDelay.readValue(); // In seconds
-        rightDrive.writeValue(speed);
-        leftDrive.writeValue(speed);
-        waitForTime((long) (1000L * delay + 0.5f)); // Round to nearest integer.
-        rightDrive.writeValue(0);
-        leftDrive.writeValue(0);
+        bothDrive.writeValue(forwardMovement.readValue());
+        waitForTime(forwardDelay);
+        bothDrive.writeValue(0);
     }
 
-    private final FloatStatus hotcheckBeforeMove = tune.getFloat("autom-hotcheck-before-move", 0);
-    private final FloatStatus hotcheckMoveSpeed = tune.getFloat("autom-hotcheck-premove-speed", -0.8f);
-    private final FloatStatus hotcheckMoveLength = tune.getFloat("autom-hotcheck-move-length", 4);
-    private final FloatStatus hotcheckPreDelay = tune.getFloat("autom-hotcheck-fire-wait", 0.5f);
-    private final FloatStatus hotcheckMovement = tune.getFloat("autom-hotcheck-move-speed", -0.7f);
-    private final FloatStatus hotcheckMoveDelay = tune.getFloat("autom-hotcheck-move-duration", 0);
-    private final FloatStatus hotcheckCollector = tune.getFloat("autom-hotcheck-collector", 0.5f);
-    private final FloatStatus hotcheckPreFireDelay = tune.getFloat("autom-hotcheck-prefire-delay", 1);
-    private final FloatStatus hotcheckArmMoveTime = tune.getFloat("autom-hotcheck-armmove-time", 0.6f);
+    private final FloatStatus hotcheckAlignDistance = tune.getFloat("autom-hotcheck-align-distance", 0);
+    private final FloatStatus hotcheckAlignSpeed = tune.getFloat("autom-hotcheck-align-speed", -0.8f);
+    private final FloatStatus hotcheckTimeoutAfter = tune.getFloat("autom-hotcheck-timeout", 0); //4);
+    private final FloatStatus hotcheckPostFirePause = tune.getFloat("autom-hotcheck-postfire-pause", 0.5f);
+    private final FloatStatus hotcheckPostFireSpeed = tune.getFloat("autom-hotcheck-postfire-speed", -0.7f);
+    private final FloatStatus hotcheckPostFireMove = tune.getFloat("autom-hotcheck-postfire-move", 0);
+    private final FloatStatus hotcheckCollectorSpeed = tune.getFloat("autom-hotcheck-collector", 0.5f);
+    private final FloatStatus hotcheckPreFirePause = tune.getFloat("autom-hotcheck-prefire-pause", 1);
+    private final FloatStatus hotcheckArmMoveTime = tune.getFloat("autom-hotcheck-armmove-time", 0);//.6f);
 
     private void autoHotcheck() throws AutonomousModeOverException, InterruptedException {
         FloatInputPoll currentTime = Utils.currentTimeSeconds;
         Logger.fine("Began Hotcheck");
-        {
-            arm.writeValue(true);
-            leftDrive.writeValue(0);
-            rightDrive.writeValue(0);
-            float target = currentTime.readValue() + hotcheckMoveLength.readValue();
-            BooleanInputPoll fatl = Mixing.floatIsAtLeast(currentTime, target);
-            int i = waitUntilOneOf(new BooleanInputPoll[]{kinectTrigger, fatl});
-            if (i != 0) {
-                Logger.warning("Cancelled wait for HotZone after " + hotcheckMoveLength.readValue() + " seconds: " + currentTime.readValue() + " and " + target);
-            }
+        arm.writeValue(true);
+        bothDrive.writeValue(0);
+        float timeoutTime = currentTime.readValue() + hotcheckTimeoutAfter.readValue();
+        BooleanInputPoll timedout = Mixing.floatIsAtLeast(currentTime, timeoutTime);
+        if (waitUntilOneOf(new BooleanInputPoll[]{kinectTrigger, timedout}) != 0) {
+            Logger.warning("Cancelled HotZone wait after " + hotcheckTimeoutAfter.readValue() + " secs: " + currentTime.readValue() + "," + timeoutTime);
         }
         Logger.fine("Found hotzone");
-        {
-            collect.writeValue(hotcheckCollector.readValue());
-            leftDrive.writeValue(hotcheckMoveSpeed.readValue());
-            rightDrive.writeValue(hotcheckMoveSpeed.readValue());
-            waitForTime(hotcheckBeforeMove);
-        }
-        Logger.fine("Ended pretime");
-        {
-            leftDrive.writeValue(0);
-            rightDrive.writeValue(0);
-        }
+        collect.writeValue(hotcheckCollectorSpeed.readValue());
+        bothDrive.writeValue(hotcheckAlignSpeed.readValue());
+        waitForTime(hotcheckAlignDistance);
+        bothDrive.writeValue(0);
         Logger.fine("Arrived");
-        waitForTime(hotcheckArmMoveTime);
-        arm.writeValue(false);
-        Logger.fine("Up");
-        waitForTime(hotcheckArmMoveTime);
-        arm.writeValue(true);
-        Logger.fine("Down");
-        waitForTime(hotcheckPreFireDelay);
+        if (hotcheckArmMoveTime.readValue() > 0.02f) {
+            arm.writeValue(false);
+            waitForTime(hotcheckArmMoveTime);
+            Logger.fine("Up");
+            arm.writeValue(true);
+            waitForTime(hotcheckArmMoveTime);
+            Logger.fine("Down");
+        } else {
+            Logger.fine("Skip Arm");
+        }
+        waitForTime(hotcheckPreFirePause);
         fireWhenEvent.produce();
         Logger.fine("Fired.");
-        {
-            waitForTime(hotcheckPreDelay);
-            Logger.fine("Wait over.");
-            leftDrive.writeValue(hotcheckMovement.readValue());
-            rightDrive.writeValue(hotcheckMovement.readValue());
-            waitForTime(hotcheckMoveDelay);
-            leftDrive.writeValue(0);
-            rightDrive.writeValue(0);
-        }
+        waitForTime(hotcheckPostFirePause);
+        Logger.fine("Firing delay over..");
+        bothDrive.writeValue(hotcheckPostFireSpeed.readValue());
+        waitForTime(hotcheckPostFireMove);
+        bothDrive.writeValue(0);
     }
 
     private final FloatStatus doubleArmMoveTime = tune.getFloat("autom-double-armmove-time", 0.6f);
@@ -147,27 +131,25 @@ public class AutonomousController extends InstinctModule {
         waitForTime((long) (1000L * fin.readValue() + 0.5f));
     }
 
-    private void sayCurrent() {
-        Logger.info("Autonomous mode is currently set to: " + option.get());
-    }
-
     public AutonomousController(InstinctRegistrar reg) {
+        final EventConsumer reportAutonomous = new EventConsumer() {
+            public void eventFired() {
+                Logger.info("Autonomous mode is currently set to: " + option.get());
+            }
+        };
+        reportAutonomous.eventFired();
         seg.attachStringHolder("autonomous-mode", option);
+        CluckGlobals.node.publish("autom-check", reportAutonomous);
         CluckGlobals.node.publish("autom-next", new EventConsumer() {
             public void eventFired() {
                 option.set(options[(optionList.indexOf(option.get()) + 1) % options.length]);
-                sayCurrent();
-            }
-        });
-        CluckGlobals.node.publish("autom-check", new EventConsumer() {
-            public void eventFired() {
-                sayCurrent();
+                reportAutonomous.eventFired();
             }
         });
         CluckGlobals.node.publish("autom-prev", new EventConsumer() {
             public void eventFired() {
                 option.set(options[(optionList.indexOf(option.get()) - 1 + options.length) % options.length]);
-                sayCurrent();
+                reportAutonomous.eventFired();
             }
         });
         final RemoteProcedure openDialog = CluckGlobals.node.subscribeRP("phidget/display-dialog", 11000);
@@ -182,19 +164,17 @@ public class AutonomousController extends InstinctModule {
                         String str = new String(this.toByteArray());
                         if (str.length() > 0 && optionList.indexOf(str) != -1) {
                             option.set(str);
-                            sayCurrent();
+                            reportAutonomous.eventFired();
                         }
                     }
                 });
             }
         });
-        sayCurrent();
         register(reg);
     }
 
     public void putDriveMotors(FloatOutput leftDrive, FloatOutput rightDrive) {
-        this.leftDrive = leftDrive;
-        this.rightDrive = rightDrive;
+        bothDrive = Mixing.combine(leftDrive, rightDrive);
     }
 
     public void putKinectTrigger(BooleanInputPoll kinectTrigger) {

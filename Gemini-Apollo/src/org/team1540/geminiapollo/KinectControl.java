@@ -8,7 +8,7 @@ import ccre.event.EventSource;
 
 public class KinectControl {
 
-    static BooleanInputPoll main(IDispatchJoystick disp1, IDispatchJoystick disp2, EventSource globalPeriodic) {
+    public static BooleanInputPoll main(EventSource globalPeriodic, IDispatchJoystick disp1, IDispatchJoystick disp2) {
         CluckGlobals.node.publish("stick-1", disp1.getAxisSource(2));
         CluckGlobals.node.publish("stick-2", disp2.getAxisSource(2));
         BooleanInputPoll pressed = Mixing.andBooleans(
@@ -17,5 +17,4 @@ public class KinectControl {
         CluckGlobals.node.publish("stick-pressed", Mixing.createDispatch(pressed, globalPeriodic));
         return pressed;
     }
-
 }
