@@ -15,9 +15,10 @@ public class Actuators {
 
     public void createCollector(FloatOutput collectorMotor, FloatInputPoll speed, BooleanOutput armFloatSolenoid,
             final BooleanInputPoll rollersIn, final BooleanInputPoll rollersOut, BooleanInputPoll disableCollector) {
-        Mixing.pumpWhen(during, Mixing.select(disableCollector,
-                Mixing.quadSelect(rollersIn, rollersOut, Mixing.always(0f), Mixing.negate(speed), speed, speed),
-                Mixing.always(0f)), collectorMotor);
+        Mixing.pumpWhen(during, Mixing.quadSelect(rollersIn, rollersOut,
+                Mixing.always(0f), Mixing.negate(speed),
+                Mixing.select(disableCollector, speed, Mixing.always(0)), speed),
+                collectorMotor);
         Mixing.pumpWhen(during, Mixing.orBooleans(rollersIn, rollersOut), armFloatSolenoid);
     }
 

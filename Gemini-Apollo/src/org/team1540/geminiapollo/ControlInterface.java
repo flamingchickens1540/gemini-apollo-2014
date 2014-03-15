@@ -29,11 +29,12 @@ public class ControlInterface {
         return Mixing.combine(Mixing.whenBooleanBecomes(PhidgetReader.digitalInputs[1], true), joystick2.getButtonSource(2));
     }
 
-    public BooleanInput getArmShouldBeDown() {
+    public BooleanInput getArmShouldBeDown(EventSource disabled) {
         BooleanStatus armIsDown = new BooleanStatus();
         armIsDown.setFalseWhen(joystick2.getButtonSource(5));
         armIsDown.setTrueWhen(joystick2.getButtonSource(6));
         armIsDown.setTrueWhen(forceArmLower);
+        armIsDown.setFalseWhen(disabled);
         armIsDown.setFalseWhen(Mixing.whenBooleanBecomes(PhidgetReader.getDigitalInput(7), true));
         armIsDown.setTrueWhen(Mixing.whenBooleanBecomes(PhidgetReader.getDigitalInput(0), true));
         return armIsDown;
@@ -109,13 +110,6 @@ public class ControlInterface {
     public static float normalize(float zero, float one, float value) {
         float range = one - zero;
         return ((value - zero) / range);
-    }
-
-    private static int errno = 0;
-
-    public static void displayError(String message) {
-        errno = (errno + 1) % 10;
-        PhidgetReader.phidgetLCD[0].print(errno + " " + message + '\n');
     }
 
     public FloatInputPoll getLeftDriveAxis() {

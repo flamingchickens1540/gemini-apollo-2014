@@ -12,7 +12,7 @@ import ccre.log.Logger;
 
 public class Shooter {
 
-    private final EventSource globalPeriodic, constantPeriodic;
+    private final EventSource periodic, constantPeriodic;
     private final TuningContext tuner = new TuningContext(CluckGlobals.node, "ShooterValues");
     public final BooleanStatus winchDisengaged = new BooleanStatus();
     public final BooleanStatus rearming = new BooleanStatus();
@@ -24,8 +24,8 @@ public class Shooter {
     private final FloatInput drawBack = tuner.getFloat("Draw Back", 2.6f);
     private final FloatInput rearmTimeout = tuner.getFloat("Winch Rearm Timeout", 5f);
 
-    public Shooter(EventSource resetModule, EventSource globalPeriodic, EventSource constantPeriodic, final BooleanInputPoll isArmNotInTheWay) {
-        this.globalPeriodic = globalPeriodic;
+    public Shooter(EventSource resetModule, EventSource periodic, EventSource constantPeriodic, final BooleanInputPoll isArmNotInTheWay) {
+        this.periodic = periodic;
         this.constantPeriodic = constantPeriodic;
         winchDisengaged.setFalseWhen(resetModule);
         rearming.setFalseWhen(resetModule);
@@ -57,6 +57,7 @@ public class Shooter {
         MultipleSourceBooleanController runWinch = new MultipleSourceBooleanController(MultipleSourceBooleanController.OR);
         runWinch.addInput(rearming);
         runWinch.addInput(Mixing.andBooleans(forceRearm, Mixing.invert(isArmInTheWay)));
+        periodic.addListener(runWinch);
         runWinch.addTarget(Mixing.select(winchMotor, Mixing.always(0), winchSpeed));
     }
 
@@ -97,13 +98,13 @@ public class Shooter {
                 if (rearming.readValue()) {
                     Logger.info("fire button: stop rearm");
                     rearming.writeValue(false);
-                    ControlInterface.displayError("Cancelled rearm.");
+                    ErrorMessages.displayError("Cancelled rearm.");
                 } else if (winchDisengaged.readValue()) {
                     Logger.info("no fire: run the winch!");
-                    ControlInterface.displayError("Winch not armed.");
+                    ErrorMessages.displayError("Winch not armed.");
                 } else if (isArmInTheWay.readValue()) {
                     Logger.info("no fire: autolowering the arm.");
-                    ControlInterface.displayError("Autolowering arm.");
+                    ErrorMessages.displayError("Autolowering arm.");
                     autolowerArm();
                 } else {
                     realFire.eventFired();
@@ -115,13 +116,13 @@ public class Shooter {
                 if (rearming.readValue()) {
                     Logger.info("stop rearm");
                     rearming.writeValue(false);
-                    ControlInterface.displayError("Cancelled rearm.");
+                    ErrorMessages.displayError("Cancelled rearm.");
                 } else if (catapultCocked.readValue()) {
                     Logger.info("no rearm");
-                    ControlInterface.displayError("Already at limit.");
+                    ErrorMessages.displayError("Already at limit.");
                 } else if (isArmInTheWay.readValue()) {
                     Logger.info("no rearm: lower the arm!");
-                    ControlInterface.displayError("Arm isn't down.");
+                    ErrorMessages.displayError("Arm isn't down.");
                 } else {
                     winchDisengaged.writeValue(false);
                     Logger.info("rearm");
@@ -129,7 +130,7 @@ public class Shooter {
                 }
             }
         });
-        globalPeriodic.addListener(new EventConsumer() {
+        periodic.addListener(new EventConsumer() {
             public void eventFired() {
                 if (rearming.readValue() && (catapultCocked.readValue() || winchPastThreshold.readValue())) {
                     rearming.writeValue(false);
@@ -145,7 +146,7 @@ public class Shooter {
         final BooleanStatus enabled = new BooleanStatus();
         enabled.setTrueWhen(rearmCatapult);
         active.setWhen(0, rearmCatapult);
-        globalPeriodic.addListener(new EventConsumer() {
+        periodic.addListener(new EventConsumer() {
             public void eventFired() {
                 if (enabled.readValue()) {
                     float sense = sensor.readValue();

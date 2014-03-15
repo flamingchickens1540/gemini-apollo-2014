@@ -48,7 +48,7 @@ public class RobotMain extends SimpleCore {
         CluckGlobals.node.publish("Winch Current", Mixing.createDispatch(winchCurrent, globalPeriodic));
         CluckGlobals.node.publish("Catapult Not Cocked", Mixing.createDispatch(catapultNotCocked, globalPeriodic));
         // ***** CONTROL INTERFACE *****
-        BooleanInput armShouldBeDown = ui.getArmShouldBeDown();
+        BooleanInput armShouldBeDown = ui.getArmShouldBeDown(robotDisabled);
         BooleanInput rearmButton = ui.getRearmCatapult(globalPeriodic);
         // [[[[ AUTONOMOUS CODE ]]]]
         AutonomousController instinct = new AutonomousController(this);
@@ -65,7 +65,7 @@ public class RobotMain extends SimpleCore {
                 ui.getLeftDriveAxis(), ui.getRightDriveAxis(), ui.getForwardDriveAxis(), shiftBoolean);
         // [[[[ SHOOTER CODE ]]]]
         EventSource fireWhen = Mixing.combine(fireAutonomousTrigger, ui.getFireButton());
-        Shooter shooter = new Shooter(robotDisabled, globalPeriodic, constantPeriodic, Mixing.orBooleans(armShouldBeDown, getIsAutonomous()));
+        Shooter shooter = new Shooter(robotDisabled, Mixing.filterEvent(getIsTest(), false, globalPeriodic), constantPeriodic, Mixing.orBooleans(armShouldBeDown, getIsAutonomous()));
         EventSource rearmEvent = Mixing.whenBooleanBecomes(rearmButton, true);
         shooter.setupWinch(winchMotor, winchSolenoid, winchCurrent, rearmButton);
         shooter.setupRearmTimeout();
