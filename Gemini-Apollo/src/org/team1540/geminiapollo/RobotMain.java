@@ -75,11 +75,13 @@ public class RobotMain extends SimpleCore {
                 notifyRearmFinished
         );
         shooter.createTuner(winchCurrent, rearmEvent, catapultNotCocked);
-        shooter.setupArmLower(ui.forceArmLower());
+        BooleanStatus forceRunCollectorForArmAutolower = new BooleanStatus();
+        shooter.setupArmLower(ui.forceArmLower(), forceRunCollectorForArmAutolower);
         // [[[[ ARM CODE ]]]]
         Actuators act = new Actuators(duringTeleop);
         act.createArm(armSolenoid, armShouldBeDown, IS_COMPETITION_ROBOT ? Mixing.alwaysFalse : shooter.rearming);
-        act.createCollector(collectorMotor, ui.collectorSpeed(), collectionSolenoids, ui.rollerIn(), ui.rollerOut(), shooter.winchDisengaged);
+        act.createCollector(collectorMotor, ui.collectorSpeed(), collectionSolenoids,
+                Mixing.orBooleans(forceRunCollectorForArmAutolower, ui.rollerIn()), ui.rollerOut(), shooter.winchDisengaged);
         // [[[[ Phidget Display Code ]]]]
         ui.showFiring(globalPeriodic, shooter.winchDisengaged);
         ui.showArm(armShouldBeDown);
