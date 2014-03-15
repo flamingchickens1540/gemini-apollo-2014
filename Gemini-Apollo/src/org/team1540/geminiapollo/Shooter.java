@@ -33,9 +33,10 @@ public class Shooter {
         this.isArmInTheWay = Mixing.invert(isArmNotInTheWay);
     }
     
-    public void setupArmLower(EventConsumer enc) {
+    public void setupArmLower(EventConsumer enc, BooleanOutput runCollector) {
         ExpirationTimer fireAfterLower = new ExpirationTimer();
         fireAfterLower.schedule(50, enc);
+        fireAfterLower.scheduleBooleanPeriod(40, 1400, runCollector, true);
         if (this.guardedFire == null || enc == null) {
             throw new NullPointerException();
         }
