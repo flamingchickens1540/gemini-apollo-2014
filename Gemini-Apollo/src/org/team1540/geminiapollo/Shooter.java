@@ -12,26 +12,28 @@ import ccre.log.Logger;
 
 public class Shooter {
 
-    private final EventSource resetModule, globalPeriodic, constantPeriodic;
+    private final EventSource globalPeriodic, constantPeriodic;
     private final TuningContext tuner = new TuningContext(CluckGlobals.node, "ShooterValues");
     public final BooleanStatus winchDisengaged = new BooleanStatus();
     public final BooleanStatus rearming = new BooleanStatus();
     private BooleanInputPoll winchPastThreshold;
+    private final BooleanInputPoll isArmInTheWay;
 
     private final FloatInput winchSpeed = tuner.getFloat("Winch Speed", 1f);
     private final FloatInput drawBack = tuner.getFloat("Draw Back", 6f);
     private final FloatInput rearmTimeout = tuner.getFloat("Winch Rearm Timeout", 5f);
 
-    public Shooter(EventSource resetModule, EventSource globalPeriodic, EventSource constantPeriodic) {
-        this.resetModule = resetModule;
+    public Shooter(EventSource resetModule, EventSource globalPeriodic, EventSource constantPeriodic, final BooleanInputPoll isArmNotInTheWay) {
         this.globalPeriodic = globalPeriodic;
         this.constantPeriodic = constantPeriodic;
         winchDisengaged.setFalseWhen(resetModule);
         rearming.setFalseWhen(resetModule);
         tuner.publishSavingEvent("Shooter");
+        this.isArmInTheWay = Mixing.invert(isArmNotInTheWay);
     }
 
-    public void setupWinch(final FloatOutput winchMotor, final BooleanOutput winchSolenoid, final FloatInputPoll winchCurrent, final BooleanInput forceRearm) {
+    public void setupWinch(final FloatOutput winchMotor, final BooleanOutput winchSolenoid,
+            final FloatInputPoll winchCurrent, final BooleanInput forceRearm) {
         winchDisengaged.addTarget(winchSolenoid);
         CluckGlobals.node.publish("Winch Disengaged", winchDisengaged);
         winchPastThreshold = new BooleanInputPoll() {
@@ -41,7 +43,7 @@ public class Shooter {
         };
         MultipleSourceBooleanController runWinch = new MultipleSourceBooleanController(MultipleSourceBooleanController.OR);
         runWinch.addInput(rearming);
-        runWinch.addInput(forceRearm);
+        runWinch.addInput(Mixing.andBooleans(forceRearm, Mixing.invert(isArmInTheWay)));
         runWinch.addTarget(Mixing.select(winchMotor, Mixing.always(0), winchSpeed));
     }
 
@@ -66,7 +68,7 @@ public class Shooter {
         });
     }
 
-    public void handleShooterButtons(final BooleanInputPoll catapultCocked, final BooleanInputPoll isArmInTheWay,
+    public void handleShooterButtons(final BooleanInputPoll catapultCocked,
             final EventSource rearmTrigger, EventSource fireButton, final EventConsumer finishedRearm) {
         final EventConsumer realFire = Mixing.combine(
                 new EventLogger(LogLevel.INFO, "Fire Begin"),
@@ -100,6 +102,7 @@ public class Shooter {
                     ControlInterface.displayError("Already at limit.");
                 } else if (isArmInTheWay.readValue()) {
                     Logger.info("no rearm: lower the arm!");
+                    ControlInterface.displayError("Arm isn't down.");
                 } else {
                     winchDisengaged.writeValue(false);
                     Logger.info("rearm");

@@ -65,12 +65,12 @@ public class RobotMain extends SimpleCore {
                 ui.getLeftDriveAxis(), ui.getRightDriveAxis(), ui.getForwardDriveAxis(), shiftBoolean);
         // [[[[ SHOOTER CODE ]]]]
         EventSource fireWhen = Mixing.combine(fireAutonomousTrigger, ui.getFireButton());
-        Shooter shooter = new Shooter(robotDisabled, globalPeriodic, constantPeriodic);
+        Shooter shooter = new Shooter(robotDisabled, globalPeriodic, constantPeriodic, Mixing.orBooleans(armShouldBeDown, getIsAutonomous()));
         EventSource rearmEvent = Mixing.whenBooleanBecomes(rearmButton, true);
         shooter.setupWinch(winchMotor, winchSolenoid, winchCurrent, rearmButton);
         shooter.setupRearmTimeout();
         shooter.handleShooterButtons(
-                Mixing.invert(catapultNotCocked), Mixing.invert(Mixing.orBooleans(armShouldBeDown, getIsAutonomous())),
+                Mixing.invert(catapultNotCocked),
                 Mixing.combine(rearmAutonomousTrigger, rearmEvent), fireWhen,
                 notifyRearmFinished
         );
