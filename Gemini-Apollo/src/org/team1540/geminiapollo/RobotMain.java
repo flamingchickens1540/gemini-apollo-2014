@@ -70,7 +70,7 @@ public class RobotMain extends SimpleCore {
         shooter.setupWinch(winchMotor, winchSolenoid, winchCurrent, rearmButton);
         shooter.setupRearmTimeout();
         shooter.handleShooterButtons(
-                Mixing.invert(catapultNotCocked), Mixing.orBooleans(armShouldBeDown, getIsAutonomous()),
+                Mixing.invert(catapultNotCocked), Mixing.invert(Mixing.orBooleans(armShouldBeDown, getIsAutonomous())),
                 Mixing.combine(rearmAutonomousTrigger, rearmEvent), fireWhen,
                 notifyRearmFinished
         );

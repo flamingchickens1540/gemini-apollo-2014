@@ -66,7 +66,7 @@ public class Shooter {
         });
     }
 
-    public void handleShooterButtons(final BooleanInputPoll catapultCocked, final BooleanInputPoll isArmNotInTheWay,
+    public void handleShooterButtons(final BooleanInputPoll catapultCocked, final BooleanInputPoll isArmInTheWay,
             final EventSource rearmTrigger, EventSource fireButton, final EventConsumer finishedRearm) {
         final EventConsumer realFire = Mixing.combine(
                 new EventLogger(LogLevel.INFO, "Fire Begin"),
@@ -81,7 +81,7 @@ public class Shooter {
                 } else if (winchDisengaged.readValue()) {
                     Logger.info("no fire: run the winch!");
                     ControlInterface.displayError("Winch not armed.");
-                } else if (isArmNotInTheWay.readValue()) {
+                } else if (isArmInTheWay.readValue()) {
                     Logger.info("no fire: lower the arm!");
                     ControlInterface.displayError("Arm isn't down.");
                 } else {
@@ -98,6 +98,8 @@ public class Shooter {
                 } else if (catapultCocked.readValue()) {
                     Logger.info("no rearm");
                     ControlInterface.displayError("Already at limit.");
+                } else if (isArmInTheWay.readValue()) {
+                    Logger.info("no rearm: lower the arm!");
                 } else {
                     winchDisengaged.writeValue(false);
                     Logger.info("rearm");
