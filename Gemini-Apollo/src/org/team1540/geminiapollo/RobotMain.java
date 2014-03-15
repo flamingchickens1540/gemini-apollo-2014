@@ -23,6 +23,7 @@ public class RobotMain extends SimpleCore {
 
     protected void createSimpleControl() {
         ui = new ControlInterface(joystick1, joystick2);
+        ErrorMessages.setupError(constantPeriodic);
         setupCluck();
         setupCompressor();
         testing = new TestMode(getIsTest());

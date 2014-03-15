@@ -77,11 +77,12 @@ public class ControlInterface {
     }
 
     public void showArm(BooleanInput arm) {
-        arm.addTarget(PhidgetReader.digitalOutputs[2]);
+        arm.addTarget(Mixing.invert(PhidgetReader.digitalOutputs[0]));
+        arm.addTarget(PhidgetReader.digitalOutputs[1]);
     }
 
     public void showFiring(EventSource when, BooleanInput canFire) {
-        Mixing.invert(canFire).addTarget(PhidgetReader.digitalOutputs[0]);
+        canFire.addTarget(PhidgetReader.digitalOutputs[2]);
     }
 
     public void displayPressure(final FloatInputPoll level, EventSource update, final BooleanInputPoll cprSwitch) {
@@ -102,7 +103,7 @@ public class ControlInterface {
                 while (mstr.length() < 4) {
                     mstr = " " + mstr;
                 }
-                PhidgetReader.phidgetLCD[1].println("Air: " + (cpr ? "<" : " ") + mstr + (cpr ? "> " : "  ") + (RobotMain.IS_COMPETITION_ROBOT ? "(APOLLO)" : "(GEMINI)"));
+                PhidgetReader.phidgetLCD[1].println("AIR " + (cpr ? "<" : " ") + mstr + (cpr ? ">" : " ") + " WINCH ...");
             }
         });
     }

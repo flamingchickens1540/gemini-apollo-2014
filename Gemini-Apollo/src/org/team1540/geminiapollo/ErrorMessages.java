@@ -10,11 +10,11 @@ public class ErrorMessages {
     private static String activeMessage = null;
     private static int activePriority = -1;
     private static int timeRemaining = -1;
+    private static int defaultTimeRemaining = 10000;
     private static final PrintStream line = PhidgetReader.phidgetLCD[0];
 
     public static void setupError(EventSource constant) {
         final String defaultStr = RobotMain.IS_COMPETITION_ROBOT ? "(1540) APOLLO (1540)" : "[____] GEMINI [____]";
-        line.println(defaultStr);
         constant.addListener(new EventConsumer() {
             public void eventFired() {
                 if (activeMessage != null) {
@@ -25,6 +25,11 @@ public class ErrorMessages {
                         timeRemaining = -1;
                         line.println(defaultStr);
                     }
+                }
+                defaultTimeRemaining -= 10;
+                if (defaultTimeRemaining <= 0 && activeMessage == null) {
+                    line.println(defaultStr);
+                    defaultTimeRemaining = 10000;
                 }
             }
         });
