@@ -85,7 +85,7 @@ public class ControlInterface {
         canFire.addTarget(PhidgetReader.digitalOutputs[2]);
     }
 
-    public void displayPressure(final FloatInputPoll level, EventSource update, final BooleanInputPoll cprSwitch) {
+    public void displayPressureAndWinch(final FloatInputPoll level, EventSource update, final BooleanInputPoll cprSwitch, final FloatInputPoll currentSensor) {
         update.addListener(new EventConsumer() {
             int prevValue = -1000;
             boolean prevValueCpr = cprSwitch.readValue();
@@ -103,7 +103,7 @@ public class ControlInterface {
                 while (mstr.length() < 4) {
                     mstr = " " + mstr;
                 }
-                PhidgetReader.phidgetLCD[1].println("AIR " + (cpr ? "<" : " ") + mstr + (cpr ? ">" : " ") + " WINCH ...");
+                PhidgetReader.phidgetLCD[1].println("AIR " + (cpr ? "<" : " ") + mstr + (cpr ? ">" : " ") + " WNCH " + Float.toString(currentSensor.readValue()).substring(0, 4));
             }
         });
     }

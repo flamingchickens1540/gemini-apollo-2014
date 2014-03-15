@@ -25,7 +25,6 @@ public class RobotMain extends SimpleCore {
         ui = new ControlInterface(joystick1, joystick2);
         ErrorMessages.setupError(constantPeriodic);
         setupCluck();
-        setupCompressor();
         testing = new TestMode(getIsTest());
         // ***** MOTORS *****
         FloatOutput leftDrive1 = makeTalonMotor(1, MOTOR_FORWARD, 0.1f), rightDrive1 = makeTalonMotor(3, MOTOR_REVERSE, 0.1f);
@@ -48,6 +47,7 @@ public class RobotMain extends SimpleCore {
         final BooleanInputPoll catapultNotCocked = makeDigitalInput(2);
         CluckGlobals.node.publish("Winch Current", Mixing.createDispatch(winchCurrent, globalPeriodic));
         CluckGlobals.node.publish("Catapult Not Cocked", Mixing.createDispatch(catapultNotCocked, globalPeriodic));
+        setupCompressor(winchCurrent);
         // ***** CONTROL INTERFACE *****
         BooleanInput armShouldBeDown = ui.getArmShouldBeDown(robotDisabled);
         BooleanInput rearmButton = ui.getRearmCatapult(globalPeriodic);
@@ -88,7 +88,7 @@ public class RobotMain extends SimpleCore {
         ui.showArm(armShouldBeDown);
     }
 
-    private void setupCompressor() {
+    private void setupCompressor(FloatInputPoll winch) {
         final BooleanInputPoll pressureSwitch = makeDigitalInput(1);
         final FloatStatus override = new FloatStatus();
         final FloatInputPoll pressureSensor = makeAnalogInput(2, 8);
@@ -104,7 +104,7 @@ public class RobotMain extends SimpleCore {
                 return 100 * ControlInterface.normalize(zeroP.readValue(), oneP.readValue(), pressureSensor.readValue());
             }
         };
-        ui.displayPressure(percentPressure, globalPeriodic, pressureSwitch);
+        ui.displayPressureAndWinch(percentPressure, globalPeriodic, pressureSwitch, winch);
         constantPeriodic.addListener(new EventConsumer() {
             public void eventFired() {
                 float value = override.readValue();
