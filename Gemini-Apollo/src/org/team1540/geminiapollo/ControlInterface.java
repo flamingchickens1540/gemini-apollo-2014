@@ -12,6 +12,7 @@ public class ControlInterface {
 
     private final IDispatchJoystick joystick1, joystick2;
     private static final FloatFilter driveDeadzone = Mixing.deadzone(.1f);
+    private final Event forceArmLower = new Event();
 
     public ControlInterface(IDispatchJoystick joystick1, IDispatchJoystick joystick2) {
         this.joystick1 = joystick1;
@@ -32,6 +33,7 @@ public class ControlInterface {
         BooleanStatus armIsDown = new BooleanStatus();
         armIsDown.setFalseWhen(joystick2.getButtonSource(5));
         armIsDown.setTrueWhen(joystick2.getButtonSource(6));
+        armIsDown.setTrueWhen(forceArmLower);
         armIsDown.setFalseWhen(Mixing.whenBooleanBecomes(PhidgetReader.getDigitalInput(7), true));
         armIsDown.setTrueWhen(Mixing.whenBooleanBecomes(PhidgetReader.getDigitalInput(0), true));
         return armIsDown;
@@ -134,5 +136,9 @@ public class ControlInterface {
 
     public EventSource getShiftLowButton() {
         return joystick1.getButtonSource(3);
+    }
+
+    public EventConsumer forceArmLower() {
+        return forceArmLower;
     }
 }

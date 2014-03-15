@@ -18,9 +18,10 @@ public class Shooter {
     public final BooleanStatus rearming = new BooleanStatus();
     private BooleanInputPoll winchPastThreshold;
     private final BooleanInputPoll isArmInTheWay;
+    private EventConsumer lowerArm, guardedFire;
 
     private final FloatInput winchSpeed = tuner.getFloat("Winch Speed", 1f);
-    private final FloatInput drawBack = tuner.getFloat("Draw Back", 6f);
+    private final FloatInput drawBack = tuner.getFloat("Draw Back", 2.5f);
     private final FloatInput rearmTimeout = tuner.getFloat("Winch Rearm Timeout", 5f);
 
     public Shooter(EventSource resetModule, EventSource globalPeriodic, EventSource constantPeriodic, final BooleanInputPoll isArmNotInTheWay) {
@@ -30,6 +31,17 @@ public class Shooter {
         rearming.setFalseWhen(resetModule);
         tuner.publishSavingEvent("Shooter");
         this.isArmInTheWay = Mixing.invert(isArmNotInTheWay);
+    }
+    
+    public void setupArmLower(EventConsumer enc) {
+        ExpirationTimer fireAfterLower = new ExpirationTimer();
+        fireAfterLower.schedule(50, enc);
+        if (this.guardedFire == null || enc == null) {
+            throw new NullPointerException();
+        }
+        fireAfterLower.schedule(1000, this.guardedFire);
+        fireAfterLower.schedule(1100, fireAfterLower.getStopEvent());
+        lowerArm = fireAfterLower.getStartEvent();
     }
 
     public void setupWinch(final FloatOutput winchMotor, final BooleanOutput winchSolenoid,
@@ -67,6 +79,11 @@ public class Shooter {
             }
         });
     }
+    
+    private void autolowerArm() {
+        Logger.info("Autolower!");
+        lowerArm.eventFired();
+    }
 
     public void handleShooterButtons(final BooleanInputPoll catapultCocked,
             final EventSource rearmTrigger, EventSource fireButton, final EventConsumer finishedRearm) {
@@ -74,7 +91,7 @@ public class Shooter {
                 new EventLogger(LogLevel.INFO, "Fire Begin"),
                 winchDisengaged.getSetTrueEvent());
         CluckGlobals.node.publish("Force Fire", realFire);
-        fireButton.addListener(new EventConsumer() {
+        fireButton.addListener(this.guardedFire = new EventConsumer() {
             public void eventFired() {
                 if (rearming.readValue()) {
                     Logger.info("fire button: stop rearm");
@@ -84,8 +101,9 @@ public class Shooter {
                     Logger.info("no fire: run the winch!");
                     ControlInterface.displayError("Winch not armed.");
                 } else if (isArmInTheWay.readValue()) {
-                    Logger.info("no fire: lower the arm!");
-                    ControlInterface.displayError("Arm isn't down.");
+                    Logger.info("no fire: autolowering the arm.");
+                    ControlInterface.displayError("Autolowering arm.");
+                    autolowerArm();
                 } else {
                     realFire.eventFired();
                 }

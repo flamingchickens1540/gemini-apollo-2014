@@ -75,6 +75,7 @@ public class RobotMain extends SimpleCore {
                 notifyRearmFinished
         );
         shooter.createTuner(winchCurrent, rearmEvent, catapultNotCocked);
+        shooter.setupArmLower(ui.forceArmLower());
         // [[[[ ARM CODE ]]]]
         Actuators act = new Actuators(duringTeleop);
         act.createArm(armSolenoid, armShouldBeDown, IS_COMPETITION_ROBOT ? Mixing.alwaysFalse : shooter.rearming);
