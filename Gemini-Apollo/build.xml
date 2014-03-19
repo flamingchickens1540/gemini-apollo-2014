@@ -64,6 +64,10 @@
     </target>
     <target name="run-emulator" depends="compile">
         <java jar="../common-chicken-runtime-engine/Igneous Emulator/dist/Igneous_Emulator.jar">
+            <jvmarg value="-Xdebug" />
+            <jvmarg value="-Xnoagent" />
+            <jvmarg value="-Djava.compiler=NONE" />
+            <jvmarg value="-Xrunjdwp:transport=dt_socket,address=7890,server=y,suspend=n" />
             <arg value="${emulatee.name}" />
         </java>
     </target>
