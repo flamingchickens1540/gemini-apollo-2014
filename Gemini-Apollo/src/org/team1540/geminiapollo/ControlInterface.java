@@ -48,22 +48,6 @@ public class ControlInterface {
         return Mixing.orBooleans(PhidgetReader.getDigitalInput(4), Mixing.floatIsAtMost(joystick2.getAxisChannel(2), -0.2f));
     }
 
-    public void displayDistance(final FloatInputPoll distance, EventSource update) {
-        update.addListener(new EventConsumer() {
-            float last = -1;
-            int ctr = 0;
-
-            public void eventFired() {
-                float value = distance.readValue();
-                if (value == last && (ctr++ % 100 != 0)) {
-                    return;
-                }
-                PhidgetReader.phidgetLCD[0].println(value);
-                last = value;
-            }
-        });
-    }
-
     public FloatInputPoll collectorSpeed() {
         final TuningContext tuner = new TuningContext(CluckGlobals.node, "PowerSliderTuner");
         final FloatInput min = tuner.getFloat("Slider Min", 0f);
@@ -88,22 +72,25 @@ public class ControlInterface {
     public void displayPressureAndWinch(final FloatInputPoll level, EventSource update, final BooleanInputPoll cprSwitch, final FloatInputPoll currentSensor) {
         update.addListener(new EventConsumer() {
             int prevValue = -1000;
+            int prevWinchValue = -1000;
             boolean prevValueCpr = cprSwitch.readValue();
             int ctr = 0;
 
             public void eventFired() {
                 int c = (int) level.readValue();
+                int winch = (int) (currentSensor.readValue() * 100);
                 boolean cpr = cprSwitch.readValue();
-                if (c == prevValue && (prevValueCpr == cpr) && (ctr++ % 100 != 0)) {
+                if (c == prevValue && (prevValueCpr == cpr) && prevWinchValue == winch && (ctr++ % 100 != 0)) {
                     return;
                 }
                 prevValue = c;
                 prevValueCpr = cpr;
+                prevWinchValue = winch;
                 String mstr = c <= -10 ? "????" : Integer.toString(c) + "%";
                 while (mstr.length() < 4) {
                     mstr = " " + mstr;
                 }
-                PhidgetReader.phidgetLCD[1].println("AIR " + (cpr ? "<" : " ") + mstr + (cpr ? ">" : " ") + " WNCH " + Float.toString(currentSensor.readValue()).substring(0, 4));
+                PhidgetReader.phidgetLCD[1].println("AIR " + (cpr ? "<" : " ") + mstr + (cpr ? ">" : " ") + " WNCH " + Float.toString(winch / 100f));
             }
         });
     }

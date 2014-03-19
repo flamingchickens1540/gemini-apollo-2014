@@ -7,10 +7,12 @@ import ccre.ctrl.Mixing;
 import ccre.event.*;
 import ccre.holders.*;
 import ccre.instinct.*;
+import ccre.log.LogLevel;
 import ccre.log.Logger;
 import ccre.saver.*;
 import ccre.util.*;
 import java.io.ByteArrayOutputStream;
+import java.io.UnsupportedEncodingException;
 
 public class AutonomousController extends InstinctModule {
 
@@ -159,15 +161,19 @@ public class AutonomousController extends InstinctModule {
                 for (int i = 0; i < options.length; i++) {
                     sb.append("BUTTON ").append(options[i]).append('\n');
                 }
-                openDialog.invoke(sb.toString().getBytes(), new ByteArrayOutputStream() {
-                    public void close() {
-                        String str = new String(this.toByteArray());
-                        if (str.length() > 0 && optionList.indexOf(str) != -1) {
-                            option.set(str);
-                            reportAutonomous.eventFired();
+                try {
+                    openDialog.invoke(sb.toString().getBytes("US-ASCII"), new ByteArrayOutputStream() {
+                        public void close() throws UnsupportedEncodingException {
+                            String str = new String(this.toByteArray(), "US-ASCII");
+                            if (str.length() > 0 && optionList.indexOf(str) != -1) {
+                                option.set(str);
+                                reportAutonomous.eventFired();
+                            }
                         }
-                    }
-                });
+                    });
+                } catch (UnsupportedEncodingException ex) {
+                    Logger.log(LogLevel.WARNING, "Unsupported encoding", ex);
+                }
             }
         });
         register(reg);

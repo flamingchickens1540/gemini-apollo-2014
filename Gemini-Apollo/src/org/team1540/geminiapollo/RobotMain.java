@@ -7,10 +7,11 @@ import ccre.ctrl.Mixing;
 import ccre.event.*;
 import ccre.holders.TuningContext;
 import ccre.igneous.SimpleCore;
+import ccre.log.Logger;
 
 public class RobotMain extends SimpleCore {
 
-    public static boolean IS_COMPETITION_ROBOT = true;
+    public static final boolean IS_COMPETITION_ROBOT = true;
     private TestMode testing;
     private ControlInterface ui;
 
@@ -104,6 +105,9 @@ public class RobotMain extends SimpleCore {
                 return 100 * ControlInterface.normalize(zeroP.readValue(), oneP.readValue(), pressureSensor.readValue());
             }
         };
+        if (ui == null) {
+            Logger.warning("UI not initialized!");
+        }
         ui.displayPressureAndWinch(percentPressure, globalPeriodic, pressureSwitch, winch);
         constantPeriodic.addListener(new EventConsumer() {
             public void eventFired() {

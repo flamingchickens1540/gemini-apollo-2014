@@ -11,6 +11,8 @@ import ccre.log.LogLevel;
 import ccre.log.Logger;
 
 public class Shooter {
+    
+    private static final boolean USE_HARD_STOP = false;
 
     private final EventSource periodic, constantPeriodic;
     private final TuningContext tuner = new TuningContext(CluckGlobals.node, "ShooterValues");
@@ -118,7 +120,7 @@ public class Shooter {
                     Logger.info("stop rearm");
                     rearming.writeValue(false);
                     ErrorMessages.displayError(5, "Cancelled rearm.", 1000);
-                } else if (catapultCocked.readValue()) {
+                } else if (USE_HARD_STOP && catapultCocked.readValue()) {
                     Logger.info("no rearm");
                     ErrorMessages.displayError(6, "Already at limit.", 1000);
                 } else if (isArmInTheWay.readValue()) {
@@ -134,10 +136,10 @@ public class Shooter {
         });
         periodic.addListener(new EventConsumer() {
             public void eventFired() {
-                if (rearming.readValue() && (catapultCocked.readValue() || winchPastThreshold.readValue())) {
+                if (rearming.readValue() && ((USE_HARD_STOP && catapultCocked.readValue()) || winchPastThreshold.readValue())) {
                     rearming.writeValue(false);
-                    Logger.info(catapultCocked.readValue() ? "limit switch stop rearm" : "drawback current stop rearm");
-                    if (catapultCocked.readValue()) {
+                    Logger.info((USE_HARD_STOP && catapultCocked.readValue()) ? "limit switch stop rearm" : "drawback current stop rearm");
+                    if (USE_HARD_STOP && catapultCocked.readValue()) {
                         ErrorMessages.displayError(4, "Hit Limit Switch!", 2000);
                     } else {
                         ErrorMessages.displayError(2, "Hit current limit.", 1000);
