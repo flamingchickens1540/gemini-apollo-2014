@@ -10,7 +10,7 @@ import ccre.igneous.SimpleCore;
 
 public class RobotMain extends SimpleCore {
 
-    public static boolean IS_COMPETITION_ROBOT = false;
+    public static boolean IS_COMPETITION_ROBOT = true;
     private TestMode testing;
     private ControlInterface ui;
 
