@@ -41,8 +41,9 @@ public class RobotMain extends SimpleCore {
         Mixing.setWhen(robotDisabled, armSolenoid, false);
         BooleanOutput winchSolenoid = testing.testPublish("sol-winch-3", makeSolenoid(3));
         BooleanOutput openFingers = testing.testPublish("sol-open-5", makeSolenoid(5));
+        CluckGlobals.node.publish("Finger Override", openFingers);
         BooleanOutput armFloat = testing.testPublish("sol-float-6", makeSolenoid(6));
-        BooleanOutput collectionSolenoids = Mixing.combine(openFingers, armFloat);
+        BooleanOutput collectionSolenoids = Mixing.combine(new BooleanStatus(openFingers), armFloat);
         // ***** INPUTS *****
         final FloatInputPoll winchCurrent = makeAnalogInput(1, 8);
         final BooleanInputPoll catapultNotCocked = makeDigitalInput(2);
@@ -57,7 +58,7 @@ public class RobotMain extends SimpleCore {
         instinct.putDriveMotors(leftDrive, rightDrive);
         instinct.putKinectTrigger(KinectControl.main(globalPeriodic,
                 makeDispatchJoystick(5, globalPeriodic), makeDispatchJoystick(6, globalPeriodic)));
-        instinct.putArm(armSolenoid, collectorMotor);
+        instinct.putArm(armSolenoid, collectorMotor, collectionSolenoids);
         EventSource fireAutonomousTrigger = instinct.getWhenToFire(), rearmAutonomousTrigger = instinct.getWhenToRearm();
         EventConsumer notifyRearmFinished = instinct.getNotifyRearmFinished();
         // [[[[ DRIVE CODE ]]]]
@@ -83,7 +84,7 @@ public class RobotMain extends SimpleCore {
         Actuators act = new Actuators(duringTeleop);
         act.createArm(armSolenoid, armShouldBeDown, IS_COMPETITION_ROBOT ? Mixing.alwaysFalse : shooter.rearming);
         act.createCollector(collectorMotor, ui.collectorSpeed(), collectionSolenoids,
-                Mixing.orBooleans(forceRunCollectorForArmAutolower, ui.rollerIn()), ui.rollerOut(), shooter.winchDisengaged);
+                ui.rollerIn(), ui.rollerOut(), shooter.winchDisengaged, forceRunCollectorForArmAutolower);
         // [[[[ Phidget Display Code ]]]]
         ui.showFiring(globalPeriodic, shooter.winchDisengaged);
         ui.showArm(armShouldBeDown);
