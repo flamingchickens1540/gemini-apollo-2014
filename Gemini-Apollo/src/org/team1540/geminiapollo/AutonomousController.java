@@ -83,9 +83,9 @@ public class AutonomousController extends InstinctModule {
             waitForTime(hotcheckArmMoveTime);
             Logger.fine("Up");
             arm.writeValue(true);
-            collect.writeValue(0);
             waitForTime(hotcheckArmMoveTime);
             Logger.fine("Down");
+            collect.writeValue(0);
         } else {
             Logger.fine("Skip Arm");
         }
