@@ -88,6 +88,21 @@ public class RobotMain extends SimpleCore {
         // [[[[ Phidget Display Code ]]]]
         ui.showFiring(globalPeriodic, shooter.winchDisengaged);
         ui.showArm(armShouldBeDown);
+        duringTeleop.addListener(new EventConsumer() {
+            public void eventFired() {
+                ErrorMessages.displayError(0, "(1540) APOLLO (TELE)", 200);
+            }
+        });
+        duringAutonomous.addListener(new EventConsumer() {
+            public void eventFired() {
+                ErrorMessages.displayError(0, "(AUTO) APOLLO (1540)", 200);
+            }
+        });
+        duringTesting.addListener(new EventConsumer() {
+            public void eventFired() {
+                ErrorMessages.displayError(0, "(TEST) APOLLO (TEST)", 200);
+            }
+        });
     }
 
     private void setupCompressor(FloatInputPoll winch) {
