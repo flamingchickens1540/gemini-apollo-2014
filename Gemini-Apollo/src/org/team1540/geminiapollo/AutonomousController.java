@@ -20,7 +20,7 @@ public class AutonomousController extends InstinctModule {
     private final TuningContext tune = new TuningContext(CluckGlobals.getNode(), seg).publishSavingEvent("Autonomous");
     // Provided channels
     private FloatOutput bothDrive, collect;
-    private BooleanOutput arm;
+    private BooleanOutput arm, collectSols;
     private BooleanInputPoll kinectTrigger;
     private final Event fireWhenEvent = new Event(), rearmWhenEvent = new Event(), notifyRearm = new Event();
     // Tuned constants are below near the autonomous modes.
@@ -103,14 +103,17 @@ public class AutonomousController extends InstinctModule {
         bothDrive.writeValue(0);
     }
 
-    private final FloatStatus doubleArmMoveTime = tune.getFloat("autom-double-armmove-time", 0.6f);
-    private final FloatStatus doubleFireTime = tune.getFloat("autom-double-fire-time", 1.1f);
-    private final FloatStatus doubleCollectTime = tune.getFloat("autom-double-collect-time", 1.1f);
+    private final FloatStatus doubleArmMoveTime = tune.getFloat("autom-double-armmove-time", 0.8f);
+    private final FloatStatus doubleFireTime = tune.getFloat("autom-double-fire-time", 0.7f);
+    private final FloatStatus doubleCollectTime = tune.getFloat("autom-double-collect-time", 0.9f);
+    private final FloatStatus doubleDriveTime = tune.getFloat("autom-double-drive-time", 0.4f);
 
     private void autoDouble() throws InterruptedException, AutonomousModeOverException {
         Logger.fine("Began double mode!");
+        collect.writeValue(1f);
         arm.writeValue(true);
         waitForTime(doubleArmMoveTime);
+        collect.writeValue(0f);
         Logger.fine("Arm moved - firing!");
         fireWhenEvent.produce();
         waitForTime(doubleFireTime);
@@ -119,12 +122,23 @@ public class AutonomousController extends InstinctModule {
         waitForEvent(notifyRearm);
         Logger.fine("Rearmed!");
         collect.writeValue(1f);
+        collectSols.writeValue(true);
         waitForTime(doubleCollectTime);
+        collectSols.writeValue(false);
         collect.writeValue(0);
-        Logger.fine("Collected - firing!");
+        Logger.fine("Collected - settling!");
+        arm.writeValue(false);
+        waitForTime(doubleArmMoveTime);
+        Logger.fine("Up - lowering...");
+        arm.writeValue(true);
+        waitForTime(doubleArmMoveTime);
+        Logger.fine("Down - firing...");
         fireWhenEvent.produce();
         waitForTime(doubleFireTime);
         arm.writeValue(false);
+        Logger.fine("Driving...");
+        bothDrive.writeValue(-1f);
+        waitForTime(doubleDriveTime);
         Logger.fine("Double completed.");
     }
 
@@ -191,9 +205,10 @@ public class AutonomousController extends InstinctModule {
         return rearmWhenEvent;
     }
 
-    public void putArm(BooleanOutput armSolenoid, FloatOutput collector) {
+    public void putArm(BooleanOutput armSolenoid, FloatOutput collector, BooleanOutput collectorSolenoids) {
         arm = armSolenoid;
         collect = collector;
+        collectSols = collectorSolenoids;
     }
 
     public EventConsumer getNotifyRearmFinished() {
