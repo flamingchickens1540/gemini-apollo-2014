@@ -41,7 +41,7 @@ public class RobotMain extends SimpleCore {
         Mixing.setWhen(robotDisabled, armSolenoid, false);
         BooleanOutput winchSolenoid = testing.testPublish("sol-winch-3", makeSolenoid(3));
         BooleanOutput openFingers = testing.testPublish("sol-open-5", makeSolenoid(5));
-        CluckGlobals.node.publish("Finger Override", openFingers);
+        CluckGlobals.getNode().publish("Finger Override", openFingers);
         BooleanOutput armFloat = testing.testPublish("sol-float-6", makeSolenoid(6));
         BooleanOutput collectionSolenoids = Mixing.combine(new BooleanStatus(openFingers), armFloat);
         // ***** INPUTS *****
