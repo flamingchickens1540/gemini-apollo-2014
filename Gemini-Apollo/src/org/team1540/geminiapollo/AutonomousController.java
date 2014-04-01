@@ -17,7 +17,7 @@ import java.io.UnsupportedEncodingException;
 public class AutonomousController extends InstinctModule {
 
     private final StorageSegment seg = StorageProvider.openStorage("autonomous");
-    private final TuningContext tune = new TuningContext(CluckGlobals.node, seg).publishSavingEvent("Autonomous");
+    private final TuningContext tune = new TuningContext(CluckGlobals.getNode(), seg).publishSavingEvent("Autonomous");
     // Provided channels
     private FloatOutput bothDrive, collect;
     private BooleanOutput arm;
@@ -141,39 +141,35 @@ public class AutonomousController extends InstinctModule {
         };
         reportAutonomous.eventFired();
         seg.attachStringHolder("autonomous-mode", option);
-        CluckGlobals.node.publish("autom-check", reportAutonomous);
-        CluckGlobals.node.publish("autom-next", new EventConsumer() {
+        CluckGlobals.getNode().publish("autom-check", reportAutonomous);
+        CluckGlobals.getNode().publish("autom-next", new EventConsumer() {
             public void eventFired() {
                 option.set(options[(optionList.indexOf(option.get()) + 1) % options.length]);
                 reportAutonomous.eventFired();
             }
         });
-        CluckGlobals.node.publish("autom-prev", new EventConsumer() {
+        CluckGlobals.getNode().publish("autom-prev", new EventConsumer() {
             public void eventFired() {
                 option.set(options[(optionList.indexOf(option.get()) - 1 + options.length) % options.length]);
                 reportAutonomous.eventFired();
             }
         });
-        final RemoteProcedure openDialog = CluckGlobals.node.subscribeRP("phidget/display-dialog", 11000);
-        CluckGlobals.node.publish("autom-select", new EventConsumer() {
+        final RemoteProcedure openDialog = CluckGlobals.getNode().getRPCManager().subscribe("phidget/display-dialog", 11000);
+        CluckGlobals.getNode().publish("autom-select", new EventConsumer() {
             public void eventFired() {
                 StringBuffer sb = new StringBuffer("TITLE Select Autonomous Mode\n");
                 for (int i = 0; i < options.length; i++) {
                     sb.append("BUTTON ").append(options[i]).append('\n');
                 }
-                try {
-                    openDialog.invoke(sb.toString().getBytes("US-ASCII"), new ByteArrayOutputStream() {
-                        public void close() throws UnsupportedEncodingException {
-                            String str = new String(this.toByteArray(), "US-ASCII");
-                            if (str.length() > 0 && optionList.indexOf(str) != -1) {
-                                option.set(str);
-                                reportAutonomous.eventFired();
-                            }
+                openDialog.invoke(sb.toString().getBytes(), new ByteArrayOutputStream() {
+                    public void close() throws UnsupportedEncodingException {
+                        String str = new String(this.toByteArray());
+                        if (str.length() > 0 && optionList.indexOf(str) != -1) {
+                            option.set(str);
+                            reportAutonomous.eventFired();
                         }
-                    });
-                } catch (UnsupportedEncodingException ex) {
-                    Logger.log(LogLevel.WARNING, "Unsupported encoding", ex);
-                }
+                    }
+                });
             }
         });
         register(reg);

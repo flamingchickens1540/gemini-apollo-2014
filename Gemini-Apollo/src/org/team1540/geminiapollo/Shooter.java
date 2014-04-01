@@ -15,7 +15,7 @@ public class Shooter {
     private static final boolean USE_HARD_STOP = false;
 
     private final EventSource periodic, constantPeriodic;
-    private final TuningContext tuner = new TuningContext(CluckGlobals.node, "ShooterValues");
+    private final TuningContext tuner = new TuningContext(CluckGlobals.getNode(), "ShooterValues");
     public final BooleanStatus winchDisengaged = new BooleanStatus();
     public final BooleanStatus rearming = new BooleanStatus();
     private BooleanInputPoll winchPastThreshold;
@@ -50,7 +50,7 @@ public class Shooter {
     public void setupWinch(final FloatOutput winchMotor, final BooleanOutput winchSolenoid,
             final FloatInputPoll winchCurrent, final BooleanInput forceRearm) {
         winchDisengaged.addTarget(winchSolenoid);
-        CluckGlobals.node.publish("Winch Disengaged", winchDisengaged);
+        CluckGlobals.getNode().publish("Winch Disengaged", winchDisengaged);
         winchPastThreshold = new BooleanInputPoll() {
             public boolean readValue() {
                 return winchCurrent.readValue() >= drawBack.readValue();
@@ -66,7 +66,7 @@ public class Shooter {
     public void setupRearmTimeout() {
         final FloatStatus resetRearm = new FloatStatus();
         resetRearm.setWhen(0, Mixing.whenBooleanBecomes(rearming, false));
-        CluckGlobals.node.publish("Winch Rearm Timeout Status", (FloatInput) resetRearm);
+        CluckGlobals.getNode().publish("Winch Rearm Timeout Status", (FloatInput) resetRearm);
         constantPeriodic.addListener(new EventConsumer() {
             public void eventFired() {
                 float val = resetRearm.readValue();
@@ -94,7 +94,7 @@ public class Shooter {
         final EventConsumer realFire = Mixing.combine(
                 new EventLogger(LogLevel.INFO, "Fire Begin"),
                 winchDisengaged.getSetTrueEvent());
-        CluckGlobals.node.publish("Force Fire", realFire);
+        CluckGlobals.getNode().publish("Force Fire", realFire);
         fireButton.addListener(this.guardedFire = new EventConsumer() {
             public void eventFired() {
                 if (rearming.readValue()) {
@@ -168,7 +168,7 @@ public class Shooter {
                 }
             }
         });
-        CluckGlobals.node.publish("Winch Max Current", (FloatInput) active);
-        CluckGlobals.node.publish("Winch Max Enabled", (BooleanInput) enabled);
+        CluckGlobals.getNode().publish("Winch Max Current", (FloatInput) active);
+        CluckGlobals.getNode().publish("Winch Max Enabled", (BooleanInput) enabled);
     }
 }
