@@ -11,30 +11,51 @@ import ccre.log.LogLevel;
 import ccre.log.Logger;
 
 public class Shooter {
-    
+
     private static final boolean USE_HARD_STOP = false;
 
     private final EventSource periodic, constantPeriodic;
-    private final TuningContext tuner = new TuningContext(CluckGlobals.node, "ShooterValues");
+    private final TuningContext tuner = new TuningContext(CluckGlobals.getNode(), "ShooterValues");
     public final BooleanStatus winchDisengaged = new BooleanStatus();
     public final BooleanStatus rearming = new BooleanStatus();
     private BooleanInputPoll winchPastThreshold;
     private final BooleanInputPoll isArmInTheWay;
+    private final FloatInputPoll batteryLevel;
     private EventConsumer lowerArm, guardedFire;
+    private final FloatStatus activeDrawBack = new FloatStatus();
 
     private final FloatInput winchSpeed = tuner.getFloat("Winch Speed", 1f);
-    private final FloatInput drawBack = tuner.getFloat("Draw Back", 2.6f);
+    private final FloatInput drawBackHB = tuner.getFloat("Draw Back HB", 2.6f);
+    private final FloatInput drawBackLB = tuner.getFloat("Draw Back LB", 2.6f);
+    private final FloatInput batteryHB = tuner.getFloat("Battery Level HB", 13.0f);
+    private final FloatInput batteryLB = tuner.getFloat("Battery Level LB", 10.0f);
     private final FloatInput rearmTimeout = tuner.getFloat("Winch Rearm Timeout", 5f);
 
-    public Shooter(EventSource resetModule, EventSource periodic, EventSource constantPeriodic, final BooleanInputPoll isArmNotInTheWay) {
+    private void recalculateDrawback() {
+        float draw;
+        if (batteryHB.readValue() == batteryLB.readValue()) {
+            draw = (drawBackHB.readValue() + drawBackLB.readValue()) / 2;
+        } else {
+            float slope = (drawBackHB.readValue() - drawBackLB.readValue()) / (batteryHB.readValue() - batteryLB.readValue());
+            float relX = batteryLevel.readValue() - batteryLB.readValue();
+            draw = slope * relX + drawBackLB.readValue();
+        }
+        if (Math.abs(activeDrawBack.readValue() - draw) > 0.05) {
+            Logger.fine("Updated draw back to: " + draw);
+        }
+        activeDrawBack.writeValue(draw);
+    }
+
+    public Shooter(EventSource resetModule, EventSource periodic, EventSource constantPeriodic, final BooleanInputPoll isArmNotInTheWay, final FloatInputPoll batteryLevel) {
         this.periodic = periodic;
         this.constantPeriodic = constantPeriodic;
         winchDisengaged.setFalseWhen(resetModule);
         rearming.setFalseWhen(resetModule);
         tuner.publishSavingEvent("Shooter");
         this.isArmInTheWay = Mixing.invert(isArmNotInTheWay);
+        this.batteryLevel = batteryLevel;
     }
-    
+
     public void setupArmLower(EventConsumer enc, BooleanOutput runCollector) {
         ExpirationTimer fireAfterLower = new ExpirationTimer();
         fireAfterLower.schedule(50, enc);
@@ -50,10 +71,10 @@ public class Shooter {
     public void setupWinch(final FloatOutput winchMotor, final BooleanOutput winchSolenoid,
             final FloatInputPoll winchCurrent, final BooleanInput forceRearm) {
         winchDisengaged.addTarget(winchSolenoid);
-        CluckGlobals.node.publish("Winch Disengaged", winchDisengaged);
+        CluckGlobals.getNode().publish("Winch Disengaged", winchDisengaged);
         winchPastThreshold = new BooleanInputPoll() {
             public boolean readValue() {
-                return winchCurrent.readValue() >= drawBack.readValue();
+                return winchCurrent.readValue() >= activeDrawBack.readValue();
             }
         };
         MultipleSourceBooleanController runWinch = new MultipleSourceBooleanController(MultipleSourceBooleanController.OR);
@@ -66,7 +87,7 @@ public class Shooter {
     public void setupRearmTimeout() {
         final FloatStatus resetRearm = new FloatStatus();
         resetRearm.setWhen(0, Mixing.whenBooleanBecomes(rearming, false));
-        CluckGlobals.node.publish("Winch Rearm Timeout Status", (FloatInput) resetRearm);
+        CluckGlobals.getNode().publish("Winch Rearm Timeout Status", (FloatInput) resetRearm);
         constantPeriodic.addListener(new EventConsumer() {
             public void eventFired() {
                 float val = resetRearm.readValue();
@@ -83,7 +104,7 @@ public class Shooter {
             }
         });
     }
-    
+
     private void autolowerArm() {
         Logger.info("Autolower!");
         lowerArm.eventFired();
@@ -94,7 +115,7 @@ public class Shooter {
         final EventConsumer realFire = Mixing.combine(
                 new EventLogger(LogLevel.INFO, "Fire Begin"),
                 winchDisengaged.getSetTrueEvent());
-        CluckGlobals.node.publish("Force Fire", realFire);
+        CluckGlobals.getNode().publish("Force Fire", realFire);
         fireButton.addListener(this.guardedFire = new EventConsumer() {
             public void eventFired() {
                 if (rearming.readValue()) {
@@ -127,6 +148,7 @@ public class Shooter {
                     Logger.info("no rearm: lower the arm!");
                     ErrorMessages.displayError(4, "Arm isn't down.", 500);
                 } else {
+                    recalculateDrawback();
                     winchDisengaged.writeValue(false);
                     Logger.info("rearm");
                     ErrorMessages.displayError(1, "Started rearming.", 500);
@@ -168,7 +190,7 @@ public class Shooter {
                 }
             }
         });
-        CluckGlobals.node.publish("Winch Max Current", (FloatInput) active);
-        CluckGlobals.node.publish("Winch Max Enabled", (BooleanInput) enabled);
+        CluckGlobals.getNode().publish("Winch Max Current", (FloatInput) active);
+        CluckGlobals.getNode().publish("Winch Max Enabled", (BooleanInput) enabled);
     }
 }

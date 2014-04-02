@@ -8,7 +8,7 @@ import ccre.holders.TuningContext;
 public class DriveCode {
 
     public static void createDrive(EventSource begin, EventSource during, final FloatOutput leftDrive, final FloatOutput rightDrive, final FloatInputPoll leftDriveAxis, final FloatInputPoll rightDriveAxis, final FloatInputPoll forwardDriveAxis, final BooleanStatus notShifted) {
-        TuningContext wheelTuner = new TuningContext(CluckGlobals.node, "DriveTuning");
+        TuningContext wheelTuner = new TuningContext(CluckGlobals.getNode(), "DriveTuning");
         wheelTuner.publishSavingEvent("Drive Tuning");
         final FloatStatus hfLeft = wheelTuner.getFloat("High Left Fwd", 1f), hfRight = wheelTuner.getFloat("High Right Fwd", 1f);
         final FloatStatus hbLeft = wheelTuner.getFloat("High Left Bck", 1f), hbRight = wheelTuner.getFloat("High Right Bck", 1f);

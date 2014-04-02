@@ -16,10 +16,10 @@ public class RobotMain extends SimpleCore {
     private ControlInterface ui;
 
     private void setupCluck() {
-        new CluckTCPServer(CluckGlobals.node, 443).start();
-        new CluckTCPServer(CluckGlobals.node, 1180).start();
-        new CluckTCPServer(CluckGlobals.node, 1540).start();
-        new CluckTCPServer(CluckGlobals.node, 1735).start();
+        new CluckTCPServer(CluckGlobals.getNode(), 443).start();
+        new CluckTCPServer(CluckGlobals.getNode(), 1180).start();
+        new CluckTCPServer(CluckGlobals.getNode(), 1540).start();
+        new CluckTCPServer(CluckGlobals.getNode(), 1735).start();
     }
 
     protected void createSimpleControl() {
@@ -41,14 +41,14 @@ public class RobotMain extends SimpleCore {
         Mixing.setWhen(robotDisabled, armSolenoid, false);
         BooleanOutput winchSolenoid = testing.testPublish("sol-winch-3", makeSolenoid(3));
         BooleanOutput openFingers = testing.testPublish("sol-open-5", makeSolenoid(5));
-        CluckGlobals.node.publish("Finger Override", openFingers);
+        CluckGlobals.getNode().publish("Finger Override", openFingers);
         BooleanOutput armFloat = testing.testPublish("sol-float-6", makeSolenoid(6));
         BooleanOutput collectionSolenoids = Mixing.combine(new BooleanStatus(openFingers), armFloat);
         // ***** INPUTS *****
         final FloatInputPoll winchCurrent = makeAnalogInput(1, 8);
         final BooleanInputPoll catapultNotCocked = makeDigitalInput(2);
-        CluckGlobals.node.publish("Winch Current", Mixing.createDispatch(winchCurrent, globalPeriodic));
-        CluckGlobals.node.publish("Catapult Not Cocked", Mixing.createDispatch(catapultNotCocked, globalPeriodic));
+        CluckGlobals.getNode().publish("Winch Current", Mixing.createDispatch(winchCurrent, globalPeriodic));
+        CluckGlobals.getNode().publish("Catapult Not Cocked", Mixing.createDispatch(catapultNotCocked, globalPeriodic));
         setupCompressor(winchCurrent);
         // ***** CONTROL INTERFACE *****
         BooleanInput armShouldBeDown = ui.getArmShouldBeDown(robotDisabled);
@@ -68,7 +68,9 @@ public class RobotMain extends SimpleCore {
                 ui.getLeftDriveAxis(), ui.getRightDriveAxis(), ui.getForwardDriveAxis(), shiftBoolean);
         // [[[[ SHOOTER CODE ]]]]
         EventSource fireWhen = Mixing.combine(fireAutonomousTrigger, ui.getFireButton());
-        Shooter shooter = new Shooter(robotDisabled, Mixing.filterEvent(getIsTest(), false, globalPeriodic), constantPeriodic, Mixing.orBooleans(armShouldBeDown, getIsAutonomous()));
+        FloatInputPoll voltage = getBatteryVoltage();
+        CluckGlobals.getNode().publish("Battery Level", Mixing.createDispatch(voltage, globalPeriodic));
+        Shooter shooter = new Shooter(robotDisabled, Mixing.filterEvent(getIsTest(), false, globalPeriodic), constantPeriodic, Mixing.orBooleans(armShouldBeDown, getIsAutonomous()), voltage);
         EventSource rearmEvent = Mixing.whenBooleanBecomes(rearmButton, true);
         shooter.setupWinch(winchMotor, winchSolenoid, winchCurrent, rearmButton);
         shooter.setupRearmTimeout();
@@ -109,10 +111,10 @@ public class RobotMain extends SimpleCore {
         final BooleanInputPoll pressureSwitch = makeDigitalInput(1);
         final FloatStatus override = new FloatStatus();
         final FloatInputPoll pressureSensor = makeAnalogInput(2, 8);
-        CluckGlobals.node.publish("Compressor Override", override);
-        CluckGlobals.node.publish("Compressor Sensor", Mixing.createDispatch(pressureSwitch, globalPeriodic));
-        CluckGlobals.node.publish("Pressure Sensor", Mixing.createDispatch(pressureSensor, globalPeriodic));
-        final TuningContext tuner = new TuningContext(CluckGlobals.node, "PressureTuner");
+        CluckGlobals.getNode().publish("Compressor Override", override);
+        CluckGlobals.getNode().publish("Compressor Sensor", Mixing.createDispatch(pressureSwitch, globalPeriodic));
+        CluckGlobals.getNode().publish("Pressure Sensor", Mixing.createDispatch(pressureSensor, globalPeriodic));
+        final TuningContext tuner = new TuningContext(CluckGlobals.getNode(), "PressureTuner");
         tuner.publishSavingEvent("Pressure");
         final FloatInputPoll zeroP = tuner.getFloat("LowPressure", 0.494f); // 0.5
         final FloatInputPoll oneP = tuner.getFloat("HighPressure", 2.746f); // 2.745

@@ -49,7 +49,7 @@ public class ControlInterface {
     }
 
     public FloatInputPoll collectorSpeed() {
-        final TuningContext tuner = new TuningContext(CluckGlobals.node, "PowerSliderTuner");
+        /*final TuningContext tuner = new TuningContext(CluckGlobals.getNode(), "PowerSliderTuner");
         final FloatInput min = tuner.getFloat("Slider Min", 0f);
         final FloatInput max = tuner.getFloat("Slider Max", 1f);
         final FloatInput ai = PhidgetReader.getAnalogInput(4);
@@ -57,7 +57,8 @@ public class ControlInterface {
             public float readValue() {
                 return normalize(min.readValue(), max.readValue(), ai.readValue());
             }
-        };
+        };*/
+        return Mixing.always(1);
     }
 
     public void showArm(BooleanInput arm) {
