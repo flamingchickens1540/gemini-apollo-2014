@@ -68,7 +68,9 @@ public class RobotMain extends SimpleCore {
                 ui.getLeftDriveAxis(), ui.getRightDriveAxis(), ui.getForwardDriveAxis(), shiftBoolean);
         // [[[[ SHOOTER CODE ]]]]
         EventSource fireWhen = Mixing.combine(fireAutonomousTrigger, ui.getFireButton());
-        Shooter shooter = new Shooter(robotDisabled, Mixing.filterEvent(getIsTest(), false, globalPeriodic), constantPeriodic, Mixing.orBooleans(armShouldBeDown, getIsAutonomous()));
+        FloatInputPoll voltage = getBatteryVoltage();
+        CluckGlobals.getNode().publish("Battery Level", Mixing.createDispatch(voltage, globalPeriodic));
+        Shooter shooter = new Shooter(robotDisabled, Mixing.filterEvent(getIsTest(), false, globalPeriodic), constantPeriodic, Mixing.orBooleans(armShouldBeDown, getIsAutonomous()), voltage);
         EventSource rearmEvent = Mixing.whenBooleanBecomes(rearmButton, true);
         shooter.setupWinch(winchMotor, winchSolenoid, winchCurrent, rearmButton);
         shooter.setupRearmTimeout();
