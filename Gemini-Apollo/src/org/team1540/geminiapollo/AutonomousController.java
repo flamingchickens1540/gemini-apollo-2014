@@ -111,7 +111,7 @@ public class AutonomousController extends InstinctModule {
     private final FloatStatus doubleCollectTime = tune.getFloat("autom-double-collect-time", 0.9f);
     //private final FloatStatus doubleDriveTime = tune.getFloat("autom-double-drive-time", 0.4f);
     private final FloatStatus doubleAlignTime1 = tune.getFloat("autom-double-align1-time", 0.4f);
-    private final FloatStatus doubleAlignTime2 = tune.getFloat("autom-double-align2-time", 0.45f);
+    private final FloatStatus doubleAlignTime2 = tune.getFloat("autom-double-align2-time", 0.5f);
 
     private void autoDouble() throws InterruptedException, AutonomousModeOverException {
         Logger.fine("Began double mode!");
