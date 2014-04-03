@@ -25,7 +25,7 @@ public class Shooter {
     private EventConsumer lowerArm, guardedFire;
     private final FloatStatus activeDrawBack = new FloatStatus();
     private final FloatStatus totalPowerTaken = new FloatStatus();
-    private final BooleanStatus isMeasuringPower = new BooleanStatus();
+    private final BooleanStatus shouldUseCurrent = new BooleanStatus();
 
     private final FloatInput winchSpeed = tuner.getFloat("Winch Speed", 1f);
     private final FloatInput drawBackHB = tuner.getFloat("Draw Back HB", 2.6f);
@@ -33,30 +33,27 @@ public class Shooter {
     private final FloatInput batteryHB = tuner.getFloat("Battery Level HB", 13.0f);
     private final FloatInput batteryLB = tuner.getFloat("Battery Level LB", 10.0f);
     private final FloatInput rearmTimeout = tuner.getFloat("Winch Rearm Timeout", 5f);
+    private final FloatInput ampThreshold = tuner.getFloat("Amp Threshold", 5f);
 
     private final FloatInputPoll activeAmps = new FloatInputPoll() {
         public float readValue() {
+            if (sensor == null) {
+                return -100; // TODO: Remove this later.
+            }
             float o = (sensor.readValue() - 0.60f) / 0.04f;
-            return o >= 10 ? o : 0;
+            return o >= ampThreshold.readValue() ? o : 0;
         }
     };
     
     private final FloatInputPoll activeWatts = new FloatInputPoll() {
         public float readValue() {
-            if (sensor == null) {
-                return -100; // TODO: Remove this later.
-            }
             return activeAmps.readValue() * batteryLevel.readValue();
         }
     };
 
     private final EventConsumer updateTotal = new EventConsumer() {
         public void eventFired() {
-            if (isMeasuringPower.readValue()) {
-                totalPowerTaken.writeValue(totalPowerTaken.readValue() + activeWatts.readValue() / 100);
-            } else {
-                totalPowerTaken.writeValue(0);
-            }
+            totalPowerTaken.writeValue(totalPowerTaken.readValue() + activeWatts.readValue() / 100);
         }
     };
 
@@ -80,12 +77,15 @@ public class Shooter {
         this.constantPeriodic = constantPeriodic;
         constantPeriodic.addListener(updateTotal); // TODO Move this after the shooter is registered.
         winchDisengaged.setFalseWhen(resetModule);
-        CluckGlobals.getNode().publish("ActiveWatts", Mixing.createDispatch(activeWatts, constantPeriodic));
-        CluckGlobals.getNode().publish("TotalWatts", totalPowerTaken);
         rearming.setFalseWhen(resetModule);
         tuner.publishSavingEvent("Shooter");
         this.isArmInTheWay = Mixing.invert(isArmNotInTheWay);
         this.batteryLevel = batteryLevel;
+        CluckGlobals.getNode().publish("Constant", constantPeriodic);
+        CluckGlobals.getNode().publish("ActiveAmps", Mixing.createDispatch(activeAmps, constantPeriodic));
+        CluckGlobals.getNode().publish("ActiveWatts", Mixing.createDispatch(activeWatts, constantPeriodic));
+        CluckGlobals.getNode().publish("TotalWatts", totalPowerTaken);
+        CluckGlobals.getNode().publish("ShouldUseCurrent", shouldUseCurrent);
     }
 
     public void setupArmLower(EventConsumer enc, BooleanOutput runCollector) {
@@ -106,7 +106,7 @@ public class Shooter {
         CluckGlobals.getNode().publish("Winch Disengaged", winchDisengaged);
         winchPastThreshold = new BooleanInputPoll() {
             public boolean readValue() {
-                return winchCurrent.readValue() >= activeDrawBack.readValue();
+                return (shouldUseCurrent.readValue() ? winchCurrent.readValue() : totalPowerTaken.readValue()) >= activeDrawBack.readValue();
             }
         };
         MultipleSourceBooleanController runWinch = new MultipleSourceBooleanController(MultipleSourceBooleanController.OR);

@@ -7,7 +7,6 @@ import ccre.ctrl.Mixing;
 import ccre.event.*;
 import ccre.holders.*;
 import ccre.instinct.*;
-import ccre.log.LogLevel;
 import ccre.log.Logger;
 import ccre.saver.*;
 import ccre.util.*;
@@ -107,18 +106,19 @@ public class AutonomousController extends InstinctModule {
         bothDrive.writeValue(0);
     }
 
-    private final FloatStatus doubleArmMoveTime = tune.getFloat("autom-double-armmove-time", 0.8f);
+    private final FloatStatus doubleArmMoveTime = tune.getFloat("autom-double-armmove-time", 0.9f);
     private final FloatStatus doubleFireTime = tune.getFloat("autom-double-fire-time", 0.7f);
     private final FloatStatus doubleCollectTime = tune.getFloat("autom-double-collect-time", 0.9f);
     //private final FloatStatus doubleDriveTime = tune.getFloat("autom-double-drive-time", 0.4f);
-    private final FloatStatus doubleAlignTime = tune.getFloat("autom-double-align-time", 0.4f);
+    private final FloatStatus doubleAlignTime1 = tune.getFloat("autom-double-align1-time", 0.4f);
+    private final FloatStatus doubleAlignTime2 = tune.getFloat("autom-double-align2-time", 0.45f);
 
     private void autoDouble() throws InterruptedException, AutonomousModeOverException {
         Logger.fine("Began double mode!");
-        if (doubleAlignTime.readValue() > 0.02) {
+        if (doubleAlignTime1.readValue() > 0.02) {
             bothDrive.writeValue(-1);
             Logger.fine("Aligning...");
-            waitForTime(doubleAlignTime);
+            waitForTime(doubleAlignTime1);
             Logger.fine("Aligned.");
             bothDrive.writeValue(0);
         }
@@ -139,7 +139,7 @@ public class AutonomousController extends InstinctModule {
             Logger.fine("Rearming... (and driving)");
             bothDrive.writeValue(1f);
             collect.writeValue(0.5f);
-            waitForTime(doubleAlignTime);
+            waitForTime(doubleAlignTime2);
             Logger.fine("Drove!");
             bothDrive.writeValue(0f);
             waitUntil(notified);
@@ -154,10 +154,10 @@ public class AutonomousController extends InstinctModule {
         collect.writeValue(0);
         Logger.fine("Collected.");
         arm.writeValue(false);
-        if (doubleAlignTime.readValue() > 0.02) {
+        if (doubleAlignTime2.readValue() > 0.02) {
             bothDrive.writeValue(-1);
             Logger.fine("Aligning...");
-            waitForTime(doubleAlignTime);
+            waitForTime(doubleAlignTime2);
             Logger.fine("Aligned.");
             bothDrive.writeValue(0);
         }

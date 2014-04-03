@@ -33,7 +33,7 @@ public class RobotMain extends SimpleCore {
         FloatOutput leftDrive = Mixing.combine(leftDrive1, leftDrive2), rightDrive = Mixing.combine(rightDrive1, rightDrive2);
         Mixing.setWhen(robotDisabled, Mixing.combine(leftDrive, rightDrive), 0);
         testing.addDriveMotors(leftDrive1, leftDrive2, leftDrive, rightDrive1, rightDrive2, rightDrive);
-        FloatOutput winchMotor = testing.testPublish("winch", makeTalonMotor(5, MOTOR_REVERSE, 0.1f));
+        FloatOutput winchMotor = testing.testPublish("winch", makeTalonMotor(5, MOTOR_REVERSE, 1000f));
         FloatOutput collectorMotor = testing.testPublish("collectorMotor", makeTalonMotor(6, MOTOR_REVERSE, 0.1f));
         // ***** SOLENOIDS *****
         BooleanOutput shiftSolenoid = testing.testPublish("sol-shift-1", makeSolenoid(1));
