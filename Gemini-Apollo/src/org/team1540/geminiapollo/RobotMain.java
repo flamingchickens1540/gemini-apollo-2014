@@ -15,17 +15,11 @@ public class RobotMain extends SimpleCore {
     private TestMode testing;
     private ControlInterface ui;
 
-    private void setupCluck() {
-        new CluckTCPServer(CluckGlobals.getNode(), 443).start();
-        new CluckTCPServer(CluckGlobals.getNode(), 1180).start();
-        new CluckTCPServer(CluckGlobals.getNode(), 1540).start();
-        new CluckTCPServer(CluckGlobals.getNode(), 1735).start();
-    }
-
     protected void createSimpleControl() {
         ui = new ControlInterface(joystick1, joystick2);
         ErrorMessages.setupError(constantPeriodic);
-        setupCluck();
+        new CluckTCPServer(CluckGlobals.getNode(), 1180).start();
+        new CluckTCPServer(CluckGlobals.getNode(), 1540).start();
         testing = new TestMode(getIsTest());
         // ***** MOTORS *****
         FloatOutput leftDrive1 = makeTalonMotor(1, MOTOR_FORWARD, 0.1f), rightDrive1 = makeTalonMotor(3, MOTOR_REVERSE, 0.1f);
@@ -40,10 +34,10 @@ public class RobotMain extends SimpleCore {
         BooleanStatus armSolenoid = new BooleanStatus(testing.testPublish("sol-arm-2", makeSolenoid(2)));
         Mixing.setWhen(robotDisabled, armSolenoid, false);
         BooleanOutput winchSolenoid = testing.testPublish("sol-winch-3", makeSolenoid(3));
-        BooleanOutput openFingers = testing.testPublish("sol-open-5", makeSolenoid(5));
-        CluckGlobals.getNode().publish("Finger Override", openFingers);
+        BooleanOutput openFingers = Mixing.invert(testing.testPublish("sol-open-5", makeSolenoid(5)));
+        //CluckGlobals.getNode().publish("Finger Override", openFingers);
         BooleanOutput armFloat = testing.testPublish("sol-float-6", makeSolenoid(6));
-        BooleanOutput collectionSolenoids = Mixing.combine(new BooleanStatus(openFingers), armFloat);
+        BooleanOutput collectionSolenoids = Mixing.combine(openFingers, armFloat);
         // ***** INPUTS *****
         final FloatInputPoll winchCurrent = makeAnalogInput(1, 8);
         final BooleanInputPoll catapultNotCocked = makeDigitalInput(2);
