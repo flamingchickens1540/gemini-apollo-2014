@@ -18,6 +18,7 @@ public class RobotMain extends SimpleCore {
     protected void createSimpleControl() {
         ui = new ControlInterface(joystick1, joystick2);
         ErrorMessages.setupError(constantPeriodic);
+        new CluckTCPServer(CluckGlobals.getNode(), 443).start();
         new CluckTCPServer(CluckGlobals.getNode(), 1180).start();
         new CluckTCPServer(CluckGlobals.getNode(), 1540).start();
         testing = new TestMode(getIsTest());
@@ -43,7 +44,6 @@ public class RobotMain extends SimpleCore {
         final BooleanInputPoll catapultNotCocked = makeDigitalInput(2);
         CluckGlobals.getNode().publish("Winch Current", Mixing.createDispatch(winchCurrent, globalPeriodic));
         CluckGlobals.getNode().publish("Catapult Not Cocked", Mixing.createDispatch(catapultNotCocked, globalPeriodic));
-        setupCompressor(winchCurrent);
         // ***** CONTROL INTERFACE *****
         BooleanInput armShouldBeDown = ui.getArmShouldBeDown(robotDisabled);
         BooleanInput rearmButton = ui.getRearmCatapult(globalPeriodic);
@@ -76,11 +76,12 @@ public class RobotMain extends SimpleCore {
         shooter.createTuner(winchCurrent, rearmEvent, catapultNotCocked);
         BooleanStatus forceRunCollectorForArmAutolower = new BooleanStatus();
         shooter.setupArmLower(ui.forceArmLower(), forceRunCollectorForArmAutolower);
+        setupCompressor(shooter.totalPowerTaken);
         // [[[[ ARM CODE ]]]]
         Actuators act = new Actuators(duringTeleop);
         act.createArm(armSolenoid, armShouldBeDown, IS_COMPETITION_ROBOT ? Mixing.alwaysFalse : shooter.rearming);
         act.createCollector(collectorMotor, ui.collectorSpeed(), collectionSolenoids,
-                ui.rollerIn(), ui.rollerOut(), shooter.winchDisengaged, forceRunCollectorForArmAutolower);
+                ui.rollerIn(), ui.rollerOut(), shooter.winchDisengaged, Mixing.orBooleans(forceRunCollectorForArmAutolower, ui.shouldBeCollectingBecauseLoader()));
         // [[[[ Phidget Display Code ]]]]
         ui.showFiring(globalPeriodic, shooter.winchDisengaged);
         ui.showArm(armShouldBeDown);

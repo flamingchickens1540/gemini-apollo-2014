@@ -2,6 +2,7 @@ package org.team1540.geminiapollo;
 
 import ccre.chan.*;
 import ccre.cluck.CluckGlobals;
+import ccre.ctrl.ExpirationTimer;
 import ccre.ctrl.IDispatchJoystick;
 import ccre.ctrl.Mixing;
 import ccre.event.*;
@@ -79,7 +80,7 @@ public class ControlInterface {
 
             public void eventFired() {
                 int c = (int) level.readValue();
-                int winch = (int) (currentSensor.readValue() * 100);
+                int winch = (int) (currentSensor.readValue());
                 boolean cpr = cprSwitch.readValue();
                 if (c == prevValue && (prevValueCpr == cpr) && prevWinchValue == winch && (ctr++ % 100 != 0)) {
                     return;
@@ -91,7 +92,7 @@ public class ControlInterface {
                 while (mstr.length() < 4) {
                     mstr = " " + mstr;
                 }
-                PhidgetReader.phidgetLCD[1].println("AIR " + (cpr ? "<" : " ") + mstr + (cpr ? ">" : " ") + " WNCH " + Float.toString(winch / 100f));
+                PhidgetReader.phidgetLCD[1].println("AIR " + (cpr ? "<" : " ") + mstr + (cpr ? ">" : " ") + " WNCH " + Float.toString(winch));
             }
         });
     }
@@ -123,5 +124,14 @@ public class ControlInterface {
 
     public EventConsumer forceArmLower() {
         return forceArmLower;
+    }
+
+    public BooleanInputPoll shouldBeCollectingBecauseLoader() {
+        ExpirationTimer exp = new ExpirationTimer();
+        exp.startWhen(Mixing.whenBooleanBecomes(PhidgetReader.digitalInputs[0], true));
+        BooleanStatus runCollector = new BooleanStatus();
+        exp.scheduleBooleanPeriod(10, 510, runCollector, true);
+        exp.schedule(520, exp.getStopEvent());
+        return runCollector;
     }
 }
