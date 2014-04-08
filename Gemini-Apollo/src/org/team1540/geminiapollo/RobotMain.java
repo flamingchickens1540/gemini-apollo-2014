@@ -32,9 +32,9 @@ public class RobotMain extends SimpleCore {
         FloatOutput collectorMotor = testing.testPublish("collectorMotor", makeTalonMotor(6, MOTOR_REVERSE, 0.1f));
         // ***** SOLENOIDS *****
         BooleanOutput shiftSolenoid = testing.testPublish("sol-shift-1", makeSolenoid(1));
-        BooleanStatus armSolenoid = new BooleanStatus(testing.testPublish("sol-arm-2", makeSolenoid(2)));
-        Mixing.setWhen(robotDisabled, armSolenoid, false);
+        BooleanOutput armForwardSolenoid = testing.testPublish("sol-armf-2", makeSolenoid(2));
         BooleanOutput winchSolenoid = testing.testPublish("sol-winch-3", makeSolenoid(3));
+        BooleanOutput armBackwardSolenoid = testing.testPublish("sol-armr-4", makeSolenoid(4));
         BooleanOutput openFingers = Mixing.invert(testing.testPublish("sol-open-5", makeSolenoid(5)));
         //CluckGlobals.getNode().publish("Finger Override", openFingers);
         BooleanOutput armFloat = testing.testPublish("sol-float-6", makeSolenoid(6));
@@ -42,17 +42,23 @@ public class RobotMain extends SimpleCore {
         // ***** INPUTS *****
         final FloatInputPoll winchCurrent = makeAnalogInput(1, 8);
         final BooleanInputPoll catapultNotCocked = makeDigitalInput(2);
+        final FloatInputPoll armLocationSensor = makeAnalogInput(3, 8);
         CluckGlobals.getNode().publish("Winch Current", Mixing.createDispatch(winchCurrent, globalPeriodic));
         CluckGlobals.getNode().publish("Catapult Not Cocked", Mixing.createDispatch(catapultNotCocked, globalPeriodic));
+        CluckGlobals.getNode().publish("Arm Location Sensor", Mixing.createDispatch(armLocationSensor, globalPeriodic));
         // ***** CONTROL INTERFACE *****
         BooleanInput armShouldBeDown = ui.getArmShouldBeDown(robotDisabled);
         BooleanInput rearmButton = ui.getRearmCatapult(globalPeriodic);
+        // [[[[ ARM CODE ]]]]
+        Actuators act = new Actuators(duringTeleop);
+        act.createArm(armForwardSolenoid, armBackwardSolenoid, armLocationSensor); // TODO: Remove shooter.rearming's publicity?
+        robotDisabled.addListener(act.armUp);
         // [[[[ AUTONOMOUS CODE ]]]]
         AutonomousController instinct = new AutonomousController(this);
         instinct.putDriveMotors(leftDrive, rightDrive);
         instinct.putKinectTrigger(KinectControl.main(globalPeriodic,
                 makeDispatchJoystick(5, globalPeriodic), makeDispatchJoystick(6, globalPeriodic)));
-        instinct.putArm(armSolenoid, collectorMotor, collectionSolenoids);
+        instinct.putArm(act.armUp, act.armDown, collectorMotor, collectionSolenoids);
         EventSource fireAutonomousTrigger = instinct.getWhenToFire(), rearmAutonomousTrigger = instinct.getWhenToRearm();
         EventConsumer notifyRearmFinished = instinct.getNotifyRearmFinished();
         // [[[[ DRIVE CODE ]]]]
@@ -77,9 +83,7 @@ public class RobotMain extends SimpleCore {
         BooleanStatus forceRunCollectorForArmAutolower = new BooleanStatus();
         shooter.setupArmLower(ui.forceArmLower(), forceRunCollectorForArmAutolower);
         setupCompressor(shooter.totalPowerTaken);
-        // [[[[ ARM CODE ]]]]
-        Actuators act = new Actuators(duringTeleop);
-        act.createArm(armSolenoid, armShouldBeDown, IS_COMPETITION_ROBOT ? Mixing.alwaysFalse : shooter.rearming);
+        // [[[[ Collector Code ]]]]
         act.createCollector(collectorMotor, ui.collectorSpeed(), collectionSolenoids,
                 ui.rollerIn(), ui.rollerOut(), shooter.winchDisengaged, Mixing.orBooleans(forceRunCollectorForArmAutolower, ui.shouldBeCollectingBecauseLoader()));
         // [[[[ Phidget Display Code ]]]]
