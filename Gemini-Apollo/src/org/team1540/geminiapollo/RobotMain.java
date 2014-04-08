@@ -39,6 +39,7 @@ public class RobotMain extends SimpleCore {
         //CluckGlobals.getNode().publish("Finger Override", openFingers);
         BooleanOutput armFloat = testing.testPublish("sol-float-6", makeSolenoid(6));
         BooleanOutput collectionSolenoids = Mixing.combine(openFingers, armFloat);
+        collectionSolenoids.writeValue(false);
         // ***** INPUTS *****
         final FloatInputPoll winchCurrent = makeAnalogInput(1, 8);
         final BooleanInputPoll catapultNotCocked = makeDigitalInput(2);
@@ -82,8 +83,11 @@ public class RobotMain extends SimpleCore {
         shooter.createTuner(winchCurrent, rearmEvent, catapultNotCocked);
         BooleanStatus forceRunCollectorForArmAutolower = new BooleanStatus();
         shooter.setupArmLower(ui.forceArmLower(), forceRunCollectorForArmAutolower);
-        setupCompressor(shooter.totalPowerTaken);
-        // [[[[ Collector Code ]]]]
+        setupCompressor(Mixing.select(shooter.shouldUseCurrent, shooter.totalPowerTaken, shooter.activeAmps));
+        instinct.putCurrentActivator(shooter.shouldUseCurrent);
+        // [[[[ ARM CODE ]]]]
+        Actuators act = new Actuators(duringTeleop);
+        act.createArm(armSolenoid, armShouldBeDown, IS_COMPETITION_ROBOT ? Mixing.alwaysFalse : shooter.rearming);
         act.createCollector(collectorMotor, ui.collectorSpeed(), collectionSolenoids,
                 ui.rollerIn(), ui.rollerOut(), shooter.winchDisengaged, Mixing.orBooleans(forceRunCollectorForArmAutolower, ui.shouldBeCollectingBecauseLoader()));
         // [[[[ Phidget Display Code ]]]]

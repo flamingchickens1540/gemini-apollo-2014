@@ -19,13 +19,14 @@ public class AutonomousController extends InstinctModule {
     private final TuningContext tune = new TuningContext(CluckGlobals.getNode(), seg).publishSavingEvent("Autonomous");
     // Provided channels
     private FloatOutput bothDrive, collect;
-    private BooleanOutput arm, collectSols;
+    private BooleanOutput arm, collectSols, useCurrent;
     private BooleanInputPoll kinectTrigger;
-    private final Event fireWhenEvent = new Event(), rearmWhenEvent = new Event(), notifyRearm = new Event();
+    private final Event fireWhenEvent = new Event(), rearmWhenEvent = new Event();
     // Tuned constants are below near the autonomous modes.
-    private final StringHolder option = new StringHolder("hotcheck");
+    private final StringHolder option = new StringHolder("double");
     private final String[] options = {"none", "forward", "hotcheck", "double"};
     private final CList optionList = CArrayUtils.asList(options);
+    private final BooleanStatus winchGotten = new BooleanStatus();
 
     protected void autonomousMain() throws AutonomousModeOverException, InterruptedException {
         try {
@@ -115,6 +116,9 @@ public class AutonomousController extends InstinctModule {
 
     private void autoDouble() throws InterruptedException, AutonomousModeOverException {
         Logger.fine("Began double mode!");
+        useCurrent.writeValue(true);
+        winchGotten.writeValue(false);
+        rearmWhenEvent.produce();
         if (doubleAlignTime1.readValue() > 0.02) {
             bothDrive.writeValue(-1);
             Logger.fine("Aligning...");
@@ -126,27 +130,23 @@ public class AutonomousController extends InstinctModule {
         arm.writeValue(true);
         waitForTime((long) (1000L * doubleArmMoveTime.readValue() + 0.5f) / 2);
         collect.writeValue(0f);
+        waitUntil(winchGotten);
         waitForTime((long) (1000L * doubleArmMoveTime.readValue() + 0.5f) / 2);
+        useCurrent.writeValue(false);
         Logger.fine("Arm moved - firing!");
         fireWhenEvent.produce();
         waitForTime(doubleFireTime);
-        BooleanStatus notified = new BooleanStatus();
-        EventConsumer ste = notified.getSetTrueEvent();
-        this.notifyRearm.addListener(ste);
-        try {
-            rearmWhenEvent.produce();
-            collectSols.writeValue(true);
-            Logger.fine("Rearming... (and driving)");
-            bothDrive.writeValue(1f);
-            collect.writeValue(0.5f);
-            waitForTime(doubleAlignTime2);
-            Logger.fine("Drove!");
-            bothDrive.writeValue(0f);
-            waitUntil(notified);
-            collect.writeValue(0f);
-        } finally {
-            notifyRearm.removeListener(ste);
-        }
+        winchGotten.writeValue(false);
+        rearmWhenEvent.produce();
+        collectSols.writeValue(true);
+        Logger.fine("Rearming... (and driving)");
+        bothDrive.writeValue(1f);
+        collect.writeValue(0.5f);
+        waitForTime(doubleAlignTime2);
+        Logger.fine("Drove!");
+        bothDrive.writeValue(0f);
+        waitUntil(winchGotten);
+        collect.writeValue(0f);
         Logger.fine("Rearmed!");
         collect.writeValue(1f);
         waitForTime(doubleCollectTime);
@@ -164,23 +164,23 @@ public class AutonomousController extends InstinctModule {
         arm.writeValue(true);
         waitForTime(doubleArmMoveTime);
         /*Logger.fine("Collected - settling!");
-        arm.writeValue(false);
-        waitForTime(doubleArmMoveTime);
-        Logger.fine("Up - lowering...");
-        arm.writeValue(true);
-        waitForTime(doubleArmMoveTime);
-        Logger.fine("Down - firing...");*/
+         arm.writeValue(false);
+         waitForTime(doubleArmMoveTime);
+         Logger.fine("Up - lowering...");
+         arm.writeValue(true);
+         waitForTime(doubleArmMoveTime);
+         Logger.fine("Down - firing...");*/
         Logger.fine("Firing...");
         fireWhenEvent.produce();
         waitForTime(doubleFireTime);
         arm.writeValue(false);
         /*Logger.fine("Driving...");
-        bothDrive.writeValue(-1f);
-        waitForTime(doubleDriveTime);
-        bothDrive.writeValue(0);*/
+         bothDrive.writeValue(-1f);
+         waitForTime(doubleDriveTime);
+         bothDrive.writeValue(0);*/
         Logger.fine("Double completed.");
     }
-
+    
     // *** Framework ***
     private void waitForTime(FloatInputPoll fin) throws InterruptedException, AutonomousModeOverException {
         waitForTime((long) (1000L * fin.readValue() + 0.5f));
@@ -251,6 +251,10 @@ public class AutonomousController extends InstinctModule {
     }
 
     public EventConsumer getNotifyRearmFinished() {
-        return notifyRearm;
+        return winchGotten.getSetTrueEvent();
+    }
+
+    public void putCurrentActivator(BooleanStatus shouldUseCurrent) {
+        useCurrent = shouldUseCurrent;
     }
 }

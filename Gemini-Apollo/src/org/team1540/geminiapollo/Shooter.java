@@ -2,13 +2,10 @@ package org.team1540.geminiapollo;
 
 import ccre.chan.*;
 import ccre.cluck.CluckGlobals;
-import ccre.ctrl.ExpirationTimer;
-import ccre.ctrl.Mixing;
-import ccre.ctrl.MultipleSourceBooleanController;
+import ccre.ctrl.*;
 import ccre.event.*;
 import ccre.holders.TuningContext;
-import ccre.log.LogLevel;
-import ccre.log.Logger;
+import ccre.log.*;
 
 public class Shooter {
 
@@ -24,14 +21,15 @@ public class Shooter {
     private FloatInputPoll sensor;
     private EventConsumer lowerArm, guardedFire;
     public final FloatStatus totalPowerTaken = new FloatStatus();
-    private final BooleanStatus shouldUseCurrent = new BooleanStatus();
+    public final BooleanStatus shouldUseCurrent = new BooleanStatus();
 
     private final FloatInput winchSpeed = tuner.getFloat("Winch Speed", 1f);
     private final FloatInput drawBack = tuner.getFloat("Draw Back", 605);
+    private final FloatInput drawBackCurrent = tuner.getFloat("Draw Back Current", 50);
     private final FloatInput rearmTimeout = tuner.getFloat("Winch Rearm Timeout", 5f);
     private final FloatInput ampThreshold = tuner.getFloat("Amp Threshold", 5f);
 
-    private final FloatInputPoll activeAmps = new FloatInputPoll() {
+    public final FloatInputPoll activeAmps = new FloatInputPoll() {
         public float readValue() {
             if (sensor == null) {
                 return -100; // TODO: Remove this later.
@@ -87,7 +85,7 @@ public class Shooter {
         CluckGlobals.getNode().publish("Winch Disengaged", winchDisengaged);
         winchPastThreshold = new BooleanInputPoll() {
             public boolean readValue() {
-                return (shouldUseCurrent.readValue() ? winchCurrent.readValue() : totalPowerTaken.readValue()) >= drawBack.readValue();
+                return (shouldUseCurrent.readValue() ? activeAmps.readValue() >= drawBackCurrent.readValue() : totalPowerTaken.readValue() >= drawBack.readValue());
             }
         };
         MultipleSourceBooleanController runWinch = new MultipleSourceBooleanController(MultipleSourceBooleanController.OR);
