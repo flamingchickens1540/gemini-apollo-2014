@@ -9,12 +9,10 @@ import ccre.log.*;
 
 public class Shooter {
 
-    private static final boolean USE_HARD_STOP = false;
-
     private final EventSource periodic, constantPeriodic;
     private final TuningContext tuner = new TuningContext(CluckGlobals.getNode(), "ShooterValues");
     public final BooleanStatus winchDisengaged = new BooleanStatus();
-    public final BooleanStatus rearming = new BooleanStatus();
+    private final BooleanStatus rearming = new BooleanStatus();
     private BooleanInputPoll winchPastThreshold;
     private final BooleanInputPoll isArmInTheWay;
     private final FloatInputPoll batteryLevel;
@@ -38,7 +36,7 @@ public class Shooter {
             return o >= ampThreshold.readValue() ? o : 0;
         }
     };
-    
+
     private final FloatInputPoll activeWatts = new FloatInputPoll() {
         public float readValue() {
             return activeAmps.readValue() * batteryLevel.readValue();
@@ -80,7 +78,8 @@ public class Shooter {
     }
 
     public void setupWinch(final FloatOutput winchMotor, final BooleanOutput winchSolenoid,
-            final FloatInputPoll winchCurrent, final BooleanInput forceRearm) {
+            final FloatInputPoll winchCurrent) {
+        sensor = winchCurrent;
         winchDisengaged.addTarget(winchSolenoid);
         CluckGlobals.getNode().publish("Winch Disengaged", winchDisengaged);
         winchPastThreshold = new BooleanInputPoll() {
@@ -88,11 +87,7 @@ public class Shooter {
                 return (shouldUseCurrent.readValue() ? activeAmps.readValue() >= drawBackCurrent.readValue() : totalPowerTaken.readValue() >= drawBack.readValue());
             }
         };
-        MultipleSourceBooleanController runWinch = new MultipleSourceBooleanController(MultipleSourceBooleanController.OR);
-        runWinch.addInput(rearming);
-        runWinch.addInput(Mixing.andBooleans(forceRearm, Mixing.invert(isArmInTheWay)));
-        periodic.addListener(runWinch);
-        runWinch.addTarget(Mixing.select(winchMotor, Mixing.always(0), winchSpeed));
+        rearming.addTarget(Mixing.select(winchMotor, Mixing.always(0), winchSpeed));
     }
 
     public void setupRearmTimeout() {
@@ -121,7 +116,7 @@ public class Shooter {
         lowerArm.eventFired();
     }
 
-    public void handleShooterButtons(final BooleanInputPoll catapultCocked,
+    public void handleShooterButtons(
             final EventSource rearmTrigger, EventSource fireButton, final EventConsumer finishedRearm) {
         final EventConsumer realFire = Mixing.combine(
                 new EventLogger(LogLevel.INFO, "Fire Begin"),
@@ -152,9 +147,6 @@ public class Shooter {
                     Logger.info("stop rearm");
                     rearming.writeValue(false);
                     ErrorMessages.displayError(5, "Cancelled rearm.", 1000);
-                } else if (USE_HARD_STOP && catapultCocked.readValue()) {
-                    Logger.info("no rearm");
-                    ErrorMessages.displayError(6, "Already at limit.", 1000);
                 } else if (isArmInTheWay.readValue()) {
                     Logger.info("no rearm: lower the arm!");
                     ErrorMessages.displayError(4, "Arm isn't down.", 500);
@@ -169,40 +161,13 @@ public class Shooter {
         });
         periodic.addListener(new EventConsumer() {
             public void eventFired() {
-                if (rearming.readValue() && ((USE_HARD_STOP && catapultCocked.readValue()) || winchPastThreshold.readValue())) {
+                if (rearming.readValue() && winchPastThreshold.readValue()) {
                     rearming.writeValue(false);
-                    Logger.info((USE_HARD_STOP && catapultCocked.readValue()) ? "limit switch stop rearm" : "drawback current stop rearm");
-                    if (USE_HARD_STOP && catapultCocked.readValue()) {
-                        ErrorMessages.displayError(4, "Hit Limit Switch!", 2000);
-                    } else {
-                        ErrorMessages.displayError(2, "Hit current limit.", 1000);
-                    }
+                    Logger.info("drawback current stop rearm");
+                    ErrorMessages.displayError(2, "Hit current limit.", 1000);
                     finishedRearm.eventFired();
                 }
             }
         });
-    }
-
-    public void createTuner(final FloatInputPoll sensor, EventSource rearmCatapult, final BooleanInputPoll catapultNotCocked) {
-        this.sensor = sensor;
-        final FloatStatus active = new FloatStatus(-1);
-        final BooleanStatus enabled = new BooleanStatus();
-        enabled.setTrueWhen(rearmCatapult);
-        active.setWhen(0, rearmCatapult);
-        periodic.addListener(new EventConsumer() {
-            public void eventFired() {
-                if (enabled.readValue()) {
-                    float sense = sensor.readValue();
-                    if (sense > active.readValue()) {
-                        active.writeValue(sense);
-                    }
-                    if (!catapultNotCocked.readValue()) {
-                        enabled.writeValue(false);
-                    }
-                }
-            }
-        });
-        CluckGlobals.getNode().publish("Winch Max Current", (FloatInput) active);
-        CluckGlobals.getNode().publish("Winch Max Enabled", (BooleanInput) enabled);
     }
 }

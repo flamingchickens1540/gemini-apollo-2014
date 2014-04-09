@@ -1,12 +1,10 @@
 package org.team1540.geminiapollo;
 
 import ccre.chan.*;
-import ccre.cluck.CluckGlobals;
 import ccre.ctrl.ExpirationTimer;
 import ccre.ctrl.IDispatchJoystick;
 import ccre.ctrl.Mixing;
 import ccre.event.*;
-import ccre.holders.TuningContext;
 import ccre.phidget.PhidgetReader;
 
 public class ControlInterface {
@@ -14,31 +12,34 @@ public class ControlInterface {
     private final IDispatchJoystick joystick1, joystick2;
     private static final FloatFilter driveDeadzone = Mixing.deadzone(.1f);
     private final Event forceArmLower = new Event();
+    private final EventSource globalPeriodic, robotDisabled;
 
-    public ControlInterface(IDispatchJoystick joystick1, IDispatchJoystick joystick2) {
+    public ControlInterface(IDispatchJoystick joystick1, IDispatchJoystick joystick2, EventSource globalPeriodic, EventSource robotDisabled) {
         this.joystick1 = joystick1;
         this.joystick2 = joystick2;
+        this.globalPeriodic = globalPeriodic;
+        this.robotDisabled = robotDisabled;
     }
 
-    public BooleanInput getRearmCatapult(EventSource update) {
-        BooleanInputPoll a = PhidgetReader.getDigitalInput(2);
-        BooleanInputPoll b = joystick2.getButtonChannel(1);
-        return Mixing.createDispatch(Mixing.xorBooleans(a, b), update);
+    public EventSource getRearmCatapult() {
+        return Mixing.combine(joystick2.getButtonSource(1),
+                Mixing.whenBooleanBecomes(PhidgetReader.getDigitalInput(2), true, globalPeriodic));
     }
 
     public EventSource getFireButton() {
         return Mixing.combine(Mixing.whenBooleanBecomes(PhidgetReader.digitalInputs[1], true), joystick2.getButtonSource(2));
     }
 
-    public BooleanInput getArmShouldBeDown(EventSource disabled) {
-        BooleanStatus armIsDown = new BooleanStatus();
-        armIsDown.setFalseWhen(joystick2.getButtonSource(5));
-        armIsDown.setTrueWhen(joystick2.getButtonSource(6));
-        armIsDown.setTrueWhen(forceArmLower);
-        armIsDown.setFalseWhen(disabled);
-        armIsDown.setFalseWhen(Mixing.whenBooleanBecomes(PhidgetReader.getDigitalInput(7), true));
-        armIsDown.setTrueWhen(Mixing.whenBooleanBecomes(PhidgetReader.getDigitalInput(0), true));
-        return armIsDown;
+    public EventSource getArmRaise() {
+        return Mixing.combine(new EventSource[]{robotDisabled, joystick2.getButtonSource(5), Mixing.whenBooleanBecomes(PhidgetReader.getDigitalInput(7), true)});
+    }
+
+    public EventSource getArmHold() {
+        return Mixing.combine(joystick2.getButtonSource(7), Mixing.whenBooleanBecomes(PhidgetReader.getDigitalInput(5), true));
+    }
+
+    public EventSource getArmLower() {
+        return Mixing.combine(new EventSource[]{forceArmLower, joystick2.getButtonSource(6), Mixing.whenBooleanBecomes(PhidgetReader.getDigitalInput(0), true)});
     }
 
     public BooleanInputPoll rollerIn() {
@@ -51,23 +52,26 @@ public class ControlInterface {
 
     public FloatInputPoll collectorSpeed() {
         /*final TuningContext tuner = new TuningContext(CluckGlobals.getNode(), "PowerSliderTuner");
-        final FloatInput min = tuner.getFloat("Slider Min", 0f);
-        final FloatInput max = tuner.getFloat("Slider Max", 1f);
-        final FloatInput ai = PhidgetReader.getAnalogInput(4);
-        return new FloatInputPoll() {
-            public float readValue() {
-                return normalize(min.readValue(), max.readValue(), ai.readValue());
-            }
-        };*/
+         final FloatInput min = tuner.getFloat("Slider Min", 0f);
+         final FloatInput max = tuner.getFloat("Slider Max", 1f);
+         final FloatInput ai = PhidgetReader.getAnalogInput(4);
+         return new FloatInputPoll() {
+         public float readValue() {
+         return normalize(min.readValue(), max.readValue(), ai.readValue());
+         }
+         };*/
         return Mixing.always(1);
     }
 
-    public void showArm(BooleanInput arm) {
-        arm.addTarget(Mixing.invert(PhidgetReader.digitalOutputs[0]));
-        arm.addTarget(PhidgetReader.digitalOutputs[1]);
+    public BooleanOutput showArmUp() {
+        return PhidgetReader.digitalOutputs[0];
     }
 
-    public void showFiring(EventSource when, BooleanInput canFire) {
+    public BooleanOutput showArmDown() {
+        return PhidgetReader.digitalOutputs[1];
+    }
+
+    public void showFiring(BooleanInput canFire) {
         canFire.addTarget(PhidgetReader.digitalOutputs[2]);
     }
 

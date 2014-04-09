@@ -7,7 +7,6 @@ import ccre.ctrl.Mixing;
 import ccre.event.*;
 import ccre.holders.TuningContext;
 import ccre.igneous.SimpleCore;
-import ccre.log.Logger;
 
 public class RobotMain extends SimpleCore {
 
@@ -16,83 +15,87 @@ public class RobotMain extends SimpleCore {
     private ControlInterface ui;
 
     protected void createSimpleControl() {
-        ui = new ControlInterface(joystick1, joystick2);
+        ui = new ControlInterface(joystick1, joystick2, globalPeriodic, robotDisabled);
         ErrorMessages.setupError(constantPeriodic);
         new CluckTCPServer(CluckGlobals.getNode(), 443).start();
         new CluckTCPServer(CluckGlobals.getNode(), 1180).start();
         new CluckTCPServer(CluckGlobals.getNode(), 1540).start();
         testing = new TestMode(getIsTest());
-        // ***** MOTORS *****
-        FloatOutput leftDrive1 = makeTalonMotor(1, MOTOR_FORWARD, 0.1f), rightDrive1 = makeTalonMotor(3, MOTOR_REVERSE, 0.1f);
-        FloatOutput leftDrive2 = makeTalonMotor(2, MOTOR_FORWARD, 0.1f), rightDrive2 = makeTalonMotor(4, MOTOR_REVERSE, 0.1f);
-        FloatOutput leftDrive = Mixing.combine(leftDrive1, leftDrive2), rightDrive = Mixing.combine(rightDrive1, rightDrive2);
-        Mixing.setWhen(robotDisabled, Mixing.combine(leftDrive, rightDrive), 0);
-        testing.addDriveMotors(leftDrive1, leftDrive2, leftDrive, rightDrive1, rightDrive2, rightDrive);
-        FloatOutput winchMotor = testing.testPublish("winch", makeTalonMotor(5, MOTOR_REVERSE, 1000f));
-        FloatOutput collectorMotor = testing.testPublish("collectorMotor", makeTalonMotor(6, MOTOR_REVERSE, 0.1f));
-        // ***** SOLENOIDS *****
-        BooleanOutput shiftSolenoid = testing.testPublish("sol-shift-1", makeSolenoid(1));
-        BooleanOutput armForwardSolenoid = testing.testPublish("sol-armf-2", makeSolenoid(2));
-        BooleanOutput winchSolenoid = testing.testPublish("sol-winch-3", makeSolenoid(3));
-        BooleanOutput armBackwardSolenoid = testing.testPublish("sol-armr-4", makeSolenoid(4));
-        BooleanOutput openFingers = Mixing.invert(testing.testPublish("sol-open-5", makeSolenoid(5)));
-        //CluckGlobals.getNode().publish("Finger Override", openFingers);
-        BooleanOutput armFloat = testing.testPublish("sol-float-6", makeSolenoid(6));
-        BooleanOutput collectionSolenoids = Mixing.combine(openFingers, armFloat);
-        collectionSolenoids.writeValue(false);
-        // ***** INPUTS *****
-        final FloatInputPoll winchCurrent = makeAnalogInput(1, 8);
-        final BooleanInputPoll catapultNotCocked = makeDigitalInput(2);
-        final FloatInputPoll armLocationSensor = makeAnalogInput(3, 8);
-        CluckGlobals.getNode().publish("Winch Current", Mixing.createDispatch(winchCurrent, globalPeriodic));
-        CluckGlobals.getNode().publish("Catapult Not Cocked", Mixing.createDispatch(catapultNotCocked, globalPeriodic));
-        CluckGlobals.getNode().publish("Arm Location Sensor", Mixing.createDispatch(armLocationSensor, globalPeriodic));
-        // ***** CONTROL INTERFACE *****
-        BooleanInput armShouldBeDown = ui.getArmShouldBeDown(robotDisabled);
-        BooleanInput rearmButton = ui.getRearmCatapult(globalPeriodic);
-        // [[[[ ARM CODE ]]]]
-        Actuators act = new Actuators(duringTeleop);
-        act.createArm(armForwardSolenoid, armBackwardSolenoid, armLocationSensor); // TODO: Remove shooter.rearming's publicity?
-        robotDisabled.addListener(act.armUp);
-        // [[[[ AUTONOMOUS CODE ]]]]
-        AutonomousController instinct = new AutonomousController(this);
-        instinct.putDriveMotors(leftDrive, rightDrive);
-        instinct.putKinectTrigger(KinectControl.main(globalPeriodic,
-                makeDispatchJoystick(5, globalPeriodic), makeDispatchJoystick(6, globalPeriodic)));
-        instinct.putArm(act.armUp, act.armDown, collectorMotor, collectionSolenoids);
-        EventSource fireAutonomousTrigger = instinct.getWhenToFire(), rearmAutonomousTrigger = instinct.getWhenToRearm();
-        EventConsumer notifyRearmFinished = instinct.getNotifyRearmFinished();
-        // [[[[ DRIVE CODE ]]]]
-        BooleanStatus shiftBoolean = DriveCode.createShifting(startedTeleop, startedAutonomous, duringTeleop,
-                shiftSolenoid, ui.getShiftHighButton(), ui.getShiftLowButton());
-        DriveCode.createDrive(startedTeleop, duringTeleop, leftDrive, rightDrive,
-                ui.getLeftDriveAxis(), ui.getRightDriveAxis(), ui.getForwardDriveAxis(), shiftBoolean);
-        // [[[[ SHOOTER CODE ]]]]
-        EventSource fireWhen = Mixing.combine(fireAutonomousTrigger, ui.getFireButton());
+        AutonomousController autonomous = new AutonomousController(this);
+
         FloatInputPoll voltage = getBatteryVoltage();
         CluckGlobals.getNode().publish("Battery Level", Mixing.createDispatch(voltage, globalPeriodic));
-        Shooter shooter = new Shooter(robotDisabled, Mixing.filterEvent(getIsTest(), false, globalPeriodic), constantPeriodic, Mixing.orBooleans(armShouldBeDown, getIsAutonomous()), voltage);
-        EventSource rearmEvent = Mixing.whenBooleanBecomes(rearmButton, true);
-        shooter.setupWinch(winchMotor, winchSolenoid, winchCurrent, rearmButton);
-        shooter.setupRearmTimeout();
-        shooter.handleShooterButtons(
-                Mixing.invert(catapultNotCocked),
-                Mixing.combine(rearmAutonomousTrigger, rearmEvent), fireWhen,
-                notifyRearmFinished
-        );
-        shooter.createTuner(winchCurrent, rearmEvent, catapultNotCocked);
-        BooleanStatus forceRunCollectorForArmAutolower = new BooleanStatus();
-        shooter.setupArmLower(ui.forceArmLower(), forceRunCollectorForArmAutolower);
-        setupCompressor(Mixing.select(shooter.shouldUseCurrent, shooter.totalPowerTaken, shooter.activeAmps));
-        instinct.putCurrentActivator(shooter.shouldUseCurrent);
-        // [[[[ ARM CODE ]]]]
-        Actuators act = new Actuators(duringTeleop);
-        act.createArm(armSolenoid, armShouldBeDown, IS_COMPETITION_ROBOT ? Mixing.alwaysFalse : shooter.rearming);
-        act.createCollector(collectorMotor, ui.collectorSpeed(), collectionSolenoids,
-                ui.rollerIn(), ui.rollerOut(), shooter.winchDisengaged, Mixing.orBooleans(forceRunCollectorForArmAutolower, ui.shouldBeCollectingBecauseLoader()));
-        // [[[[ Phidget Display Code ]]]]
-        ui.showFiring(globalPeriodic, shooter.winchDisengaged);
-        ui.showArm(armShouldBeDown);
+        { // ==== DRIVING ====
+            FloatOutput leftDrive1 = makeTalonMotor(1, MOTOR_FORWARD, 0.1f), rightDrive1 = makeTalonMotor(3, MOTOR_REVERSE, 0.1f);
+            FloatOutput leftDrive2 = makeTalonMotor(2, MOTOR_FORWARD, 0.1f), rightDrive2 = makeTalonMotor(4, MOTOR_REVERSE, 0.1f);
+            FloatOutput leftDrive = Mixing.combine(leftDrive1, leftDrive2), rightDrive = Mixing.combine(rightDrive1, rightDrive2);
+            BooleanOutput shiftSolenoid = testing.testPublish("sol-shift-1", makeSolenoid(1));
+            testing.addDriveMotors(leftDrive1, leftDrive2, leftDrive, rightDrive1, rightDrive2, rightDrive);
+            // Reset
+            Mixing.setWhen(robotDisabled, Mixing.combine(leftDrive, rightDrive), 0);
+            // Teleoperated
+            BooleanStatus shiftBoolean = DriveCode.createShifting(startedTeleop, startedAutonomous, duringTeleop,
+                    shiftSolenoid, ui.getShiftHighButton(), ui.getShiftLowButton());
+            DriveCode.createDrive(startedTeleop, duringTeleop, leftDrive, rightDrive,
+                    ui.getLeftDriveAxis(), ui.getRightDriveAxis(), ui.getForwardDriveAxis(), shiftBoolean);
+            // Autonomous
+            autonomous.putDriveMotors(leftDrive, rightDrive);
+        }
+        FloatInputPoll displayReading;
+        BooleanStatus safeToShoot = new BooleanStatus(), forceRunCollectorForArmAutolower = new BooleanStatus();
+        BooleanInputPoll safeToCollect;
+        { // ==== SHOOTER CODE ====
+            FloatOutput winchMotor = testing.testPublish("winch", makeTalonMotor(5, MOTOR_REVERSE, 1000f));
+            BooleanOutput winchSolenoid = testing.testPublish("sol-winch-3", makeSolenoid(3));
+            FloatInputPoll winchCurrent = makeAnalogInput(1, 8);
+            CluckGlobals.getNode().publish("Winch Current", Mixing.createDispatch(winchCurrent, globalPeriodic));
+            EventSource fireWhen = Mixing.combine(autonomous.getWhenToFire(), ui.getFireButton());
+            // Global
+            Shooter shooter = new Shooter(robotDisabled, Mixing.filterEvent(getIsTest(), false, globalPeriodic),
+                    constantPeriodic, Mixing.orBooleans(safeToShoot, getIsAutonomous()), voltage);
+            EventSource rearmEvent = ui.getRearmCatapult();
+            shooter.setupWinch(winchMotor, winchSolenoid, winchCurrent);
+            // Teleop
+            shooter.setupRearmTimeout();
+            shooter.handleShooterButtons(
+                    Mixing.combine(autonomous.getWhenToRearm(), rearmEvent),
+                    fireWhen, autonomous.getNotifyRearmFinished());
+            shooter.setupArmLower(ui.forceArmLower(), forceRunCollectorForArmAutolower);
+            safeToCollect = shooter.winchDisengaged;
+            // Autonomous
+            autonomous.putCurrentActivator(shooter.shouldUseCurrent);
+            // Readouts
+            displayReading = Mixing.select(shooter.shouldUseCurrent, shooter.totalPowerTaken, shooter.activeAmps);
+            ui.showFiring(shooter.winchDisengaged);
+        }
+        { // ==== ARM CODE ====
+            BooleanOutput armMainSolenoid = testing.testPublish("sol-arm-2", makeSolenoid(2));
+            BooleanOutput armLockSolenoid = testing.testPublish("sol-lock-6", makeSolenoid(6));
+            BooleanOutput openFingers = Mixing.invert(testing.testPublish("sol-fingers-5", makeSolenoid(5)));
+            openFingers.writeValue(false);
+            final FloatInputPoll armLocationSensor = makeAnalogInput(3, 8);
+            FloatOutput collectorMotor = testing.testPublish("collectorMotor", makeTalonMotor(6, MOTOR_REVERSE, 0.1f));
+            CluckGlobals.getNode().publish("Arm Location Sensor", Mixing.createDispatch(armLocationSensor, globalPeriodic));
+            // Teleoperated
+            Actuators act = new Actuators(duringTeleop, safeToShoot, ui.showArmDown(), ui.showArmUp());
+            act.createArm(armMainSolenoid, armLockSolenoid, armLocationSensor);
+            robotDisabled.addListener(act.armUp);
+            ui.getArmLower().addListener(act.armDown);
+            ui.getArmRaise().addListener(act.armUp);
+            ui.getArmHold().addListener(act.armAlign);
+            CluckGlobals.getNode().publish("Arm Align", act.armAlign);
+            act.createCollector(collectorMotor, ui.collectorSpeed(), openFingers,
+                    ui.rollerIn(), ui.rollerOut(), safeToCollect, Mixing.orBooleans(forceRunCollectorForArmAutolower, ui.shouldBeCollectingBecauseLoader()));
+            // Autonomous
+            autonomous.putArm(act.armUp, act.armDown, act.armFloat, collectorMotor, openFingers);
+        }
+        { // ==== KINECT CODE
+            autonomous.putKinectTrigger(KinectControl.main(globalPeriodic,
+                    makeDispatchJoystick(5, globalPeriodic), makeDispatchJoystick(6, globalPeriodic)));
+        }
+        // ==== Compressor ====
+        setupCompressorAndDisplay(displayReading);
+        // ==== Phidget Mode Code ====
         duringTeleop.addListener(new EventConsumer() {
             public void eventFired() {
                 ErrorMessages.displayError(0, "(1540) APOLLO (TELE)", 200);
@@ -110,7 +113,7 @@ public class RobotMain extends SimpleCore {
         });
     }
 
-    private void setupCompressor(FloatInputPoll winch) {
+    private void setupCompressorAndDisplay(FloatInputPoll winch) {
         final BooleanInputPoll pressureSwitch = makeDigitalInput(1);
         final FloatStatus override = new FloatStatus();
         final FloatInputPoll pressureSensor = makeAnalogInput(2, 8);
@@ -126,9 +129,6 @@ public class RobotMain extends SimpleCore {
                 return 100 * ControlInterface.normalize(zeroP.readValue(), oneP.readValue(), pressureSensor.readValue());
             }
         };
-        if (ui == null) {
-            Logger.warning("UI not initialized!");
-        }
         ui.displayPressureAndWinch(percentPressure, globalPeriodic, pressureSwitch, winch);
         constantPeriodic.addListener(new EventConsumer() {
             public void eventFired() {
