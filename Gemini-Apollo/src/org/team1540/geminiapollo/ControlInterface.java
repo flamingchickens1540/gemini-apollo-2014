@@ -31,11 +31,11 @@ public class ControlInterface {
     }
 
     public EventSource getArmRaise() {
-        return Mixing.combine(new EventSource[]{robotDisabled, joystick2.getButtonSource(5), Mixing.whenBooleanBecomes(PhidgetReader.getDigitalInput(7), true)});
+        return Mixing.combine(new EventSource[]{robotDisabled, joystick2.getButtonSource(5), Mixing.whenBooleanBecomes(PhidgetReader.getDigitalInput(5), true)});
     }
 
     public EventSource getArmHold() {
-        return Mixing.combine(joystick2.getButtonSource(7), Mixing.whenBooleanBecomes(PhidgetReader.getDigitalInput(5), true));
+        return Mixing.combine(joystick2.getButtonSource(7), Mixing.whenBooleanBecomes(PhidgetReader.getDigitalInput(7), true));
     }
 
     public EventSource getArmLower() {
