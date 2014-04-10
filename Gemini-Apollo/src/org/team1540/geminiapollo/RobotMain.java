@@ -70,8 +70,8 @@ public class RobotMain extends SimpleCore {
         }
         { // ==== ARM CODE ====
             BooleanOutput armMainSolenoid = testing.testPublish("sol-arm-2", makeSolenoid(2));
-            BooleanOutput armLockSolenoid = testing.testPublish("sol-float-6", makeSolenoid(6));
-            BooleanOutput collectionSolenoids = Mixing.combine(Mixing.invert(testing.testPublish("sol-fingers-5", makeSolenoid(5))), testing.testPublish("sol-lock-4", makeSolenoid(4)));
+            BooleanOutput armLockSolenoid = testing.testPublish("sol-lock-8", makeSolenoid(8));
+            BooleanOutput collectionSolenoids = Mixing.combine(Mixing.invert(testing.testPublish("sol-fingers-5", makeSolenoid(5))), testing.testPublish("sol-float-6", makeSolenoid(6)));
             collectionSolenoids.writeValue(false);
             FloatOutput collectorMotor = testing.testPublish("collectorMotor", makeTalonMotor(6, MOTOR_REVERSE, 0.1f));
             // Teleoperated
@@ -118,8 +118,8 @@ public class RobotMain extends SimpleCore {
         CluckGlobals.getNode().publish("Pressure Sensor", Mixing.createDispatch(pressureSensor, globalPeriodic));
         final TuningContext tuner = new TuningContext(CluckGlobals.getNode(), "PressureTuner");
         tuner.publishSavingEvent("Pressure");
-        final FloatInputPoll zeroP = tuner.getFloat("LowPressure", 0.494f); // 0.5
-        final FloatInputPoll oneP = tuner.getFloat("HighPressure", 2.746f); // 2.745
+        final FloatInputPoll zeroP = tuner.getFloat("LowPressure", 0.494f);
+        final FloatInputPoll oneP = tuner.getFloat("HighPressure", 2.9f);
         final FloatInputPoll percentPressure = new FloatInputPoll() {
             public float readValue() {
                 return 100 * ControlInterface.normalize(zeroP.readValue(), oneP.readValue(), pressureSensor.readValue());
@@ -139,10 +139,16 @@ public class RobotMain extends SimpleCore {
             {
                 CluckGlobals.getNode().publish("CP Bypass", bypass);
             }
+            boolean pressureInRange = false;
             public boolean readValue() {
                 float value = override.readValue(), pct = percentPressure.readValue();
                 boolean byp = this.bypass.readValue(), pswit = pressureSwitch.readValue();
-                boolean auto = byp ? (pct >= 100 || pct < -1) : (pswit || pct >= 105);
+                if (pct >= 100) {
+                    pressureInRange = true;
+                } else if (pct < 97) {
+                    pressureInRange = false;
+                }
+                boolean auto = byp ? (pressureInRange || pct < -1) : (pswit || pct >= 105);
                 return value < 0 || (auto && value == 0);
             }
         }, 1);

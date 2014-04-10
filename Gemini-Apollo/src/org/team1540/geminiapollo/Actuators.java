@@ -14,7 +14,8 @@ public class Actuators {
     private final EventSource during;
     public final EventConsumer armUp, armDown, armAlign;
     private final TuningContext actuatorContext = new TuningContext(CluckGlobals.getNode(), "Actuators");
-    private final FloatStatus movementDelay = actuatorContext.getFloat("arm-hover-delay", 0.3f);
+    private final FloatStatus movementUpDelay = actuatorContext.getFloat("arm-up-delay", 0.3f);
+    private final FloatStatus movementDownDelay = actuatorContext.getFloat("arm-hover-delay", 0.6f);
     public static final int STATE_UP = 0, STATE_DOWN = 1, STATE_ALIGN = 2;
 
     public Actuators(BooleanInputPoll shouldBeRunning, final BooleanInputPoll isTeleop, EventSource updateDuring, final BooleanOutput isSafeToShoot, final BooleanOutput isArmLower,
@@ -66,7 +67,7 @@ public class Actuators {
                             isArmLower.writeValue(true);
                             isArmRaise.writeValue(true);
                             armMain.writeValue(true);
-                            waitForTime((long) (movementDelay.readValue() * 1000L));
+                            waitForTime((long) (movementDownDelay.readValue() * 1000L));
                             next = STATE_ALIGN;
                         }
                     } else if (next == 1) { // Down
@@ -93,7 +94,7 @@ public class Actuators {
                             isArmLower.writeValue(true);
                             isArmRaise.writeValue(true);
                             armMain.writeValue(true);
-                            waitForTime((long) (movementDelay.readValue() * 1000L));
+                            waitForTime((long) (movementUpDelay.readValue() * 1000L));
                             next = STATE_UP;
                         }
                     } else {
