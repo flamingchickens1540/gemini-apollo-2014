@@ -75,12 +75,11 @@ public class RobotMain extends SimpleCore {
             collectionSolenoids.writeValue(false);
             FloatOutput collectorMotor = testing.testPublish("collectorMotor", makeTalonMotor(6, MOTOR_REVERSE, 0.1f));
             // Teleoperated
-            Actuators act = new Actuators(Mixing.orBooleans(getIsTeleop(), getIsAutonomous()), globalPeriodic, safeToShoot, ui.showArmDown(), ui.showArmUp(), armMainSolenoid, armLockSolenoid);
+            Actuators act = new Actuators(Mixing.andBooleans(Mixing.orBooleans(getIsTeleop(), getIsAutonomous()), Mixing.invert(getIsDisabled())), getIsTeleop(), globalPeriodic, safeToShoot, ui.showArmDown(), ui.showArmUp(), armMainSolenoid, armLockSolenoid);
             robotDisabled.addListener(act.armUp);
             ui.getArmLower().addListener(act.armDown);
             ui.getArmRaise().addListener(act.armUp);
             ui.getArmHold().addListener(act.armAlign);
-            CluckGlobals.getNode().publish("Arm Align", act.armAlign);
             act.createCollector(collectorMotor, ui.collectorSpeed(), collectionSolenoids,
                     ui.rollerIn(), ui.rollerOut(), safeToCollect, Mixing.orBooleans(forceRunCollectorForArmAutolower, ui.shouldBeCollectingBecauseLoader()));
             // Autonomous
@@ -136,9 +135,15 @@ public class RobotMain extends SimpleCore {
             }
         });
         useCustomCompressor(new BooleanInputPoll() {
+            BooleanStatus bypass = new BooleanStatus(true);
+            {
+                CluckGlobals.getNode().publish("CP Bypass", bypass);
+            }
             public boolean readValue() {
-                float value = override.readValue();
-                return value < 0 || (pressureSwitch.readValue() && value == 0) || percentPressure.readValue() > 105;
+                float value = override.readValue(), pct = percentPressure.readValue();
+                boolean byp = this.bypass.readValue(), pswit = pressureSwitch.readValue();
+                boolean auto = byp ? (pct >= 100 || pct < -1) : (pswit || pct >= 105);
+                return value < 0 || (auto && value == 0);
             }
         }, 1);
     }

@@ -17,7 +17,7 @@ public class Actuators {
     private final FloatStatus movementDelay = actuatorContext.getFloat("arm-hover-delay", 0.3f);
     public static final int STATE_UP = 0, STATE_DOWN = 1, STATE_ALIGN = 2;
 
-    public Actuators(BooleanInputPoll shouldBeRunning, EventSource updateDuring, final BooleanOutput isSafeToShoot, final BooleanOutput isArmLower,
+    public Actuators(BooleanInputPoll shouldBeRunning, final BooleanInputPoll isTeleop, EventSource updateDuring, final BooleanOutput isSafeToShoot, final BooleanOutput isArmLower,
             final BooleanOutput isArmRaise, final BooleanOutput armMain, final BooleanOutput armLock) {
         this.during = updateDuring;
         final BooleanStatus pressedUp = new BooleanStatus(), pressedDown = new BooleanStatus(), pressedAlign = new BooleanStatus();
@@ -36,6 +36,20 @@ public class Actuators {
             }
 
             protected void autonomousMain() throws AutonomousModeOverException, InterruptedException {
+                if (isTeleop.readValue()) {
+                    isArmLower.writeValue(false);
+                    isArmRaise.writeValue(false);
+                    waitForTime(80);
+                    isArmLower.writeValue(true);
+                    isArmRaise.writeValue(false);
+                    waitForTime(80);
+                    isArmLower.writeValue(false);
+                    isArmRaise.writeValue(true);
+                    waitForTime(80);
+                    isArmLower.writeValue(false);
+                    isArmRaise.writeValue(false);
+                    waitForTime(80);
+                }
                 int next = 0;
                 while (true) {
                     resetInputs();
