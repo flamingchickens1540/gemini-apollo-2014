@@ -70,24 +70,21 @@ public class RobotMain extends SimpleCore {
         }
         { // ==== ARM CODE ====
             BooleanOutput armMainSolenoid = testing.testPublish("sol-arm-2", makeSolenoid(2));
-            BooleanOutput armLockSolenoid = testing.testPublish("sol-lock-6", makeSolenoid(6));
-            BooleanOutput openFingers = Mixing.invert(testing.testPublish("sol-fingers-5", makeSolenoid(5)));
-            openFingers.writeValue(false);
-            final FloatInputPoll armLocationSensor = makeAnalogInput(3, 8);
+            BooleanOutput armLockSolenoid = testing.testPublish("sol-float-6", makeSolenoid(6));
+            BooleanOutput collectionSolenoids = Mixing.combine(Mixing.invert(testing.testPublish("sol-fingers-5", makeSolenoid(5))), testing.testPublish("sol-lock-4", makeSolenoid(4)));
+            collectionSolenoids.writeValue(false);
             FloatOutput collectorMotor = testing.testPublish("collectorMotor", makeTalonMotor(6, MOTOR_REVERSE, 0.1f));
-            CluckGlobals.getNode().publish("Arm Location Sensor", Mixing.createDispatch(armLocationSensor, globalPeriodic));
             // Teleoperated
-            Actuators act = new Actuators(duringTeleop, safeToShoot, ui.showArmDown(), ui.showArmUp());
-            act.createArm(armMainSolenoid, armLockSolenoid, armLocationSensor);
+            Actuators act = new Actuators(Mixing.orBooleans(getIsTeleop(), getIsAutonomous()), globalPeriodic, safeToShoot, ui.showArmDown(), ui.showArmUp(), armMainSolenoid, armLockSolenoid);
             robotDisabled.addListener(act.armUp);
             ui.getArmLower().addListener(act.armDown);
             ui.getArmRaise().addListener(act.armUp);
             ui.getArmHold().addListener(act.armAlign);
             CluckGlobals.getNode().publish("Arm Align", act.armAlign);
-            act.createCollector(collectorMotor, ui.collectorSpeed(), openFingers,
+            act.createCollector(collectorMotor, ui.collectorSpeed(), collectionSolenoids,
                     ui.rollerIn(), ui.rollerOut(), safeToCollect, Mixing.orBooleans(forceRunCollectorForArmAutolower, ui.shouldBeCollectingBecauseLoader()));
             // Autonomous
-            autonomous.putArm(act.armUp, act.armDown, act.armFloat, collectorMotor, openFingers);
+            autonomous.putArm(act.armUp, act.armDown, collectorMotor, collectionSolenoids);
         }
         { // ==== KINECT CODE
             autonomous.putKinectTrigger(KinectControl.main(globalPeriodic,

@@ -5,67 +5,90 @@ import ccre.cluck.CluckGlobals;
 import ccre.ctrl.Mixing;
 import ccre.event.*;
 import ccre.holders.TuningContext;
+import ccre.instinct.AutonomousModeOverException;
+import ccre.instinct.InstinctModule;
+import ccre.log.Logger;
 
 public class Actuators {
 
     private final EventSource during;
-    public final EventConsumer armUp, armDown, armAlign, armFloat;
-    private BooleanOutput armBackward, armForward, showArmRaise, showArmLower;
-    private final BooleanStatus runArmPositioner = new BooleanStatus();
-    private final TuningContext armTuning = new TuningContext(CluckGlobals.getNode(), "ArmTuning").publishSavingEvent("Arm Tuning");
-    private final FloatStatus armTooLowered = armTuning.getFloat("arm-too-lowered", 0f);
-    private final FloatStatus armTooRaised = armTuning.getFloat("arm-too-raised", 10f);
-    private final BooleanStatus collectorRequiresFloat = new BooleanStatus();
+    public final EventConsumer armUp, armDown, armAlign;
+    private final TuningContext actuatorContext = new TuningContext(CluckGlobals.getNode(), "Actuators");
+    private final FloatStatus movementDelay = actuatorContext.getFloat("arm-hover-delay", 0.3f);
+    public static final int STATE_UP = 0, STATE_DOWN = 1, STATE_ALIGN = 2;
 
-    private void reset() {
-        armBackward.writeValue(false);
-        armForward.writeValue(false);
-        runArmPositioner.writeValue(false);
-        showArmLower.writeValue(true);
-        showArmRaise.writeValue(true);
-    }
-    
-    public Actuators(EventSource updateDuring, final BooleanOutput isSafeToShoot, final BooleanOutput isArmLower, final BooleanOutput isArmRaise) {
+    public Actuators(BooleanInputPoll shouldBeRunning, EventSource updateDuring, final BooleanOutput isSafeToShoot, final BooleanOutput isArmLower,
+            final BooleanOutput isArmRaise, final BooleanOutput armMain, final BooleanOutput armLock) {
         this.during = updateDuring;
-        showArmLower = isArmLower;
-        showArmRaise = isArmRaise;
-        armUp = new EventConsumer() {
-            public void eventFired() {
-                reset();
-                if (!collectorRequiresFloat.readValue()) {
-                    armBackward.writeValue(true);
-                    isSafeToShoot.writeValue(false);
-                    isArmRaise.writeValue(false);
+        final BooleanStatus pressedUp = new BooleanStatus(), pressedDown = new BooleanStatus(), pressedAlign = new BooleanStatus();
+        armUp = pressedUp.getSetTrueEvent();
+        armDown = pressedDown.getSetTrueEvent();
+        armAlign = pressedAlign.getSetTrueEvent();
+        new InstinctModule(shouldBeRunning) {
+            private void resetInputs() {
+                pressedUp.writeValue(false);
+                pressedDown.writeValue(false);
+                pressedAlign.writeValue(false);
+            }
+
+            protected String getTypeName() {
+                return "actuator control loop";
+            }
+
+            protected void autonomousMain() throws AutonomousModeOverException, InterruptedException {
+                int next = 0;
+                while (true) {
+                    resetInputs();
+                    isSafeToShoot.writeValue(next != STATE_UP);
+                    if (next == STATE_UP) { // Up
+                        Logger.fine("Actuator state: UP");
+                        armLock.writeValue(false);
+                        armMain.writeValue(false);
+                        isArmLower.writeValue(true);
+                        isArmRaise.writeValue(false);
+                        if (waitUntilOneOf(new BooleanInputPoll[]{pressedDown, pressedAlign}) == 0) {
+                            next = STATE_DOWN;
+                        } else {
+                            isArmLower.writeValue(true);
+                            isArmRaise.writeValue(true);
+                            armMain.writeValue(true);
+                            waitForTime((long) (movementDelay.readValue() * 1000L));
+                            next = STATE_ALIGN;
+                        }
+                    } else if (next == 1) { // Down
+                        Logger.fine("Actuator state: DOWN");
+                        armLock.writeValue(false);
+                        armMain.writeValue(true);
+                        isArmLower.writeValue(false);
+                        isArmRaise.writeValue(true);
+                        if (waitUntilOneOf(new BooleanInputPoll[]{pressedUp, pressedAlign}) == 0) {
+                            next = STATE_UP;
+                        } else {
+                            next = STATE_ALIGN;
+                        }
+                    } else if (next == 2) { // Align
+                        Logger.fine("Actuator state: ALIGN");
+                        armLock.writeValue(true);
+                        armMain.writeValue(false);
+                        isArmLower.writeValue(false);
+                        isArmRaise.writeValue(false);
+                        if (waitUntilOneOf(new BooleanInputPoll[]{pressedDown, pressedUp}) == 0) {
+                            next = STATE_DOWN;
+                        } else {
+                            isSafeToShoot.writeValue(false);
+                            isArmLower.writeValue(true);
+                            isArmRaise.writeValue(true);
+                            armMain.writeValue(true);
+                            waitForTime((long) (movementDelay.readValue() * 1000L));
+                            next = STATE_UP;
+                        }
+                    } else {
+                        next = STATE_UP;
+                        Logger.warning("Bad Actuator state! Resetting to up.");
+                    }
                 }
             }
-        };
-        armDown = new EventConsumer() {
-            public void eventFired() {
-                reset();
-                if (!collectorRequiresFloat.readValue()) {
-                    armForward.writeValue(true);
-                    isSafeToShoot.writeValue(true);
-                    isArmLower.writeValue(false);
-                }
-            }
-        };
-        armAlign = new EventConsumer() {
-            public void eventFired() {
-                reset();
-                if (!collectorRequiresFloat.readValue()) {
-                    runArmPositioner.writeValue(true);
-                    isSafeToShoot.writeValue(true);
-                    isArmRaise.writeValue(false);
-                    isArmLower.writeValue(false);
-                }
-            }
-        };
-        armFloat = new EventConsumer() {
-            public void eventFired() {
-                reset();
-            }
-        };
-        Mixing.whenBooleanBecomes(collectorRequiresFloat, true).addListener(armFloat);
+        }.updateWhen(updateDuring);
     }
 
     public void createCollector(FloatOutput collectorMotor, FloatInputPoll speed, BooleanOutput openFingers,
@@ -79,18 +102,6 @@ public class Actuators {
                 Mixing.always(0f), Mixing.negate(speed),
                 Mixing.select(disableCollector, speed, Mixing.always(0)), speed),
                 collectorMotor);
-        Mixing.pumpWhen(during, Mixing.orBooleans(rollersIn, rollersOut), Mixing.combine(openFingers, collectorRequiresFloat));
-    }
-
-    public void createArm(BooleanOutput armSolenoidForward, BooleanOutput armSolenoidBackward, final FloatInputPoll active) {
-        this.armForward = armSolenoidForward;
-        this.armBackward = armSolenoidBackward;
-        during.addListener(Mixing.filterEvent(runArmPositioner, true, new EventConsumer() {
-            public void eventFired() {
-                float val = active.readValue();
-                armBackward.writeValue(val < armTooRaised.readValue());
-                armForward.writeValue(val > armTooLowered.readValue());
-            }
-        }));
+        Mixing.pumpWhen(during, Mixing.orBooleans(rollersIn, rollersOut), openFingers);
     }
 }

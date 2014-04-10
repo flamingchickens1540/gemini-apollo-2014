@@ -21,7 +21,7 @@ public class AutonomousController extends InstinctModule {
     private FloatOutput bothDrive, collect;
     private BooleanOutput collectSols, useCurrent;
     private BooleanInputPoll kinectTrigger;
-    private EventConsumer lowerArm, raiseArm, floatArm;
+    private EventConsumer lowerArm, raiseArm;
     private final Event fireWhenEvent = new Event(), rearmWhenEvent = new Event();
     // Tuned constants are below near the autonomous modes.
     private final StringHolder option = new StringHolder("double");
@@ -138,7 +138,6 @@ public class AutonomousController extends InstinctModule {
         waitForTime(doubleFireTime);
         winchGotten.writeValue(false);
         rearmWhenEvent.produce();
-        floatArm.eventFired();
         collectSols.writeValue(true);
         Logger.fine("Rearming... (and driving)");
         bothDrive.writeValue(1f);
@@ -234,10 +233,9 @@ public class AutonomousController extends InstinctModule {
         return rearmWhenEvent;
     }
 
-    public void putArm(EventConsumer lowerArm, EventConsumer raiseArm, EventConsumer floatArm, FloatOutput collector, BooleanOutput collectorSolenoids) {
+    public void putArm(EventConsumer lowerArm, EventConsumer raiseArm, FloatOutput collector, BooleanOutput collectorSolenoids) {
         this.lowerArm = lowerArm;
         this.raiseArm = raiseArm;
-        this.floatArm = floatArm;
         collect = collector;
         collectSols = collectorSolenoids;
     }
