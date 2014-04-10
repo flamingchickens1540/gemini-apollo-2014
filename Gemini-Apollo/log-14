@@ -1,0 +1,109 @@
+Logging began at Wed Apr 09 17:58:04 PDT 2014 [1397091484422]
+[298 INFO] Set look-and-feel!
+[1379 SEVERE] Abrupt termination of Thread CluckTCPServer-7
+java.net.BindException: Address already in use: JVM_Bind
+	at java.net.DualStackPlainSocketImpl.bind0(Native Method)
+	at java.net.DualStackPlainSocketImpl.socketBind(DualStackPlainSocketImpl.java:106)
+	at java.net.AbstractPlainSocketImpl.bind(AbstractPlainSocketImpl.java:376)
+	at java.net.PlainSocketImpl.bind(PlainSocketImpl.java:190)
+	at java.net.ServerSocket.bind(ServerSocket.java:376)
+	at java.net.ServerSocket.<init>(ServerSocket.java:237)
+	at java.net.ServerSocket.<init>(ServerSocket.java:128)
+	at ccre.net.DefaultNetworkProvider.openServer(DefaultNetworkProvider.java:98)
+	at ccre.net.Network.bind(Network.java:162)
+	at ccre.net.ConnectionReceiverThread.threadBody(ConnectionReceiverThread.java:56)
+	at ccre.concurrency.ReporterThread.run(ReporterThread.java:74)
+[1566 FINE] Client connected at 1397091485988 named phidget
+[1577 FINE] [LOCAL] Rechecking logging...
+[1669 CONFIG] Loaded config for autom-forward-speed: def:0.5 old:0.5 new:0.5
+[1671 CONFIG] Loaded config for autom-forward-delay: def:0.5 old:0.5 new:0.5
+[1672 CONFIG] Loaded config for autom-hotcheck-postfire-pause: def:0.5 old:0.5 new:0.5
+[1672 CONFIG] Loaded config for autom-hotcheck-postfire-speed: def:-0.7 old:-0.7 new:-0.7
+[1672 CONFIG] Loaded config for autom-hotcheck-postfire-move: def:0.0 old:0.0 new:0.0
+[1672 CONFIG] Loaded config for autom-hotcheck-collector: def:0.5 old:0.5 new:0.5
+[1673 CONFIG] Loaded config for autom-hotcheck-prefire-pause: def:1.0 old:1.0 new:1.0
+[1673 CONFIG] Loaded config for autom-hotcheck-armmove-time: def:0.0 old:0.0 new:0.0
+[1674 INFO] Autonomous mode is currently set to: double
+[1692 INFO] No data file for: DriveTuning - assuming empty.
+[1699 CONFIG] Loaded config for Winch Speed: def:1.0 old:1.0 new:1.0
+[1699 CONFIG] Loaded config for Winch Rearm Timeout: def:5.0 old:5.0 new:5.0
+[1699 CONFIG] Loaded config for Amp Threshold: def:5.0 old:5.0 new:5.0
+[1717 INFO] No data file for: Actuators - assuming empty.
+[1727 INFO] No data file for: PressureTuner - assuming empty.
+[1763 INFO] Started actuator control loop.
+[1763 FINE] Actuator state: UP
+[2590 CONFIG] [LOCAL] Requested loggers: [auto-0, phidget/auto-0]
+[2592 CONFIG] [LOCAL] Loaded logger: phidget/auto-0
+[6576 INFO] [NET] Current time: Wed Apr 09 17:58:10 PDT 2014
+Logging continues at Wed Apr 09 17:58:14 PDT 2014
+Logging continues at Wed Apr 09 17:58:24 PDT 2014
+[27811 FINE] Actuator state: DOWN
+Logging continues at Wed Apr 09 17:58:34 PDT 2014
+[37132 FINE] Actuator state: UP
+[39873 FINE] Actuator state: DOWN
+Logging continues at Wed Apr 09 17:58:44 PDT 2014
+[40613 FINE] Actuator state: UP
+[41101 FINE] Actuator state: DOWN
+[42641 FINE] Actuator state: ALIGN
+[47867 FINE] Actuator state: UP
+Logging continues at Wed Apr 09 17:58:54 PDT 2014
+[51228 FINE] Actuator state: ALIGN
+[54849 FINE] Actuator state: UP
+[59495 FINE] Actuator state: ALIGN
+Logging continues at Wed Apr 09 17:59:04 PDT 2014
+[60333 FINE] Actuator state: UP
+[61091 FINE] Actuator state: DOWN
+[61851 FINE] Actuator state: ALIGN
+[62794 FINE] Actuator state: UP
+[63471 FINE] Actuator state: DOWN
+[65131 FINE] Actuator state: ALIGN
+[67480 FINE] Actuator state: DOWN
+[68320 FINE] Actuator state: UP
+[69228 FINE] Actuator state: ALIGN
+[69530 FINE] Actuator state: DOWN
+Logging continues at Wed Apr 09 17:59:14 PDT 2014
+[70227 FINE] Actuator state: ALIGN
+[71106 FINE] Actuator state: UP
+Logging continues at Wed Apr 09 17:59:24 PDT 2014
+[87427 FINE] Actuator state: DOWN
+[89895 FINE] Actuator state: ALIGN
+Logging continues at Wed Apr 09 17:59:34 PDT 2014
+[91459 FINE] Actuator state: UP
+[92852 FINE] Actuator state: ALIGN
+[93872 FINE] Actuator state: UP
+[94573 FINE] Actuator state: ALIGN
+[94870 FINE] Actuator state: DOWN
+[95431 FINE] Actuator state: ALIGN
+[100003 INFO] Fire Begin
+Logging continues at Wed Apr 09 17:59:44 PDT 2014
+[102639 FINE] Actuator state: UP
+[104676 INFO] no fire: run the winch!
+[108864 INFO] no rearm: lower the arm!
+Logging continues at Wed Apr 09 17:59:54 PDT 2014
+[110744 FINE] Actuator state: ALIGN
+[111504 INFO] rearm
+[113551 FINE] Actuator state: UP
+[114603 INFO] fire button: stop rearm
+[116842 INFO] no fire: autolowering the arm.
+[116843 INFO] Autolower!
+[116909 FINE] Actuator state: DOWN
+[118045 INFO] Fire Begin
+[119752 FINE] Actuator state: ALIGN
+Logging continues at Wed Apr 09 18:00:04 PDT 2014
+[120597 FINE] Actuator state: DOWN
+[121198 FINE] Actuator state: ALIGN
+[122098 FINE] Actuator state: UP
+[124170 FINE] Actuator state: ALIGN
+[124273 FINE] Actuator state: DOWN
+[125276 FINE] Actuator state: ALIGN
+[126398 FINE] Actuator state: UP
+[127239 FINE] Actuator state: ALIGN
+[127800 FINE] Actuator state: DOWN
+[128420 FINE] Actuator state: ALIGN
+[129241 FINE] Actuator state: UP
+[129631 FINE] Actuator state: ALIGN
+Logging continues at Wed Apr 09 18:00:14 PDT 2014
+[132106 FINE] Actuator state: UP
+Logging continues at Wed Apr 09 18:00:24 PDT 2014
+Logging continues at Wed Apr 09 18:00:34 PDT 2014
+Logging continues at Wed Apr 09 18:00:44 PDT 2014

@@ -64,11 +64,11 @@ public class ControlInterface {
     }
 
     public BooleanOutput showArmUp() {
-        return PhidgetReader.digitalOutputs[0];
+        return PhidgetReader.digitalOutputs[1];
     }
 
     public BooleanOutput showArmDown() {
-        return PhidgetReader.digitalOutputs[1];
+        return PhidgetReader.digitalOutputs[0];
     }
 
     public void showFiring(BooleanInput canFire) {
