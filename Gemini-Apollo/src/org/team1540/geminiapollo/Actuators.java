@@ -11,16 +11,15 @@ import ccre.log.Logger;
 
 public class Actuators {
 
-    private final EventSource during;
     public final EventConsumer armUp, armDown, armAlign;
-    private final TuningContext actuatorContext = new TuningContext(CluckGlobals.getNode(), "Actuators");
+    private final TuningContext actuatorContext = new TuningContext(CluckGlobals.getNode(), "Actuators").publishSavingEvent("Actuators");
     private final FloatStatus movementUpDelay = actuatorContext.getFloat("arm-up-delay", 0.3f);
-    private final FloatStatus movementDownDelay = actuatorContext.getFloat("arm-hover-delay", 0.6f);
+    private final FloatStatus movementDownDelay = actuatorContext.getFloat("arm-hover-delay", 0.8f);
+    private final FloatStatus collectorSpeed = actuatorContext.getFloat("collector-speed", 1f);
     public static final int STATE_UP = 0, STATE_DOWN = 1, STATE_ALIGN = 2;
 
     public Actuators(BooleanInputPoll shouldBeRunning, final BooleanInputPoll isTeleop, EventSource updateDuring, final BooleanOutput isSafeToShoot, final BooleanOutput isArmLower,
             final BooleanOutput isArmRaise, final BooleanOutput armMain, final BooleanOutput armLock) {
-        this.during = updateDuring;
         final BooleanStatus pressedUp = new BooleanStatus(), pressedDown = new BooleanStatus(), pressedAlign = new BooleanStatus();
         armUp = pressedUp.getSetTrueEvent();
         armDown = pressedDown.getSetTrueEvent();
@@ -106,7 +105,7 @@ public class Actuators {
         }.updateWhen(updateDuring);
     }
 
-    public void createCollector(FloatOutput collectorMotor, FloatInputPoll speed, BooleanOutput openFingers,
+    public void createCollector(EventSource during, FloatOutput collectorMotor, BooleanOutput openFingers,
             final BooleanInputPoll rollersIn, final BooleanInputPoll rollersOut, BooleanInputPoll disableCollector, BooleanInputPoll overrideRoll) {
         during.addListener(Mixing.filterEvent(disableCollector, true, Mixing.filterEvent(rollersIn, true, new EventConsumer() {
             public void eventFired() {
@@ -114,8 +113,8 @@ public class Actuators {
             }
         })));
         Mixing.pumpWhen(during, Mixing.quadSelect(Mixing.orBooleans(rollersIn, overrideRoll), rollersOut,
-                Mixing.always(0f), Mixing.negate(speed),
-                Mixing.select(disableCollector, speed, Mixing.always(0)), speed),
+                Mixing.always(0f), Mixing.negate((FloatInputPoll) collectorSpeed),
+                Mixing.select(disableCollector, collectorSpeed, Mixing.always(0)), collectorSpeed),
                 collectorMotor);
         Mixing.pumpWhen(during, Mixing.orBooleans(rollersIn, rollersOut), openFingers);
     }

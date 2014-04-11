@@ -4,9 +4,11 @@ import ccre.chan.*;
 import ccre.cluck.CluckGlobals;
 import ccre.cluck.tcp.CluckTCPServer;
 import ccre.ctrl.Mixing;
+import ccre.ctrl.Ticker;
 import ccre.event.*;
 import ccre.holders.TuningContext;
 import ccre.igneous.SimpleCore;
+import ccre.log.Logger;
 
 public class RobotMain extends SimpleCore {
 
@@ -43,7 +45,7 @@ public class RobotMain extends SimpleCore {
         }
         FloatInputPoll displayReading;
         BooleanStatus safeToShoot = new BooleanStatus(), forceRunCollectorForArmAutolower = new BooleanStatus();
-        BooleanInputPoll safeToCollect;
+        BooleanInputPoll safeToCollect, disableCompressorForRearm;
         { // ==== SHOOTER CODE ====
             FloatOutput winchMotor = testing.testPublish("winch", makeTalonMotor(5, MOTOR_REVERSE, 1000f));
             BooleanOutput winchSolenoid = testing.testPublish("sol-winch-3", makeSolenoid(3));
@@ -62,6 +64,7 @@ public class RobotMain extends SimpleCore {
                     fireWhen, autonomous.getNotifyRearmFinished());
             shooter.setupArmLower(ui.forceArmLower(), forceRunCollectorForArmAutolower);
             safeToCollect = shooter.winchDisengaged;
+            disableCompressorForRearm = shooter.rearming;
             // Autonomous
             autonomous.putCurrentActivator(shooter.shouldUseCurrent);
             // Readouts
@@ -80,17 +83,17 @@ public class RobotMain extends SimpleCore {
             ui.getArmLower().addListener(act.armDown);
             ui.getArmRaise().addListener(act.armUp);
             ui.getArmHold().addListener(act.armAlign);
-            act.createCollector(collectorMotor, ui.collectorSpeed(), collectionSolenoids,
+            act.createCollector(duringTeleop, collectorMotor, collectionSolenoids,
                     ui.rollerIn(), ui.rollerOut(), safeToCollect, Mixing.orBooleans(forceRunCollectorForArmAutolower, ui.shouldBeCollectingBecauseLoader()));
             // Autonomous
-            autonomous.putArm(act.armUp, act.armDown, collectorMotor, collectionSolenoids);
+            autonomous.putArm(act.armDown, act.armUp, act.armAlign, collectorMotor, collectionSolenoids);
         }
         { // ==== KINECT CODE
             autonomous.putKinectTrigger(KinectControl.main(globalPeriodic,
                     makeDispatchJoystick(5, globalPeriodic), makeDispatchJoystick(6, globalPeriodic)));
         }
         // ==== Compressor ====
-        setupCompressorAndDisplay(displayReading);
+        setupCompressorAndDisplay(displayReading, disableCompressorForRearm);
         // ==== Phidget Mode Code ====
         duringTeleop.addListener(new EventConsumer() {
             public void eventFired() {
@@ -109,7 +112,7 @@ public class RobotMain extends SimpleCore {
         });
     }
 
-    private void setupCompressorAndDisplay(FloatInputPoll winch) {
+    private void setupCompressorAndDisplay(FloatInputPoll winch, final BooleanInputPoll disableCompressor) {
         final BooleanInputPoll pressureSwitch = makeDigitalInput(1);
         final FloatStatus override = new FloatStatus();
         final FloatInputPoll pressureSensor = makeAnalogInput(2, 8);
@@ -125,6 +128,15 @@ public class RobotMain extends SimpleCore {
                 return 100 * ControlInterface.normalize(zeroP.readValue(), oneP.readValue(), pressureSensor.readValue());
             }
         };
+        EventConsumer report = new EventConsumer() {
+            public void eventFired() {
+                Logger.fine("Pressure: " + percentPressure.readValue());
+            }
+        };
+        startedAutonomous.addListener(report);
+        startedTeleop.addListener(report);
+        robotDisabled.addListener(report);
+        new Ticker(10000).addListener(report);
         ui.displayPressureAndWinch(percentPressure, globalPeriodic, pressureSwitch, winch);
         constantPeriodic.addListener(new EventConsumer() {
             public void eventFired() {
@@ -149,7 +161,7 @@ public class RobotMain extends SimpleCore {
                     pressureInRange = false;
                 }
                 boolean auto = byp ? (pressureInRange || pct < -1) : (pswit || pct >= 105);
-                return value < 0 || (auto && value == 0);
+                return value < 0 || ((auto || disableCompressor.readValue()) && value == 0);
             }
         }, 1);
     }

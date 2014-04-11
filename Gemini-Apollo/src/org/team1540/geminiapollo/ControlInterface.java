@@ -1,10 +1,12 @@
 package org.team1540.geminiapollo;
 
 import ccre.chan.*;
+import ccre.cluck.CluckGlobals;
 import ccre.ctrl.ExpirationTimer;
 import ccre.ctrl.IDispatchJoystick;
 import ccre.ctrl.Mixing;
 import ccre.event.*;
+import ccre.holders.TuningContext;
 import ccre.phidget.PhidgetReader;
 
 public class ControlInterface {
@@ -50,17 +52,16 @@ public class ControlInterface {
         return Mixing.orBooleans(PhidgetReader.getDigitalInput(4), Mixing.floatIsAtMost(joystick2.getAxisChannel(2), -0.2f));
     }
 
-    public FloatInputPoll collectorSpeed() {
-        /*final TuningContext tuner = new TuningContext(CluckGlobals.getNode(), "PowerSliderTuner");
-         final FloatInput min = tuner.getFloat("Slider Min", 0f);
-         final FloatInput max = tuner.getFloat("Slider Max", 1f);
-         final FloatInput ai = PhidgetReader.getAnalogInput(4);
-         return new FloatInputPoll() {
-         public float readValue() {
-         return normalize(min.readValue(), max.readValue(), ai.readValue());
-         }
-         };*/
-        return Mixing.always(1);
+    public FloatInputPoll getSlider() {
+        final TuningContext tuner = new TuningContext(CluckGlobals.getNode(), "PowerSliderTuner");
+        final FloatInput min = tuner.getFloat("Slider Min", 0f);
+        final FloatInput max = tuner.getFloat("Slider Max", 1f);
+        final FloatInput ai = PhidgetReader.getAnalogInput(4);
+        return new FloatInputPoll() {
+            public float readValue() {
+                return normalize(min.readValue(), max.readValue(), ai.readValue());
+            }
+        };
     }
 
     public BooleanOutput showArmUp() {

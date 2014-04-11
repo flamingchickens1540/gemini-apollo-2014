@@ -21,7 +21,7 @@ public class AutonomousController extends InstinctModule {
     private FloatOutput bothDrive, collect;
     private BooleanOutput collectSols, useCurrent;
     private BooleanInputPoll kinectTrigger;
-    private EventConsumer lowerArm, raiseArm;
+    private EventConsumer lowerArm, raiseArm, alignArm;
     private final Event fireWhenEvent = new Event(), rearmWhenEvent = new Event();
     // Tuned constants are below near the autonomous modes.
     private final StringHolder option = new StringHolder("double");
@@ -53,7 +53,7 @@ public class AutonomousController extends InstinctModule {
         bothDrive.writeValue(0);
     }
 
-    private final FloatStatus forwardMovement = tune.getFloat("autom-forward-speed", 0.5f);
+    private final FloatStatus forwardMovement = tune.getFloat("autom-forward-speed", -1f);
     private final FloatStatus forwardDelay = tune.getFloat("autom-forward-delay", 0.5f);
 
     private void autoForward() throws AutonomousModeOverException, InterruptedException {
@@ -91,7 +91,7 @@ public class AutonomousController extends InstinctModule {
             Logger.fine("Skip Arm");
         }
         Logger.fine("Arrived");
-        lowerArm.eventFired();
+        alignArm.eventFired();
         float timeoutTime = currentTime.readValue() + hotcheckTimeoutAfter.readValue();
         BooleanInputPoll timedout = Mixing.floatIsAtLeast(currentTime, timeoutTime);
         if (waitUntilOneOf(new BooleanInputPoll[]{kinectTrigger, timedout}) != 0) {
@@ -106,6 +106,7 @@ public class AutonomousController extends InstinctModule {
         bothDrive.writeValue(hotcheckPostFireSpeed.readValue());
         waitForTime(hotcheckPostFireMove);
         bothDrive.writeValue(0);
+        Logger.fine("Hotcheck done!");
     }
 
     private final FloatStatus doubleArmMoveTime = tune.getFloat("autom-double-armmove-time", 0.9f);
@@ -126,9 +127,11 @@ public class AutonomousController extends InstinctModule {
             Logger.fine("Aligned.");
             bothDrive.writeValue(0);
         }
+        Logger.info("Collect On");
         collect.writeValue(1f);
-        lowerArm.eventFired();
+        alignArm.eventFired();
         waitForTime((long) (1000L * doubleArmMoveTime.readValue() + 0.5f) / 2);
+        Logger.info("Collect Off");
         collect.writeValue(0f);
         waitUntil(winchGotten);
         waitForTime((long) (1000L * doubleArmMoveTime.readValue() + 0.5f) / 2);
@@ -137,6 +140,7 @@ public class AutonomousController extends InstinctModule {
         fireWhenEvent.produce();
         waitForTime(doubleFireTime);
         winchGotten.writeValue(false);
+        lowerArm.eventFired();
         rearmWhenEvent.produce();
         collectSols.writeValue(true);
         Logger.fine("Rearming... (and driving)");
@@ -150,7 +154,7 @@ public class AutonomousController extends InstinctModule {
         Logger.fine("Rearmed!");
         collect.writeValue(1f);
         waitForTime(doubleCollectTime);
-        raiseArm.eventFired();
+        alignArm.eventFired();
         collectSols.writeValue(false);
         collect.writeValue(0);
         Logger.fine("Collected.");
@@ -161,7 +165,6 @@ public class AutonomousController extends InstinctModule {
             Logger.fine("Aligned.");
             bothDrive.writeValue(0);
         }
-        lowerArm.eventFired();
         waitForTime(doubleArmMoveTime);
         Logger.fine("Firing...");
         fireWhenEvent.produce();
@@ -233,9 +236,10 @@ public class AutonomousController extends InstinctModule {
         return rearmWhenEvent;
     }
 
-    public void putArm(EventConsumer lowerArm, EventConsumer raiseArm, FloatOutput collector, BooleanOutput collectorSolenoids) {
+    public void putArm(EventConsumer lowerArm, EventConsumer raiseArm, EventConsumer alignArm, FloatOutput collector, BooleanOutput collectorSolenoids) {
         this.lowerArm = lowerArm;
         this.raiseArm = raiseArm;
+        this.alignArm = alignArm;
         collect = collector;
         collectSols = collectorSolenoids;
     }

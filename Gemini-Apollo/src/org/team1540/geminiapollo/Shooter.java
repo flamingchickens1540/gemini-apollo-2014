@@ -12,7 +12,7 @@ public class Shooter {
     private final EventSource periodic, constantPeriodic;
     private final TuningContext tuner = new TuningContext(CluckGlobals.getNode(), "ShooterValues");
     public final BooleanStatus winchDisengaged = new BooleanStatus();
-    private final BooleanStatus rearming = new BooleanStatus();
+    public final BooleanStatus rearming = new BooleanStatus();
     private BooleanInputPoll winchPastThreshold;
     private final BooleanInputPoll isArmInTheWay;
     private final FloatInputPoll batteryLevel;
