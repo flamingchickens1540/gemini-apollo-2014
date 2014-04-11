@@ -2,12 +2,20 @@ package org.team1540.geminiapollo;
 
 import ccre.chan.*;
 import ccre.cluck.CluckGlobals;
+import ccre.ctrl.Mixing;
 import ccre.event.*;
 import ccre.holders.TuningContext;
 
 public class DriveCode {
 
-    public static void createDrive(EventSource begin, EventSource during, final FloatOutput leftDrive, final FloatOutput rightDrive, final FloatInputPoll leftDriveAxis, final FloatInputPoll rightDriveAxis, final FloatInputPoll forwardDriveAxis, final BooleanStatus notShifted) {
+    public static void createDrive(EventSource begin, EventSource during,
+            final FloatOutput leftDrive, final FloatOutput rightDrive,
+            final FloatInputPoll leftDriveAxis, final FloatInputPoll rightDriveAxis,
+            final FloatInputPoll forwardDriveAxis, final BooleanStatus notShifted,
+            BooleanInputPoll overrideDisabled, BooleanInputPoll disableDriving) {
+        
+        final BooleanInputPoll actuallyDisable = Mixing.andBooleans(disableDriving, Mixing.invert(overrideDisabled));
+
         TuningContext wheelTuner = new TuningContext(CluckGlobals.getNode(), "DriveTuning");
         wheelTuner.publishSavingEvent("Drive Tuning");
         final FloatStatus hfLeft = wheelTuner.getFloat("High Left Fwd", 1f), hfRight = wheelTuner.getFloat("High Right Fwd", 1f);
@@ -19,7 +27,9 @@ public class DriveCode {
             public void eventFired() {
                 float leftDriveValue = leftDriveAxis.readValue() + forwardDriveAxis.readValue();
                 float rightDriveValue = rightDriveAxis.readValue() + forwardDriveAxis.readValue();
-                if (!notShifted.readValue()) {
+                if (actuallyDisable.readValue()) {
+                    leftDriveValue = rightDriveValue = 0;
+                } else if (!notShifted.readValue()) {
                     leftDriveValue *= leftDriveValue > 0 ? hfLeft.readValue() : hbLeft.readValue();
                     rightDriveValue *= rightDriveValue > 0 ? hfRight.readValue() : hbRight.readValue();
                 } else {

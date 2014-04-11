@@ -127,6 +127,10 @@ public class ControlInterface {
         return joystick1.getButtonSource(3);
     }
 
+    public BooleanInputPoll getToggleDisabled() {
+        return Mixing.orBooleans(joystick1.getButtonChannel(7), joystick1.getButtonChannel(8));
+    }
+
     public EventConsumer forceArmLower() {
         return forceArmLower;
     }
