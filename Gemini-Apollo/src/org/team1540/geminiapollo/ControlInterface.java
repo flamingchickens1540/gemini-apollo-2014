@@ -29,7 +29,7 @@ public class ControlInterface {
     }
 
     public EventSource getFireButton() {
-        return Mixing.combine(Mixing.whenBooleanBecomes(PhidgetReader.digitalInputs[1], true), joystick2.getButtonSource(2));
+        return Mixing.combine(new EventSource[]{Mixing.whenBooleanBecomes(PhidgetReader.digitalInputs[1], true), joystick1.getButtonSource(6), joystick2.getButtonSource(2)});
     }
 
     public EventSource getArmRaise() {
@@ -76,7 +76,7 @@ public class ControlInterface {
         canFire.addTarget(PhidgetReader.digitalOutputs[2]);
     }
 
-    public void displayPressureAndWinch(final FloatInputPoll level, EventSource update, final BooleanInputPoll cprSwitch, final FloatInputPoll currentSensor) {
+    public void displayPressureAndWinch(final FloatInputPoll level, EventSource update, final BooleanInputPoll cprSwitch, final FloatInputPoll winchValue) {
         update.addListener(new EventConsumer() {
             int prevValue = -1000;
             int prevWinchValue = -1000;
@@ -85,7 +85,7 @@ public class ControlInterface {
 
             public void eventFired() {
                 int c = (int) level.readValue();
-                int winch = (int) (currentSensor.readValue());
+                int winch = (int) (winchValue.readValue());
                 boolean cpr = cprSwitch.readValue();
                 if (c == prevValue && (prevValueCpr == cpr) && prevWinchValue == winch && (ctr++ % 100 != 0)) {
                     return;

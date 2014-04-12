@@ -29,7 +29,7 @@ public class RobotMain extends SimpleCore {
         CluckGlobals.getNode().publish("Battery Level", Mixing.createDispatch(voltage, globalPeriodic));
         FloatInputPoll displayReading;
         BooleanStatus safeToShoot = new BooleanStatus(), forceRunCollectorForArmAutolower = new BooleanStatus();
-        BooleanInputPoll safeToCollect, disableSystemsForRearm;
+        BooleanInputPoll unsafeToCollect, disableSystemsForRearm;
         { // ==== SHOOTER CODE ====
             FloatOutput winchMotor = testing.testPublish("winch", makeTalonMotor(5, MOTOR_REVERSE, 1000f));
             BooleanOutput winchSolenoid = testing.testPublish("sol-winch-3", makeSolenoid(3));
@@ -40,14 +40,14 @@ public class RobotMain extends SimpleCore {
             Shooter shooter = new Shooter(robotDisabled, Mixing.filterEvent(getIsTest(), false, globalPeriodic),
                     constantPeriodic, Mixing.orBooleans(safeToShoot, getIsAutonomous()), voltage);
             EventSource rearmEvent = ui.getRearmCatapult();
-            shooter.setupWinch(winchMotor, winchSolenoid, winchCurrent);
+            shooter.setupWinch(winchMotor, winchSolenoid, winchCurrent, getIsAutonomous());
             // Teleop
             shooter.setupRearmTimeout();
             shooter.handleShooterButtons(
                     Mixing.combine(autonomous.getWhenToRearm(), rearmEvent),
                     fireWhen, autonomous.getNotifyRearmFinished());
             shooter.setupArmLower(ui.forceArmLower(), forceRunCollectorForArmAutolower);
-            safeToCollect = shooter.winchDisengaged;
+            unsafeToCollect = Mixing.alwaysTrue;//shooter.winchDisengaged;
             disableSystemsForRearm = shooter.rearming;
             // Autonomous
             autonomous.putCurrentActivator(shooter.shouldUseCurrent);
@@ -68,7 +68,7 @@ public class RobotMain extends SimpleCore {
             ui.getArmRaise().addListener(act.armUp);
             ui.getArmHold().addListener(act.armAlign);
             act.createCollector(duringTeleop, collectorMotor, collectionSolenoids,
-                    ui.rollerIn(), ui.rollerOut(), safeToCollect, Mixing.orBooleans(forceRunCollectorForArmAutolower, ui.shouldBeCollectingBecauseLoader()));
+                    ui.rollerIn(), ui.rollerOut(), unsafeToCollect, Mixing.orBooleans(forceRunCollectorForArmAutolower, ui.shouldBeCollectingBecauseLoader()));
             // Autonomous
             autonomous.putArm(act.armDown, act.armUp, act.armAlign, collectorMotor, collectionSolenoids);
         }
@@ -130,8 +130,13 @@ public class RobotMain extends SimpleCore {
             }
         };
         EventConsumer report = new EventConsumer() {
+            private float last;
             public void eventFired() {
-                Logger.fine("Pressure: " + percentPressure.readValue());
+                float cur = percentPressure.readValue();
+                if (Math.abs(last - cur) > 0.05) {
+                    last = cur;
+                    Logger.fine("Pressure: " + cur);
+                }
             }
         };
         startedAutonomous.addListener(report);

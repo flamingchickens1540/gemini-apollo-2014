@@ -23,6 +23,7 @@ public class Shooter {
 
     private final FloatInput winchSpeed = tuner.getFloat("Winch Speed", 1f);
     private final FloatInput drawBack = tuner.getFloat("Draw Back", 605);
+    private final FloatInput drawBackExtra = tuner.getFloat("Extra Draw Back in Auto", 0);
     private final FloatInput drawBackCurrent = tuner.getFloat("Draw Back Current", 50);
     private final FloatInput rearmTimeout = tuner.getFloat("Winch Rearm Timeout", 5f);
     private final FloatInput ampThreshold = tuner.getFloat("Amp Threshold", 5f);
@@ -78,13 +79,13 @@ public class Shooter {
     }
 
     public void setupWinch(final FloatOutput winchMotor, final BooleanOutput winchSolenoid,
-            final FloatInputPoll winchCurrent) {
+            final FloatInputPoll winchCurrent, final BooleanInputPoll isAutonomous) {
         sensor = winchCurrent;
         winchDisengaged.addTarget(winchSolenoid);
         CluckGlobals.getNode().publish("Winch Disengaged", winchDisengaged);
         winchPastThreshold = new BooleanInputPoll() {
             public boolean readValue() {
-                return (shouldUseCurrent.readValue() ? activeAmps.readValue() >= drawBackCurrent.readValue() : totalPowerTaken.readValue() >= drawBack.readValue());
+                return shouldUseCurrent.readValue() ? activeAmps.readValue() >= drawBackCurrent.readValue() : totalPowerTaken.readValue() >= (isAutonomous.readValue() ? drawBackExtra.readValue() : 0) + drawBack.readValue();
             }
         };
         rearming.addTarget(Mixing.select(winchMotor, Mixing.always(0), winchSpeed));
