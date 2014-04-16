@@ -47,7 +47,7 @@ public class RobotMain extends SimpleCore {
                     Mixing.combine(autonomous.getWhenToRearm(), rearmEvent),
                     fireWhen, autonomous.getNotifyRearmFinished());
             shooter.setupArmLower(ui.forceArmLower(), forceRunCollectorForArmAutolower);
-            unsafeToCollect = Mixing.alwaysTrue;//shooter.winchDisengaged;
+            unsafeToCollect = Mixing.alwaysFalse;//shooter.winchDisengaged;
             disableSystemsForRearm = shooter.rearming;
             // Autonomous
             autonomous.putCurrentActivator(shooter.shouldUseCurrent);
