@@ -114,7 +114,7 @@ public class Actuators {
         })));
         Mixing.pumpWhen(during, Mixing.quadSelect(Mixing.orBooleans(rollersIn, overrideRoll), rollersOut,
                 Mixing.always(0f), Mixing.negate((FloatInputPoll) collectorSpeed),
-                Mixing.select(disableCollector, collectorSpeed, Mixing.always(0)), collectorSpeed),
+                Mixing.select(disableCollector, collectorSpeed, Mixing.always(0)), Mixing.negate((FloatInputPoll) collectorSpeed)),
                 collectorMotor);
         Mixing.pumpWhen(during, Mixing.orBooleans(rollersIn, rollersOut), openFingers);
     }

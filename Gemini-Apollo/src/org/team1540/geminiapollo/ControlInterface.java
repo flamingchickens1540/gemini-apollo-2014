@@ -141,6 +141,11 @@ public class ControlInterface {
         BooleanStatus runCollector = new BooleanStatus();
         exp.scheduleBooleanPeriod(10, 510, runCollector, true);
         exp.schedule(520, exp.getStopEvent());
+        
+        ExpirationTimer exp2 = new ExpirationTimer();
+        exp2.startWhen(Mixing.whenBooleanBecomes(PhidgetReader.digitalInputs[7], true));
+        exp2.scheduleBooleanPeriod(10, 1010, runCollector, true);
+        exp2.schedule(1520, exp2.getStopEvent());
         return runCollector;
     }
 }
