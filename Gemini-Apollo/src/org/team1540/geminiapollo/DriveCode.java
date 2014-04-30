@@ -12,7 +12,8 @@ public class DriveCode {
             final FloatOutput leftDrive, final FloatOutput rightDrive,
             final FloatInputPoll leftDriveAxis, final FloatInputPoll rightDriveAxis,
             final FloatInputPoll forwardDriveAxis, final BooleanStatus notShifted,
-            BooleanInputPoll overrideDisabled, BooleanInputPoll disableDriving) {
+            BooleanInputPoll overrideDisabled, BooleanInputPoll disableDriving,
+            final BooleanInputPoll isKidMode) {
         
         final BooleanInputPoll actuallyDisable = Mixing.andBooleans(disableDriving, Mixing.invert(overrideDisabled));
 
@@ -36,6 +37,10 @@ public class DriveCode {
                     leftDriveValue *= leftDriveValue > 0 ? lfLeft.readValue() : lbLeft.readValue();
                     rightDriveValue *= rightDriveValue > 0 ? lfRight.readValue() : lbRight.readValue();
                 }
+                if (isKidMode.readValue()) {
+                    leftDriveValue /= 2;
+                    rightDriveValue /= 2;
+                }
                 leftDrive.writeValue(leftDriveValue);
                 rightDrive.writeValue(rightDriveValue);
             }
@@ -46,7 +51,7 @@ public class DriveCode {
         final BooleanStatus shifted = new BooleanStatus(shiftSolenoid);
         shifted.setTrueWhen(begin); // begin
         shifted.setFalseWhen(beginAuto);
-        shifted.setTrueWhen(shiftHighButton); // high - APOLLO WILL BE CHANGED SO THAT THESE ARE CORRECT
+        shifted.setTrueWhen(shiftHighButton); // high
         shifted.setFalseWhen(shiftLowButton); // low
         return shifted;
     }

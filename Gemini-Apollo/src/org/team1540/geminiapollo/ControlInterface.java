@@ -28,8 +28,11 @@ public class ControlInterface {
                 Mixing.whenBooleanBecomes(PhidgetReader.getDigitalInput(2), true, globalPeriodic));
     }
 
-    public EventSource getFireButton() {
-        return Mixing.combine(new EventSource[]{Mixing.whenBooleanBecomes(PhidgetReader.digitalInputs[1], true), joystick1.getButtonSource(6), joystick2.getButtonSource(2)});
+    public EventSource getFireButton(BooleanInputPoll isKidMode) {
+        return Mixing.combine(new EventSource[]{
+            Mixing.whenBooleanBecomes(PhidgetReader.digitalInputs[1], true),
+            Mixing.filterEvent(isKidMode, false, joystick1.getButtonSource(6)),
+            joystick2.getButtonSource(2)});
     }
 
     public EventSource getArmRaise() {
@@ -141,7 +144,7 @@ public class ControlInterface {
         BooleanStatus runCollector = new BooleanStatus();
         exp.scheduleBooleanPeriod(10, 510, runCollector, true);
         exp.schedule(520, exp.getStopEvent());
-        
+
         ExpirationTimer exp2 = new ExpirationTimer();
         exp2.startWhen(Mixing.whenBooleanBecomes(PhidgetReader.digitalInputs[7], true));
         exp2.scheduleBooleanPeriod(10, 1010, runCollector, true);

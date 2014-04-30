@@ -24,6 +24,9 @@ public class RobotMain extends SimpleCore {
         new CluckTCPServer(CluckGlobals.getNode(), 1540).start();
         testing = new TestMode(getIsTest());
         AutonomousController autonomous = new AutonomousController(this);
+        
+        BooleanStatus isKidMode = new BooleanStatus(true);
+        CluckGlobals.getNode().publish("Kid Mode", isKidMode);
 
         FloatInputPoll voltage = getBatteryVoltage();
         CluckGlobals.getNode().publish("Battery Level", Mixing.createDispatch(voltage, globalPeriodic));
@@ -35,7 +38,7 @@ public class RobotMain extends SimpleCore {
             BooleanOutput winchSolenoid = testing.testPublish("sol-winch-3", makeSolenoid(3));
             FloatInputPoll winchCurrent = makeAnalogInput(1, 8);
             CluckGlobals.getNode().publish("Winch Current", Mixing.createDispatch(winchCurrent, globalPeriodic));
-            EventSource fireWhen = Mixing.combine(autonomous.getWhenToFire(), ui.getFireButton());
+            EventSource fireWhen = Mixing.combine(autonomous.getWhenToFire(), ui.getFireButton(isKidMode));
             // Global
             Shooter shooter = new Shooter(robotDisabled, Mixing.filterEvent(getIsTest(), false, globalPeriodic),
                     constantPeriodic, Mixing.orBooleans(safeToShoot, getIsAutonomous()), voltage);
@@ -89,7 +92,7 @@ public class RobotMain extends SimpleCore {
                     shiftSolenoid, ui.getShiftHighButton(), ui.getShiftLowButton());
             DriveCode.createDrive(startedTeleop, duringTeleop, leftDrive, rightDrive,
                     ui.getLeftDriveAxis(), ui.getRightDriveAxis(), ui.getForwardDriveAxis(),
-                    shiftBoolean, ui.getToggleDisabled(), disableSystemsForRearm);
+                    shiftBoolean, ui.getToggleDisabled(), disableSystemsForRearm, isKidMode);
             // Autonomous
             autonomous.putDriveMotors(leftDrive, rightDrive);
         }
@@ -153,7 +156,7 @@ public class RobotMain extends SimpleCore {
             }
         });
         useCustomCompressor(new BooleanInputPoll() {
-            BooleanStatus bypass = new BooleanStatus(true);
+            BooleanStatus bypass = new BooleanStatus(false);
 
             {
                 CluckGlobals.getNode().publish("CP Bypass", bypass);
