@@ -1,9 +1,7 @@
 package org.team1540.geminiapollo;
 
-import ccre.cluck.CluckGlobals;
-import ccre.event.*;
-import ccre.chan.*;
-import ccre.ctrl.Mixing;
+import ccre.cluck.Cluck;
+import ccre.channel.*;
 
 public class TestMode {
 
@@ -19,21 +17,21 @@ public class TestMode {
 
     public BooleanStatus testPublish(String s, BooleanStatus b) {
         s = testify(s);
-        CluckGlobals.getNode().publish(s + ".input", (BooleanInput) b);
+        Cluck.publish(s + ".input", (BooleanInput) b);
         testPublish(s + ".output", (BooleanOutput) b);
         return b;
     }
 
     public BooleanInput testPublish(String s, BooleanInput b) {
-        CluckGlobals.getNode().publish(testify(s), (BooleanInput) b);
+        Cluck.publish(testify(s), (BooleanInput) b);
         return b;
     }
 
     public BooleanOutput testPublish(String s, final BooleanOutput b) {
-        CluckGlobals.getNode().publish(testify(s), new BooleanOutput() {
-            public void writeValue(boolean bln) {
-                if (inTest.readValue()) {
-                    b.writeValue(bln);
+        Cluck.publish(testify(s), new BooleanOutput() {
+            public void set(boolean bln) {
+                if (inTest.get()) {
+                    b.set(bln);
                 }
             }
         });
@@ -42,50 +40,40 @@ public class TestMode {
 
     public FloatStatus testPublish(String s, FloatStatus b) {
         s = testify(s);
-        CluckGlobals.getNode().publish(s + ".input", (FloatInput) b);
+        Cluck.publish(s + ".input", (FloatInput) b);
         testPublish(s + ".output", (FloatOutput) b);
         return b;
     }
 
     public FloatInput testPublish(String s, FloatInput b) {
-        CluckGlobals.getNode().publish(testify(s), (FloatInput) b);
+        Cluck.publish(testify(s), (FloatInput) b);
         return b;
     }
 
     public FloatOutput testPublish(String s, final FloatOutput b) {
-        CluckGlobals.getNode().publish(testify(s), new FloatOutput() {
-            public void writeValue(float bln) {
-                if (inTest.readValue()) {
-                    b.writeValue(bln);
+        Cluck.publish(testify(s), new FloatOutput() {
+            public void set(float bln) {
+                if (inTest.get()) {
+                    b.set(bln);
                 }
             }
         });
         return b;
     }
 
-    public BooleanInputProducer testPublish(String s, BooleanInputProducer b) {
-        CluckGlobals.getNode().publish(testify(s), b);
-        return b;
-    }
-
-    public FloatInputProducer testPublish(String s, FloatInputProducer b) {
-        CluckGlobals.getNode().publish(testify(s), b);
-        return b;
-    }
-
-    public EventConsumer testPublish(String s, final EventConsumer o) {
-        CluckGlobals.getNode().publish(testify(s), new EventConsumer() {
-            public void eventFired() {
-                if (inTest.readValue()) {
-                    o.eventFired();
+    public EventOutput testPublish(String s, final EventOutput o) {
+        Cluck.publish(testify(s), new EventOutput() {
+            public void event() {
+                if (inTest.get()) {
+                    o.event();
                 }
             }
         });
         return o;
     }
 
-    public EventSource testPublish(String s, final EventSource o) {
-        CluckGlobals.getNode().publish(testify(s), o);
+    public EventInput testPublish(String s, final EventInput o) {
+        Cluck.publish(testify(s), o);
         return o;
     }
 

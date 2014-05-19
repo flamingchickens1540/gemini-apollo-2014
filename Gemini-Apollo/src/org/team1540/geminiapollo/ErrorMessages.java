@@ -1,7 +1,6 @@
 package org.team1540.geminiapollo;
 
-import ccre.event.EventConsumer;
-import ccre.event.EventSource;
+import ccre.channel.*;
 import ccre.phidget.PhidgetReader;
 import java.io.PrintStream;
 
@@ -11,12 +10,12 @@ public class ErrorMessages {
     private static int activePriority = -1;
     private static int timeRemaining = -1;
     private static int defaultTimeRemaining = 10000;
-    private static final PrintStream line = PhidgetReader.phidgetLCD[0];
+    private static final PrintStream line = PhidgetReader.getLCDLine(0);
 
-    public static void setupError(EventSource constant) {
+    public static void setupError(EventInput constant) {
         final String defaultStr = RobotMain.IS_COMPETITION_ROBOT ? "(1540) APOLLO (1540)" : "[____] GEMINI [____]";
-        constant.addListener(new EventConsumer() {
-            public void eventFired() {
+        constant.send(new EventOutput() {
+            public void event() {
                 if (activeMessage != null) {
                     timeRemaining -= 10;
                     if (timeRemaining <= 0) {

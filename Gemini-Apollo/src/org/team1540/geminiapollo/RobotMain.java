@@ -1,35 +1,37 @@
 package org.team1540.geminiapollo;
 
-import ccre.chan.*;
-import ccre.cluck.CluckGlobals;
+import ccre.channel.*;
+import ccre.cluck.Cluck;
 import ccre.cluck.tcp.CluckTCPServer;
+import ccre.ctrl.BooleanMixing;
+import ccre.ctrl.EventMixing;
+import ccre.ctrl.FloatMixing;
 import ccre.ctrl.Mixing;
 import ccre.ctrl.Ticker;
-import ccre.event.*;
 import ccre.holders.TuningContext;
-import ccre.igneous.SimpleCore;
+import ccre.igneous.IgneousCore;
 import ccre.log.Logger;
 
-public class RobotMain extends SimpleCore {
+public class RobotMain extends IgneousCore {
 
     public static final boolean IS_COMPETITION_ROBOT = true;
     private TestMode testing;
     private ControlInterface ui;
 
-    protected void createSimpleControl() {
-        ui = new ControlInterface(joystick1, joystick2, globalPeriodic, robotDisabled);
+    public void setupRobot() {
+        ui = new ControlInterface(joystick1, joystick2, globalPeriodic, startDisabled);
         ErrorMessages.setupError(constantPeriodic);
-        new CluckTCPServer(CluckGlobals.getNode(), 443).start();
-        new CluckTCPServer(CluckGlobals.getNode(), 1180).start();
-        new CluckTCPServer(CluckGlobals.getNode(), 1540).start();
+        new CluckTCPServer(Cluck.getNode(), 443).start();
+        new CluckTCPServer(Cluck.getNode(), 1180).start();
+        new CluckTCPServer(Cluck.getNode(), 1540).start();
         testing = new TestMode(getIsTest());
-        AutonomousController autonomous = new AutonomousController(this);
-        
+        AutonomousController autonomous = new AutonomousController();
+
         BooleanStatus isKidMode = new BooleanStatus(true);
-        CluckGlobals.getNode().publish("Kid Mode", isKidMode);
+        Cluck.publish("Kid Mode", isKidMode);
 
         FloatInputPoll voltage = getBatteryVoltage();
-        CluckGlobals.getNode().publish("Battery Level", Mixing.createDispatch(voltage, globalPeriodic));
+        Cluck.publish("Battery Level", FloatMixing.createDispatch(voltage, globalPeriodic));
         FloatInputPoll displayReading;
         BooleanStatus safeToShoot = new BooleanStatus(), forceRunCollectorForArmAutolower = new BooleanStatus();
         BooleanInputPoll unsafeToCollect, disableSystemsForRearm;
@@ -37,20 +39,20 @@ public class RobotMain extends SimpleCore {
             FloatOutput winchMotor = testing.testPublish("winch", makeTalonMotor(5, MOTOR_REVERSE, 1000f));
             BooleanOutput winchSolenoid = testing.testPublish("sol-winch-3", makeSolenoid(3));
             FloatInputPoll winchCurrent = makeAnalogInput(1, 8);
-            CluckGlobals.getNode().publish("Winch Current", Mixing.createDispatch(winchCurrent, globalPeriodic));
-            EventSource fireWhen = Mixing.combine(autonomous.getWhenToFire(), ui.getFireButton(isKidMode));
+            Cluck.publish("Winch Current", FloatMixing.createDispatch(winchCurrent, globalPeriodic));
+            EventInput fireWhen = EventMixing.combine(autonomous.getWhenToFire(), ui.getFireButton(isKidMode));
             // Global
-            Shooter shooter = new Shooter(robotDisabled, Mixing.filterEvent(getIsTest(), false, globalPeriodic),
-                    constantPeriodic, Mixing.orBooleans(safeToShoot, getIsAutonomous()), voltage);
-            EventSource rearmEvent = ui.getRearmCatapult();
+            Shooter shooter = new Shooter(startDisabled, EventMixing.filterEvent(getIsTest(), false, globalPeriodic),
+                    constantPeriodic, BooleanMixing.orBooleans(safeToShoot, getIsAutonomous()), voltage);
+            EventInput rearmEvent = ui.getRearmCatapult();
             shooter.setupWinch(winchMotor, winchSolenoid, winchCurrent, getIsAutonomous());
             // Teleop
             shooter.setupRearmTimeout();
             shooter.handleShooterButtons(
-                    Mixing.combine(autonomous.getWhenToRearm(), rearmEvent),
+                    EventMixing.combine(autonomous.getWhenToRearm(), rearmEvent),
                     fireWhen, autonomous.getNotifyRearmFinished());
             shooter.setupArmLower(ui.forceArmLower(), forceRunCollectorForArmAutolower);
-            unsafeToCollect = Mixing.alwaysFalse;//shooter.winchDisengaged;
+            unsafeToCollect = BooleanMixing.alwaysFalse;//shooter.winchDisengaged;
             disableSystemsForRearm = shooter.rearming;
             // Autonomous
             autonomous.putCurrentActivator(shooter.shouldUseCurrent);
@@ -61,36 +63,35 @@ public class RobotMain extends SimpleCore {
         { // ==== ARM CODE ====
             BooleanOutput armMainSolenoid = testing.testPublish("sol-arm-2", makeSolenoid(2));
             BooleanOutput armLockSolenoid = testing.testPublish("sol-lock-8", makeSolenoid(8));
-            BooleanOutput collectionSolenoids = Mixing.combine(Mixing.invert(testing.testPublish("sol-fingers-5", makeSolenoid(5))), testing.testPublish("sol-float-6", makeSolenoid(6)));
-            collectionSolenoids.writeValue(false);
+            BooleanOutput collectionSolenoids = BooleanMixing.combine(BooleanMixing.invert(testing.testPublish("sol-fingers-5", makeSolenoid(5))), testing.testPublish("sol-float-6", makeSolenoid(6)));
+            collectionSolenoids.set(false);
             FloatOutput collectorMotor = testing.testPublish("collectorMotor", makeTalonMotor(6, MOTOR_REVERSE, 0.1f));
             // Teleoperated
-            Actuators act = new Actuators(Mixing.andBooleans(Mixing.orBooleans(getIsTeleop(), getIsAutonomous()), Mixing.invert(getIsDisabled())), getIsTeleop(), globalPeriodic, safeToShoot, ui.showArmDown(), ui.showArmUp(), armMainSolenoid, armLockSolenoid);
-            robotDisabled.addListener(act.armUp);
-            ui.getArmLower().addListener(act.armDown);
-            ui.getArmRaise().addListener(act.armUp);
-            ui.getArmHold().addListener(act.armAlign);
-            act.createCollector(duringTeleop, collectorMotor, collectionSolenoids,
-                    ui.rollerIn(), ui.rollerOut(), unsafeToCollect, Mixing.orBooleans(forceRunCollectorForArmAutolower, ui.shouldBeCollectingBecauseLoader()));
+            Actuators act = new Actuators(BooleanMixing.andBooleans(BooleanMixing.orBooleans(getIsTeleop(), getIsAutonomous()), BooleanMixing.invert(getIsDisabled())), getIsTeleop(), globalPeriodic, safeToShoot, ui.showArmDown(), ui.showArmUp(), armMainSolenoid, armLockSolenoid);
+            startDisabled.send(act.armUp);
+            ui.getArmLower().send(act.armDown);
+            ui.getArmRaise().send(act.armUp);
+            ui.getArmHold().send(act.armAlign);
+            act.createCollector(duringTele, collectorMotor, collectionSolenoids,
+                    ui.rollerIn(), ui.rollerOut(), unsafeToCollect, BooleanMixing.orBooleans(forceRunCollectorForArmAutolower, ui.shouldBeCollectingBecauseLoader()));
             // Autonomous
             autonomous.putArm(act.armDown, act.armUp, act.armAlign, collectorMotor, collectionSolenoids);
         }
         { // ==== KINECT CODE
-            autonomous.putKinectTrigger(KinectControl.main(globalPeriodic,
-                    makeDispatchJoystick(5, globalPeriodic), makeDispatchJoystick(6, globalPeriodic)));
+            autonomous.putKinectTrigger(KinectControl.main(globalPeriodic, getKinectJoystick(false), getKinectJoystick(true)));
         }
         { // ==== DRIVING ====
             FloatOutput leftDrive1 = makeTalonMotor(1, MOTOR_FORWARD, 0.1f), rightDrive1 = makeTalonMotor(3, MOTOR_REVERSE, 0.1f);
             FloatOutput leftDrive2 = makeTalonMotor(2, MOTOR_FORWARD, 0.1f), rightDrive2 = makeTalonMotor(4, MOTOR_REVERSE, 0.1f);
-            FloatOutput leftDrive = Mixing.combine(leftDrive1, leftDrive2), rightDrive = Mixing.combine(rightDrive1, rightDrive2);
+            FloatOutput leftDrive = FloatMixing.combine(leftDrive1, leftDrive2), rightDrive = FloatMixing.combine(rightDrive1, rightDrive2);
             BooleanOutput shiftSolenoid = testing.testPublish("sol-shift-1", makeSolenoid(1));
             testing.addDriveMotors(leftDrive1, leftDrive2, leftDrive, rightDrive1, rightDrive2, rightDrive);
             // Reset
-            Mixing.setWhen(robotDisabled, Mixing.combine(leftDrive, rightDrive), 0);
+            FloatMixing.setWhen(startDisabled, FloatMixing.combine(leftDrive, rightDrive), 0);
             // Teleoperated
-            BooleanStatus shiftBoolean = DriveCode.createShifting(startedTeleop, startedAutonomous, duringTeleop,
+            BooleanStatus shiftBoolean = DriveCode.createShifting(startTele, startAuto, duringTele,
                     shiftSolenoid, ui.getShiftHighButton(), ui.getShiftLowButton());
-            DriveCode.createDrive(startedTeleop, duringTeleop, leftDrive, rightDrive,
+            DriveCode.createDrive(startTele, duringTele, leftDrive, rightDrive,
                     ui.getLeftDriveAxis(), ui.getRightDriveAxis(), ui.getForwardDriveAxis(),
                     shiftBoolean, ui.getToggleDisabled(), disableSystemsForRearm, isKidMode);
             // Autonomous
@@ -99,18 +100,18 @@ public class RobotMain extends SimpleCore {
         // ==== Compressor ====
         setupCompressorAndDisplay(displayReading, disableSystemsForRearm);
         // ==== Phidget Mode Code ====
-        duringTeleop.addListener(new EventConsumer() {
-            public void eventFired() {
+        duringTele.send(new EventOutput() {
+            public void event() {
                 ErrorMessages.displayError(0, "(1540) APOLLO (TELE)", 200);
             }
         });
-        duringAutonomous.addListener(new EventConsumer() {
-            public void eventFired() {
+        duringAuto.send(new EventOutput() {
+            public void event() {
                 ErrorMessages.displayError(0, "(AUTO) APOLLO (1540)", 200);
             }
         });
-        duringTesting.addListener(new EventConsumer() {
-            public void eventFired() {
+        duringTest.send(new EventOutput() {
+            public void event() {
                 ErrorMessages.displayError(0, "(TEST) APOLLO (TEST)", 200);
             }
         });
@@ -120,38 +121,39 @@ public class RobotMain extends SimpleCore {
         final BooleanInputPoll pressureSwitch = makeDigitalInput(1);
         final FloatStatus override = new FloatStatus();
         final FloatInputPoll pressureSensor = makeAnalogInput(2, 8);
-        CluckGlobals.getNode().publish("Compressor Override", override);
-        CluckGlobals.getNode().publish("Compressor Sensor", Mixing.createDispatch(pressureSwitch, globalPeriodic));
-        CluckGlobals.getNode().publish("Pressure Sensor", Mixing.createDispatch(pressureSensor, globalPeriodic));
-        final TuningContext tuner = new TuningContext(CluckGlobals.getNode(), "PressureTuner");
+        Cluck.publish("Compressor Override", override);
+        Cluck.publish("Compressor Sensor", BooleanMixing.createDispatch(pressureSwitch, globalPeriodic));
+        Cluck.publish("Pressure Sensor", FloatMixing.createDispatch(pressureSensor, globalPeriodic));
+        final TuningContext tuner = new TuningContext(Cluck.getNode(), "PressureTuner");
         tuner.publishSavingEvent("Pressure");
         final FloatInputPoll zeroP = tuner.getFloat("LowPressure", 0.494f);
         final FloatInputPoll oneP = tuner.getFloat("HighPressure", 2.9f);
         final FloatInputPoll percentPressure = new FloatInputPoll() {
-            public float readValue() {
-                return 100 * ControlInterface.normalize(zeroP.readValue(), oneP.readValue(), pressureSensor.readValue());
+            public float get() {
+                return 100 * ControlInterface.normalize(zeroP.get(), oneP.get(), pressureSensor.get());
             }
         };
-        EventConsumer report = new EventConsumer() {
+        EventOutput report = new EventOutput() {
             private float last;
-            public void eventFired() {
-                float cur = percentPressure.readValue();
+
+            public void event() {
+                float cur = percentPressure.get();
                 if (Math.abs(last - cur) > 0.05) {
                     last = cur;
                     Logger.fine("Pressure: " + cur);
                 }
             }
         };
-        startedAutonomous.addListener(report);
-        startedTeleop.addListener(report);
-        robotDisabled.addListener(report);
-        new Ticker(10000).addListener(report);
+        startAuto.send(report);
+        startTele.send(report);
+        startDisabled.send(report);
+        new Ticker(10000).send(report);
         ui.displayPressureAndWinch(percentPressure, globalPeriodic, pressureSwitch, winch);
-        constantPeriodic.addListener(new EventConsumer() {
-            public void eventFired() {
-                float value = override.readValue();
+        constantPeriodic.send(new EventOutput() {
+            public void event() {
+                float value = override.get();
                 if (value > 0) {
-                    override.writeValue(Math.max(0, Math.min(10, value) - 0.01f));
+                    override.set(Math.max(0, Math.min(10, value) - 0.01f));
                 }
             }
         });
@@ -159,20 +161,20 @@ public class RobotMain extends SimpleCore {
             BooleanStatus bypass = new BooleanStatus(false);
 
             {
-                CluckGlobals.getNode().publish("CP Bypass", bypass);
+                Cluck.publish("CP Bypass", bypass);
             }
             boolean pressureInRange = false;
 
-            public boolean readValue() {
-                float value = override.readValue(), pct = percentPressure.readValue();
-                boolean byp = this.bypass.readValue(), pswit = pressureSwitch.readValue();
+            public boolean get() {
+                float value = override.get(), pct = percentPressure.get();
+                boolean byp = this.bypass.get(), pswit = pressureSwitch.get();
                 if (pct >= 100) {
                     pressureInRange = true;
                 } else if (pct < 97) {
                     pressureInRange = false;
                 }
                 boolean auto = byp ? (pressureInRange || pct < -1) : (pswit || pct >= 105);
-                return value < 0 || ((auto || disableCompressor.readValue()) && value == 0);
+                return value < 0 || ((auto || disableCompressor.get()) && value == 0);
             }
         }, 1);
     }
